@@ -18,7 +18,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { CrearProductoSchema } from "@congeminco/shared";
 
 interface FilaCSV {
@@ -131,6 +131,7 @@ export async function POST(request: NextRequest) {
 
   if (productosValidos.length > 0) {
     // Inserción masiva con service-role (bypasea RLS para operación admin)
+    const supabaseAdmin = crearClienteAdmin();
     const { data: insertados, error: insertError } = await supabaseAdmin
       .schema("inv")
       .from("T_Producto")

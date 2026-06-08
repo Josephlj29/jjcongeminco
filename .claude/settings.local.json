@@ -35,7 +35,9 @@
       "Bash(git commit *)",
       "Bash(git branch *)",
       "Bash(git remote *)",
-      "Bash(echo \"remote: $\\(git remote get-url origin\\)\")"
+      "Bash(echo \"remote: $\\(git remote get-url origin\\)\")",
+      "Bash(git push *)",
+      "Bash(pnpm --filter @congeminco/web cf:build)"
     ],
     "additionalDirectories": [
       "/Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/productos/[id]/imagenes",

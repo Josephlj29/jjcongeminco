@@ -10,12 +10,29 @@
  *
  * GOTCHA: sigue requiriendo .schema("inv") para tablas fuera de "public".
  */
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: { persistSession: false },
+let clienteAdmin: SupabaseClient | null = null;
+
+/**
+ * Crea (o reutiliza) el cliente service-role de forma LAZY.
+ *
+ * No se construye al importar el módulo: si se hiciera, el build de Next
+ * (al "collect page data") lo evaluaría sin tener la SERVICE_ROLE_KEY
+ * disponible y fallaría con "supabaseUrl/supabaseKey is required".
+ * Acá se crea recién al ejecutar el handler, donde el runtime ya tiene las env.
+ */
+export function crearClienteAdmin(): SupabaseClient {
+  if (clienteAdmin) return clienteAdmin;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(
+      "Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en el entorno."
+    );
   }
-);
+
+  clienteAdmin = createClient(url, key, { auth: { persistSession: false } });
+  return clienteAdmin;
+}
