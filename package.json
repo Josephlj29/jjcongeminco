@@ -1,0 +1,23 @@
+{
+  "name": "congeminco-inventory",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Sistema de inventario JJ Congeminco — monorepo (web + api + db + shared)",
+  "packageManager": "pnpm@11.5.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:migrate": "pnpm --filter @congeminco/db migrate",
+    "db:seed": "pnpm --filter @congeminco/db seed",
+    "db:etl": "pnpm --filter @congeminco/db etl"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import openpyxl; print\\('ok'\\)\")",
+      "Bash(pip3 install *)",
+      "Bash(eza -la --tree --level=2 --git-ignore)",
+      "Bash(eza -la)",
+      "Bash(eza -la --all)",
+      "Bash(pnpm -v)",
+      "mcp__plugin_engram_engram__mem_save",
+      "mcp__plugin_engram_engram__mem_search",
+      "Bash(eza --tree --level=3)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm --filter @congeminco/shared exec tsc --noEmit)",
+      "Bash(echo \"=== shared exit: $? ===\")",
+      "Bash(python3)",
+      "Bash(mkdir -p \\\\ *)",
+      "Bash(mkdir -p \"/Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/productos/[id]\")",
+      "Bash(eza apps *)",
+      "Bash(mkdir -p /Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/proveedores/\\\\[id\\\\])",
+      "Bash(mkdir -p /Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/ubicaciones/\\\\[id\\\\])",
+      "Bash(mkdir -p /Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/equipos/\\\\[id\\\\])",
+      "Bash(mkdir -p /Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/vehiculos/\\\\[id\\\\])",
+      "Bash(npx tsc *)",
+      "mcp__plugin_engram_engram__mem_save_prompt",
+      "mcp__plugin_engram_engram__mem_judge",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}, indent=2\\)\\)\")",
+      "Bash(pnpm add *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(fd -t f -e ts -e tsx . /Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/productos/[id])",
+      "Bash(mkdir -p \"/Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/dependencias/[entidad]/[id]\")",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)",
+      "Bash(echo \"remote: $\\(git remote get-url origin\\)\")"
+    ],
+    "additionalDirectories": [
+      "/Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/productos/[id]/imagenes",
+      "/Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/productos/[id]",
+      "/Users/josephllanque/Code/ventures/CONGEMIN-VIANNY/apps/web/app/api/dependencias/[entidad]"
+    ]
+  }
+}

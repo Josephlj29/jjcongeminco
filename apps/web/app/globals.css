@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Paleta JJ Congeminco
+  - Primary  : naranja empresarial (marca, CTAs)
+  - Secondary/Muted : gris frio elegante (superficies, UI neutra)
+  - Tertiary : teal complementario (enfasis, datos, badges)
+  - Chart 1-5: serie para reportes/graficos
+*/
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 26% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 26% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 26% 14%;
+
+    --primary: 22 90% 46%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 95%;
+    --secondary-foreground: 220 22% 24%;
+
+    --muted: 220 16% 95%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 28 100% 96%;
+    --accent-foreground: 22 85% 34%;
+
+    --tertiary: 192 44% 34%;
+    --tertiary-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 16% 90%;
+    --input: 220 16% 90%;
+    --ring: 22 90% 46%;
+    --radius: 0.5rem;
+
+    --chart-1: 22 90% 50%;
+    --chart-2: 192 44% 40%;
+    --chart-3: 220 14% 50%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 210 30% 55%;
+
+    --sidebar-background: 220 24% 12%;
+    --sidebar-foreground: 220 14% 92%;
+    --sidebar-primary: 22 90% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 18% 20%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 220 18% 20%;
+    --sidebar-ring: 22 90% 52%;
+  }
+
+  .dark {
+    --background: 220 24% 9%;
+    --foreground: 220 14% 92%;
+    --card: 220 22% 12%;
+    --card-foreground: 220 14% 92%;
+    --popover: 220 22% 12%;
+    --popover-foreground: 220 14% 92%;
+
+    --primary: 24 92% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 18%;
+    --secondary-foreground: 220 14% 92%;
+
+    --muted: 220 16% 18%;
+    --muted-foreground: 220 10% 64%;
+
+    --accent: 22 60% 18%;
+    --accent-foreground: 28 100% 88%;
+
+    --tertiary: 192 44% 46%;
+    --tertiary-foreground: 220 24% 9%;
+
+    --destructive: 0 62% 44%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 16% 22%;
+    --input: 220 16% 22%;
+    --ring: 24 92% 53%;
+
+    --chart-1: 24 92% 56%;
+    --chart-2: 192 44% 50%;
+    --chart-3: 220 14% 62%;
+    --chart-4: 38 92% 56%;
+    --chart-5: 210 36% 62%;
+
+    --sidebar-background: 220 26% 8%;
+    --sidebar-foreground: 220 14% 92%;
+    --sidebar-primary: 24 92% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 18% 16%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 220 18% 16%;
+    --sidebar-ring: 24 92% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}

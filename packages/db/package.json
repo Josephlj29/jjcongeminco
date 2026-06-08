@@ -1,0 +1,20 @@
+{
+  "name": "@congeminco/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Migraciones SQL, seed y ETL del inventario JJ Congeminco",
+  "scripts": {
+    "migrate": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/migrate.ts",
+    "seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts",
+    "etl": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/etl.ts",
+    "reconcile": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/reconcile.ts"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2"
+  }
+}
