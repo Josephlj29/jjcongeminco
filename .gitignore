@@ -12,3 +12,4 @@ dist/
 .DS_Store
 coverage/
 .claude/settings.local.json
+.mcp.json

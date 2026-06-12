@@ -1,12 +1,15 @@
 /**
  * app/api/saldos/route.ts
  *
- * GET /api/saldos — stock consolidado desde inv.V_Producto_StockConsolidado
- * Soporta ?bajoMinimo=true para filtrar por BajoMinimo.
+ * GET /api/saldos — stock consolidado o por ubicación.
  *
- * NOTA: se usa la misma vista que /api/productos pero este endpoint
- * devuelve TODOS los campos de stock sin filtros de búsqueda por texto,
- * pensado para el dashboard y KPIs.
+ * Sin ?porUbicacion → inv.V_Producto_StockConsolidado
+ *   Soporta ?bajoMinimo=true para filtrar por BajoMinimo.
+ *
+ * Con ?porUbicacion=true → inv.V_SaldoStock_PorUbicacion
+ *   Soporta ?idProducto=<id> para filtrar por producto.
+ *
+ * Pensado para el dashboard, KPIs y vistas de detalle por ubicación.
  */
 export const runtime = "nodejs";
 
@@ -19,9 +22,34 @@ export async function GET(request: NextRequest) {
   if (error) return error;
 
   const { searchParams } = new URL(request.url);
-  const bajoMinimo = searchParams.get("bajoMinimo");
+  const porUbicacion = searchParams.get("porUbicacion");
 
   const supabase = await crearClienteServidor();
+
+  if (porUbicacion === "true") {
+    const idProducto = searchParams.get("idProducto");
+
+    let query = supabase
+      .schema("inv")
+      .from("V_SaldoStock_PorUbicacion")
+      .select("*");
+
+    if (idProducto) {
+      query = query.eq("IdProducto", idProducto);
+    }
+
+    const { data, error: dbError } = await query;
+
+    if (dbError) {
+      return NextResponse.json({ error: dbError.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  }
+
+  // Comportamiento original: vista consolidada
+  const bajoMinimo = searchParams.get("bajoMinimo");
+
   let query = supabase
     .schema("inv")
     .from("V_Producto_StockConsolidado")

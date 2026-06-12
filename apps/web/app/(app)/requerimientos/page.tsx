@@ -17,11 +17,12 @@ import {
   ORIGEN_REQUERIMIENTO,
   type CrearRequerimiento,
 } from "@congeminco/shared";
-import { useCrearRequerimiento, useRequerimientos, type RequerimientoResumen } from "@/hooks/useRequerimientos";
+import { useCrearRequerimiento, useRequerimientos } from "@/hooks/useRequerimientos";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
-import { useProductos } from "@/hooks/useProductos";
+import { useSaldos } from "@/hooks/useSaldos";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
+import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,7 +60,7 @@ const SITUACION_VARIANTE = {
 
 export default function RequerimientosPage() {
   const { mutateAsync, isPending } = useCrearRequerimiento();
-  const { data: productos } = useProductos();
+  const { data: productos } = useSaldos();
   const { data: equipos } = useEquipos();
   const { data: vehiculos } = useVehiculos();
   const { data: requerimientos, isLoading: cargandoReqs } = useRequerimientos();
@@ -234,29 +235,22 @@ export default function RequerimientosPage() {
                   <TableBody>
                     {fields.map((field, idx) => (
                       <TableRow key={field.id}>
-                        <TableCell>
-                          <Select
-                            onValueChange={(v) =>
-                              setValue(`Detalle.${idx}.IdProducto`, v)
+                        <TableCell className="align-top min-w-64">
+                          <ProductoCombobox
+                            productos={productos ?? []}
+                            value={watch(`Detalle.${idx}.IdProducto`) || null}
+                            onChange={(v) =>
+                              setValue(`Detalle.${idx}.IdProducto`, v ?? "", {
+                                shouldValidate: true,
+                              })
                             }
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue placeholder="Buscar producto..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {productos?.map((p) => (
-                                <SelectItem key={p.IdProducto} value={p.IdProducto}>
-                                  {p.Sku} — {p.NombreProducto}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-top">
                           <Input
                             type="number"
                             min={1}
-                            className="h-8"
+                            className="h-9"
                             {...register(`Detalle.${idx}.Cantidad`, {
                               valueAsNumber: true,
                             })}

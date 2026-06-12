@@ -29,6 +29,25 @@ export interface Equipo extends CamposAuditoria {
   Codigo: string;
   Nombre: string;
   Descripcion: string | null;
+  IdTipoEquipo: string | null;
+  /* Embebido del GET (PostgREST T_TipoEquipo(Nombre)) */
+  NombreTipoEquipo?: string | null;
+}
+
+export interface TipoEquipo extends CamposAuditoria {
+  Id: string;
+  Codigo: string;
+  Nombre: string;
+  Descripcion: string | null;
+}
+
+/* Fila de la puente producto<->tipo de equipo, con nombre del tipo (embed) */
+export interface AsociacionProductoTipoEquipo {
+  Id: string;
+  IdProducto: string;
+  IdTipoEquipo: string;
+  NombreTipoEquipo: string;
+  CodigoTipoEquipo: string;
 }
 
 export interface Vehiculo extends CamposAuditoria {
@@ -55,6 +74,11 @@ export interface ProductoPrecioHistorico {
   IdProveedor: string | null;
   IdDocumentoInventario: string | null;
   Origen: "compra" | "manual" | "ajuste";
+}
+
+/* Historial de precios con el nombre del proveedor (embed para el dialog) */
+export interface PrecioHistoricoConProveedor extends ProductoPrecioHistorico {
+  NombreProveedor: string | null;
 }
 
 export interface Requerimiento extends CamposAuditoria {
@@ -103,6 +127,22 @@ export interface ProductoStockConsolidado {
   StockMinimo: number;
   StockTotal: number;
   BajoMinimo: boolean;
+  IdCategoria: string;
+  CostoPromedio: number;
+  UrlImagenPrincipal: string | null;
+}
+
+/* Salida de la vista inv.V_SaldoStock_PorUbicacion */
+export interface SaldoPorUbicacion {
+  IdProducto: string;
+  Sku: string;
+  NombreProducto: string;
+  IdUbicacion: string;
+  NombreUbicacion: string;
+  CodigoUbicacion: string;
+  CantidadDisponible: number;
+  StockMinimo: number;
+  CostoPromedio: number;
 }
 
 /* Salida de la vista inv.V_Producto_Valorizado */
@@ -118,6 +158,7 @@ export interface ProductoValorizado {
   StockTotal: number;
   ValorTotal: number;
   BajoMinimo: boolean;
+  UrlImagenPrincipal: string | null;
 }
 
 /* Salida de la vista inv.V_Producto_HistorialRequerimiento */

@@ -1,22 +1,39 @@
 "use client";
 
 /**
- * app/(app)/page.tsx — Dashboard
+ * app/(app)/page.tsx — Dashboard con gráficos
  *
- * Client Component porque usa TanStack Query para los KPIs y la tabla.
- * Muestra:
- * - KPIs: total de productos, bajo mínimo, ubicaciones activas
- * - Tabla de productos bajo mínimo
+ * Client Component (TanStack Query + ECharts).
+ * - 4 KPI cards: total productos, valor total inventario, bajo mínimo,
+ *   movimientos del período.
+ * - Select de rango (7/30/90 días) que define desde/hasta.
+ * - Gráficos: tendencia entradas/salidas por día, donut de valor por categoría,
+ *   top 5 productos por cantidad movida. Los datos de los gráficos se agregan en
+ *   memoria a partir de /api/reportes/movimientos y /api/reportes/valorizado.
  */
-import { Package, AlertTriangle, MapPin } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Package,
+  AlertTriangle,
+  Wallet,
+  ArrowLeftRight,
+} from "lucide-react";
+import type { ReporteMovimiento, ProductoValorizado } from "@congeminco/shared";
 import { useSaldos, useSaldosBajoMinimo } from "@/hooks/useSaldos";
-import { useUbicaciones } from "@/hooks/useCatalogo";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -27,6 +44,23 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GraficoTendencia } from "@/components/charts/GraficoTendencia";
+import { GraficoDonutCategorias } from "@/components/charts/GraficoDonutCategorias";
+import { GraficoTopProductos } from "@/components/charts/GraficoTopProductos";
+
+const RANGOS = [
+  { value: "7", label: "Últimos 7 días" },
+  { value: "30", label: "Últimos 30 días" },
+  { value: "90", label: "Últimos 90 días" },
+] as const;
+
+function fechaISO(d: Date): string {
+  return d.toISOString().split("T")[0];
+}
+
+function moneda(n: number): string {
+  return `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function KpiCard({
   titulo,
@@ -67,28 +101,131 @@ function KpiCard({
   );
 }
 
+function useReporteMovimientos(desde: string, hasta: string) {
+  return useQuery({
+    queryKey: ["reportes", "movimientos", "dashboard", desde, hasta],
+    queryFn: async () => {
+      const params = new URLSearchParams({ desde, hasta });
+      const res = await fetch(`/api/reportes/movimientos?${params.toString()}`);
+      if (!res.ok) throw new Error("Error al cargar movimientos");
+      return res.json() as Promise<ReporteMovimiento[]>;
+    },
+  });
+}
+
+function useReporteValorizado() {
+  return useQuery({
+    queryKey: ["reportes", "valorizado", "dashboard"],
+    queryFn: async () => {
+      const res = await fetch("/api/reportes/valorizado");
+      if (!res.ok) throw new Error("Error al cargar valorizado");
+      return res.json() as Promise<ProductoValorizado[]>;
+    },
+  });
+}
+
 export default function DashboardPage() {
+  const [rango, setRango] = useState<string>("30");
+
+  const { desde, hasta } = useMemo(() => {
+    const fin = new Date();
+    const inicio = new Date();
+    inicio.setDate(inicio.getDate() - Number(rango));
+    return { desde: fechaISO(inicio), hasta: fechaISO(fin) };
+  }, [rango]);
+
   const { data: saldos, isLoading: cargandoSaldos } = useSaldos();
   const { data: bajoMinimo, isLoading: cargandoBM } = useSaldosBajoMinimo();
-  const { data: ubicaciones } = useUbicaciones();
+  const { data: movimientos, isLoading: cargandoMov } = useReporteMovimientos(
+    desde,
+    hasta
+  );
+  const { data: valorizado, isLoading: cargandoVal } = useReporteValorizado();
 
   const totalProductos = saldos?.length ?? 0;
   const totalBajoMinimo = bajoMinimo?.length ?? 0;
-  const totalUbicaciones = ubicaciones?.length ?? 0;
+  const valorInventario = useMemo(
+    () => (valorizado ?? []).reduce((sum, v) => sum + v.ValorTotal, 0),
+    [valorizado]
+  );
+  const totalMovimientos = movimientos?.length ?? 0;
+
+  /* Tendencia: entradas vs salidas por día (Direccion 1 = entrada, -1 = salida). */
+  const datosTendencia = useMemo(() => {
+    const mapa = new Map<string, { entradas: number; salidas: number }>();
+    (movimientos ?? []).forEach((m) => {
+      const fecha = m.FechaMovimiento.split("T")[0];
+      const acc = mapa.get(fecha) ?? { entradas: 0, salidas: 0 };
+      if (m.Direccion === 1) acc.entradas += m.Cantidad;
+      else acc.salidas += m.Cantidad;
+      mapa.set(fecha, acc);
+    });
+    return [...mapa.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([fecha, v]) => ({
+        fecha: new Date(fecha).toLocaleDateString("es-PE", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        entradas: v.entradas,
+        salidas: v.salidas,
+      }));
+  }, [movimientos]);
+
+  /* Donut: valor por categoría (suma ValorTotal del valorizado). */
+  const datosDonut = useMemo(() => {
+    const mapa = new Map<string, number>();
+    (valorizado ?? []).forEach((v) => {
+      mapa.set(v.NombreCategoria, (mapa.get(v.NombreCategoria) ?? 0) + v.ValorTotal);
+    });
+    return [...mapa.entries()]
+      .map(([nombre, valor]) => ({ nombre, valor }))
+      .sort((a, b) => b.valor - a.valor);
+  }, [valorizado]);
+
+  /* Top 5 productos por cantidad movida en el período. */
+  const datosTop = useMemo(() => {
+    const mapa = new Map<string, number>();
+    (movimientos ?? []).forEach((m) => {
+      mapa.set(m.NombreProducto, (mapa.get(m.NombreProducto) ?? 0) + m.Cantidad);
+    });
+    return [...mapa.entries()]
+      .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 5)
+      .reverse(); // barras horizontales: mayor arriba
+  }, [movimientos]);
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Resumen del inventario — JJ Congeminco
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Resumen del inventario — JJ Congeminco
+          </p>
+        </div>
+        <div className="w-full sm:w-48">
+          <Select value={rango} onValueChange={setRango}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RANGOS.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cargandoSaldos ? (
           <>
+            <Skeleton className="h-28" />
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
@@ -102,6 +239,12 @@ export default function DashboardPage() {
               descripcion="Productos activos en catálogo"
             />
             <KpiCard
+              titulo="Valor total inventario"
+              valor={cargandoVal ? "…" : moneda(valorInventario)}
+              icono={Wallet}
+              descripcion="Stock valorizado a costo promedio"
+            />
+            <KpiCard
               titulo="Bajo mínimo"
               valor={totalBajoMinimo}
               icono={AlertTriangle}
@@ -109,14 +252,72 @@ export default function DashboardPage() {
               variante={totalBajoMinimo > 0 ? "warning" : "default"}
             />
             <KpiCard
-              titulo="Ubicaciones"
-              valor={totalUbicaciones}
-              icono={MapPin}
-              descripcion="Almacenes y proyectos activos"
+              titulo="Movimientos del período"
+              valor={cargandoMov ? "…" : totalMovimientos}
+              icono={ArrowLeftRight}
+              descripcion={RANGOS.find((r) => r.value === rango)?.label}
             />
           </>
         )}
       </div>
+
+      {/* Gráficos */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">
+              Entradas vs salidas por día
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cargandoMov ? (
+              <Skeleton className="h-[300px]" />
+            ) : datosTendencia.length === 0 ? (
+              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+                Sin movimientos en el período.
+              </div>
+            ) : (
+              <GraficoTendencia datos={datosTendencia} />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Valor por categoría</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cargandoVal ? (
+              <Skeleton className="h-[300px]" />
+            ) : datosDonut.length === 0 ? (
+              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+                Sin datos valorizados.
+              </div>
+            ) : (
+              <GraficoDonutCategorias datos={datosDonut} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            Top productos movidos (período)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {cargandoMov ? (
+            <Skeleton className="h-[300px]" />
+          ) : datosTop.length === 0 ? (
+            <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+              Sin movimientos en el período.
+            </div>
+          ) : (
+            <GraficoTopProductos datos={datosTop} />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tabla de productos bajo mínimo */}
       <div>
@@ -132,7 +333,7 @@ export default function DashboardPage() {
             No hay productos bajo mínimo. ¡Todo en orden!
           </div>
         ) : (
-          <div className="rounded-lg border">
+          <div className="rounded-lg border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -152,9 +353,7 @@ export default function DashboardPage() {
                       {p.NombreProducto}
                     </TableCell>
                     <TableCell>{p.NombreCategoria}</TableCell>
-                    <TableCell className="text-right">
-                      {p.StockMinimo}
-                    </TableCell>
+                    <TableCell className="text-right">{p.StockMinimo}</TableCell>
                     <TableCell className="text-right font-semibold text-amber-600">
                       {p.StockTotal}
                     </TableCell>

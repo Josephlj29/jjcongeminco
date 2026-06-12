@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { AlertCircle } from "lucide-react";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const LoginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -53,66 +55,94 @@ export default function LoginPage() {
     }
 
     // Navegación dura: garantiza que el servidor lea la cookie de sesión recién escrita
-    // (evita el race entre el cliente que setea la cookie y el render server-side).
     window.location.assign("/");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg">
+    <div
+      className={cn(
+        "min-h-screen flex items-center justify-center px-4",
+        "bg-gradient-to-br from-background via-muted/30 to-muted/60"
+      )}
+    >
+      <div className="w-full max-w-sm">
+        {/* Logo flotante encima de la card */}
+        <div className="flex justify-center mb-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-bold text-xl shadow-lg shadow-primary/30">
             JJ
           </div>
-          <CardTitle className="text-2xl">Bienvenido</CardTitle>
-          <CardDescription>
-            Sistema de inventario — JJ Congeminco
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@empresa.com"
-                autoComplete="email"
-                {...register("email")}
-              />
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
+        </div>
+
+        <Card className="shadow-xl border-border/50">
+          <CardHeader className="space-y-1 text-center pb-4">
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              Bienvenido
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Sistema de inventario — JJ Congeminco
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Correo electrónico</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@empresa.com"
+                  autoComplete="email"
+                  className={cn(errors.email && "border-destructive focus-visible:ring-destructive")}
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className={cn(errors.password && "border-destructive focus-visible:ring-destructive")}
+                  {...register("password")}
+                />
+                {errors.password && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              {error && (
+                <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5">
+                  <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                  <p className="text-sm text-destructive leading-snug">{error}</p>
+                </div>
               )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                {...register("password")}
-              />
-              {errors.password && (
-                <p className="text-xs text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+              <Button
+                type="submit"
+                className="w-full font-semibold"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Ingresando..." : "Ingresar"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-            {error && (
-              <p className="text-sm text-destructive text-center rounded-md bg-destructive/10 px-3 py-2">
-                {error}
-              </p>
-            )}
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Ingresando..." : "Ingresar"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          JJ Congeminco © {new Date().getFullYear()}
+        </p>
+      </div>
     </div>
   );
 }

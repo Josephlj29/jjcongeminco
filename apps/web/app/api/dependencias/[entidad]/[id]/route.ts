@@ -23,6 +23,7 @@ const ENTIDADES_VALIDAS = [
   "ubicacion",
   "equipo",
   "vehiculo",
+  "tipoEquipo",
 ] as const;
 
 type EntidadValida = (typeof ENTIDADES_VALIDAS)[number];

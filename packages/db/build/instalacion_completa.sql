@@ -1,6 +1,6 @@
 /*
 	 INSTALACION COMPLETA - Inventario JJ Congeminco (re-ejecutable)
-	 reset + 0001-0014 + seed + 222 productos. No incluye Storage ni admin.
+	 reset + 0001-0017 + seed + 222 productos. No incluye Storage ni admin.
 */
 
 BEGIN;
@@ -1747,6 +1747,519 @@ END;
 $$;
 
 COMMENT ON FUNCTION "inv"."FnContarDependencias"(TEXT, UUID) IS 'Cuenta datos enlazados de una entidad. puedeEliminar=true solo si total=0.';
+
+/* ===================== migrations/0015_tipo_equipo.sql ===================== */
+/*
+	Base de Datos: Inventario JJ Congeminco (Supabase / PostgreSQL)
+	Objeto: inv.T_TipoEquipo + inv.T_ProductoTipoEquipo + asociacion masiva
+	Tipo de Cambio: CREATE + ALTER - clasificacion de productos por tipo de equipo
+	Autor: Equipo Desarrollo
+	Fecha: 2026-06-08
+	Descripcion: Un tipo de equipo (camion, camioneta, grua...) agrupa equipos y
+	             define que productos le son compatibles. Un producto puede ser
+	             compatible con N tipos (tabla puente). PRODUCTO SIN FILAS EN LA
+	             PUENTE = producto GENERAL (usable por cualquier equipo, ej. grasa).
+*/
+
+/* =====================================================================
+	inv.T_TipoEquipo  (maestro)
+===================================================================== */
+CREATE TABLE "inv"."T_TipoEquipo"
+(
+	"Id"                  UUID         NOT NULL DEFAULT gen_random_uuid(),
+	"Codigo"              VARCHAR(20)  NOT NULL,
+	"Nombre"              VARCHAR(120) NOT NULL,
+	"Descripcion"         VARCHAR(200),
+	"Estado"              BOOLEAN      NOT NULL DEFAULT TRUE,
+	"UsuarioCreacion"     VARCHAR(50)  NOT NULL DEFAULT 'Sistema',
+	"UsuarioModificacion" VARCHAR(50)  NOT NULL DEFAULT 'Sistema',
+	"FechaCreacion"       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+	"FechaModificacion"   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+	"RowVersion"          BIGINT       NOT NULL DEFAULT 0,
+	"IdMigracion"         UUID,
+	CONSTRAINT "PK_T_TipoEquipo" PRIMARY KEY ("Id"),
+	CONSTRAINT "UQ_T_TipoEquipo_Codigo" UNIQUE ("Codigo")
+);
+
+COMMENT ON TABLE "inv"."T_TipoEquipo" IS 'Tipo de equipo (camion, camioneta, grua...). Agrupa equipos y define compatibilidad de productos.';
+COMMENT ON COLUMN "inv"."T_TipoEquipo"."Id" IS 'Identificador unico del tipo de equipo.';
+COMMENT ON COLUMN "inv"."T_TipoEquipo"."Codigo" IS 'Codigo corto del tipo de equipo.';
+COMMENT ON COLUMN "inv"."T_TipoEquipo"."Nombre" IS 'Nombre del tipo de equipo.';
+COMMENT ON COLUMN "inv"."T_TipoEquipo"."Descripcion" IS 'Descripcion del tipo de equipo.';
+COMMENT ON COLUMN "inv"."T_TipoEquipo"."Estado" IS 'Estado de auditoria: activo o inactivo.';
+
+CREATE TRIGGER "TR_T_TipoEquipo_Auditoria"
+	BEFORE UPDATE ON "inv"."T_TipoEquipo"
+	FOR EACH ROW EXECUTE FUNCTION "comun"."FnAuditoriaActualizacion"();
+
+ALTER TABLE "inv"."T_TipoEquipo" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "LecturaAutenticado" ON "inv"."T_TipoEquipo"
+	FOR SELECT USING ("seg"."FnRolUsuario"() IS NOT NULL);
+
+CREATE POLICY "TipoEquipoEscritura" ON "inv"."T_TipoEquipo"
+	FOR ALL USING ("seg"."FnRolUsuario"() IN ('admin','almacenero'))
+	WITH CHECK ("seg"."FnRolUsuario"() IN ('admin','almacenero'));
+
+/* =====================================================================
+	ALTER inv.T_Equipo  (cada equipo pertenece a un tipo)
+	Nullable para equipos legacy; la UI lo exige al crear/editar.
+===================================================================== */
+ALTER TABLE "inv"."T_Equipo"
+	ADD COLUMN "IdTipoEquipo" UUID;
+
+ALTER TABLE "inv"."T_Equipo"
+	ADD CONSTRAINT "FK_T_Equipo_TipoEquipo_IdTipoEquipo"
+		FOREIGN KEY ("IdTipoEquipo") REFERENCES "inv"."T_TipoEquipo" ("Id");
+
+COMMENT ON COLUMN "inv"."T_Equipo"."IdTipoEquipo" IS 'Tipo al que pertenece el equipo (camion, camioneta...).';
+
+CREATE INDEX "IX_T_Equipo_IdTipoEquipo" ON "inv"."T_Equipo" ("IdTipoEquipo");
+
+/* =====================================================================
+	inv.T_ProductoTipoEquipo  (puente N:M producto <-> tipo de equipo)
+===================================================================== */
+CREATE TABLE "inv"."T_ProductoTipoEquipo"
+(
+	"Id"                  UUID         NOT NULL DEFAULT gen_random_uuid(),
+	"IdProducto"          UUID         NOT NULL,
+	"IdTipoEquipo"        UUID         NOT NULL,
+	"Estado"              BOOLEAN      NOT NULL DEFAULT TRUE,
+	"UsuarioCreacion"     VARCHAR(50)  NOT NULL DEFAULT 'Sistema',
+	"UsuarioModificacion" VARCHAR(50)  NOT NULL DEFAULT 'Sistema',
+	"FechaCreacion"       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+	"FechaModificacion"   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+	"RowVersion"          BIGINT       NOT NULL DEFAULT 0,
+	"IdMigracion"         UUID,
+	CONSTRAINT "PK_T_ProductoTipoEquipo" PRIMARY KEY ("Id"),
+	CONSTRAINT "UQ_T_ProductoTipoEquipo_IdProducto_IdTipoEquipo" UNIQUE ("IdProducto","IdTipoEquipo"),
+	CONSTRAINT "FK_T_ProductoTipoEquipo_Producto_IdProducto"
+		FOREIGN KEY ("IdProducto") REFERENCES "inv"."T_Producto" ("Id") ON DELETE CASCADE,
+	CONSTRAINT "FK_T_ProductoTipoEquipo_TipoEquipo_IdTipoEquipo"
+		FOREIGN KEY ("IdTipoEquipo") REFERENCES "inv"."T_TipoEquipo" ("Id") ON DELETE CASCADE
+);
+
+COMMENT ON TABLE "inv"."T_ProductoTipoEquipo" IS 'Compatibilidad producto<->tipo de equipo (N:M). Producto SIN filas aqui = producto GENERAL (compatible con cualquier tipo).';
+COMMENT ON COLUMN "inv"."T_ProductoTipoEquipo"."Id" IS 'Identificador unico de la asociacion.';
+COMMENT ON COLUMN "inv"."T_ProductoTipoEquipo"."IdProducto" IS 'Producto compatible.';
+COMMENT ON COLUMN "inv"."T_ProductoTipoEquipo"."IdTipoEquipo" IS 'Tipo de equipo con el que es compatible.';
+
+CREATE INDEX "IX_T_ProductoTipoEquipo_IdTipoEquipo" ON "inv"."T_ProductoTipoEquipo" ("IdTipoEquipo");
+
+CREATE TRIGGER "TR_T_ProductoTipoEquipo_Auditoria"
+	BEFORE UPDATE ON "inv"."T_ProductoTipoEquipo"
+	FOR EACH ROW EXECUTE FUNCTION "comun"."FnAuditoriaActualizacion"();
+
+ALTER TABLE "inv"."T_ProductoTipoEquipo" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "LecturaAutenticado" ON "inv"."T_ProductoTipoEquipo"
+	FOR SELECT USING ("seg"."FnRolUsuario"() IS NOT NULL);
+
+CREATE POLICY "ProductoTipoEquipoEscritura" ON "inv"."T_ProductoTipoEquipo"
+	FOR ALL USING ("seg"."FnRolUsuario"() IN ('admin','almacenero'))
+	WITH CHECK ("seg"."FnRolUsuario"() IN ('admin','almacenero'));
+
+/* ---------------------------------------------------------------------
+	Asociacion masiva: asocia TODOS los productos de una categoria a un tipo.
+	Escribe filas individuales en la puente (unica fuente de verdad).
+	Idempotente (ON CONFLICT). Retorna la cantidad de filas insertadas.
+--------------------------------------------------------------------- */
+CREATE OR REPLACE FUNCTION "inv"."FnAsociarCategoriaTipoEquipo"
+(
+	"PIdCategoria"   UUID
+	,"PIdTipoEquipo" UUID
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	"vInsertados" INTEGER;
+BEGIN
+	INSERT INTO "inv"."T_ProductoTipoEquipo" ("IdProducto","IdTipoEquipo")
+	SELECT P."Id", "PIdTipoEquipo"
+	FROM "inv"."T_Producto" P
+	WHERE P."IdCategoria" = "PIdCategoria" AND P."Estado" = TRUE
+	ON CONFLICT ("IdProducto","IdTipoEquipo") DO NOTHING;
+
+	GET DIAGNOSTICS "vInsertados" = ROW_COUNT;
+	RETURN "vInsertados";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnAsociarCategoriaTipoEquipo"(UUID, UUID) IS 'Asocia todos los productos activos de una categoria a un tipo de equipo. Idempotente, retorna insertados.';
+
+/* ---------------------------------------------------------------------
+	FnContarDependencias: agrega rama 'tipoEquipo'.
+--------------------------------------------------------------------- */
+CREATE OR REPLACE FUNCTION "inv"."FnContarDependencias"
+(
+	"PEntidad" TEXT
+	,"PId"     UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = "inv", "public"
+AS $$
+DECLARE
+	"vResultado" JSONB;
+	"vTotal"     NUMERIC;
+BEGIN
+	IF "PEntidad" = 'producto' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'movimientos', (SELECT COUNT(*) FROM "inv"."T_MovimientoStock" WHERE "IdProducto" = "PId"),
+			'detalleDocumentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventarioDetalle" WHERE "IdProducto" = "PId"),
+			'detalleRequerimientos', (SELECT COUNT(*) FROM "inv"."T_RequerimientoDetalle" WHERE "IdProducto" = "PId"),
+			'stockDisponible', (SELECT COALESCE(SUM("CantidadDisponible"), 0) FROM "inv"."T_SaldoStock" WHERE "IdProducto" = "PId")
+		);
+	ELSIF "PEntidad" = 'proveedor' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'documentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventario" WHERE "IdProveedor" = "PId"),
+			'precios', (SELECT COUNT(*) FROM "inv"."T_ProductoPrecioHistorico" WHERE "IdProveedor" = "PId")
+		);
+	ELSIF "PEntidad" = 'ubicacion' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'documentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventario" WHERE "IdUbicacionOrigen" = "PId" OR "IdUbicacionDestino" = "PId"),
+			'movimientos', (SELECT COUNT(*) FROM "inv"."T_MovimientoStock" WHERE "IdUbicacion" = "PId"),
+			'stockDisponible', (SELECT COALESCE(SUM("CantidadDisponible"), 0) FROM "inv"."T_SaldoStock" WHERE "IdUbicacion" = "PId")
+		);
+	ELSIF "PEntidad" = 'equipo' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'vehiculos', (SELECT COUNT(*) FROM "inv"."T_Vehiculo" WHERE "IdEquipo" = "PId"),
+			'requerimientos', (SELECT COUNT(*) FROM "inv"."T_Requerimiento" WHERE "IdEquipo" = "PId")
+		);
+	ELSIF "PEntidad" = 'vehiculo' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'documentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventario" WHERE "IdVehiculo" = "PId"),
+			'requerimientos', (SELECT COUNT(*) FROM "inv"."T_Requerimiento" WHERE "IdVehiculo" = "PId")
+		);
+	ELSIF "PEntidad" = 'tipoEquipo' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'equipos', (SELECT COUNT(*) FROM "inv"."T_Equipo" WHERE "IdTipoEquipo" = "PId"),
+			'productosAsociados', (SELECT COUNT(*) FROM "inv"."T_ProductoTipoEquipo" WHERE "IdTipoEquipo" = "PId")
+		);
+	ELSE
+		RAISE EXCEPTION 'Entidad no soportada para verificacion de dependencias: %', "PEntidad";
+	END IF;
+
+	SELECT COALESCE(SUM(value::NUMERIC), 0) INTO "vTotal"
+	FROM JSONB_EACH_TEXT("vResultado");
+
+	RETURN "vResultado"
+		|| JSONB_BUILD_OBJECT('total', "vTotal")
+		|| JSONB_BUILD_OBJECT('puedeEliminar', "vTotal" = 0);
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnContarDependencias"(TEXT, UUID) IS 'Cuenta datos enlazados de una entidad. puedeEliminar=true solo si total=0.';
+
+/* Seed de tipos base (idempotente) */
+INSERT INTO "inv"."T_TipoEquipo" ("Codigo","Nombre","Descripcion")
+VALUES
+	('CAMION','Camion','Camiones de carga y volquetes')
+	,('CAMIONETA','Camioneta','Camionetas y vehiculos livianos')
+	,('GRUA','Grua','Gruas de izaje')
+	,('CISTERNA','Cisterna','Camiones cisterna')
+	,('BUS','Bus','Buses de personal')
+ON CONFLICT ("Codigo") DO NOTHING;
+
+/* ===================== migrations/0016_valorizacion_salidas.sql ===================== */
+/*
+	Base de Datos: Inventario JJ Congeminco (Supabase / PostgreSQL)
+	Objeto: valorizacion de salidas (kardex valorizado completo)
+	Tipo de Cambio: REPLACE funciones + backfill
+	Autor: Equipo Desarrollo
+	Fecha: 2026-06-08
+	Descripcion: Las salidas toman el CostoPromedio movil vigente del producto
+	             (metodo NIC 2 / SUNAT Art. 62 LIR) si el detalle no trae costo.
+	             El ledger es inmutable: cada salida congela el costo de su momento.
+	             Las transferencias mueven valor (ambas patas con el mismo costo) y
+	             NO recalculan el promedio.
+*/
+
+/* ---------------------------------------------------------------------
+	FnConfirmarDocumentoInventario: valoriza egresos con el promedio vigente.
+--------------------------------------------------------------------- */
+CREATE OR REPLACE FUNCTION "inv"."FnConfirmarDocumentoInventario"
+(
+	"PIdDocumentoInventario" UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = "inv", "public"
+AS $$
+DECLARE
+	"vDocumento"      "inv"."T_DocumentoInventario";
+	"vDetalle"        "inv"."T_DocumentoInventarioDetalle";
+	"vCostoPromedio"  NUMERIC(14,4);
+	"vCostoEgreso"    NUMERIC(14,4);
+BEGIN
+	SELECT * INTO "vDocumento"
+	FROM "inv"."T_DocumentoInventario"
+	WHERE "Id" = "PIdDocumentoInventario"
+	FOR UPDATE;
+
+	IF "vDocumento" IS NULL THEN
+		RAISE EXCEPTION 'El documento % no existe.', "PIdDocumentoInventario";
+	END IF;
+
+	IF "vDocumento"."Situacion" <> 'borrador' THEN
+		RAISE EXCEPTION 'Solo se confirman documentos en borrador (situacion actual: %).', "vDocumento"."Situacion";
+	END IF;
+
+	FOR "vDetalle" IN
+		SELECT * FROM "inv"."T_DocumentoInventarioDetalle"
+		WHERE "IdDocumentoInventario" = "PIdDocumentoInventario"
+	LOOP
+		/* Costo de egreso: el del detalle (override) o el promedio movil vigente */
+		SELECT "CostoPromedio" INTO "vCostoPromedio"
+		FROM "inv"."T_Producto" WHERE "Id" = "vDetalle"."IdProducto";
+		"vCostoEgreso" = COALESCE("vDetalle"."CostoUnitario", "vCostoPromedio", 0);
+
+		/* Pata de egreso (-1): salida, transferencia, ajuste */
+		IF "vDocumento"."IdUbicacionOrigen" IS NOT NULL
+		   AND "vDocumento"."TipoDocumento" IN ('salida','transferencia','ajuste') THEN
+			INSERT INTO "inv"."T_MovimientoStock"
+			(
+				"IdDocumentoInventarioDetalle"
+				,"IdDocumentoInventario"
+				,"IdProducto"
+				,"IdUbicacion"
+				,"Direccion"
+				,"Cantidad"
+				,"CostoUnitario"
+				,"FechaMovimiento"
+			)
+			VALUES
+			(
+				"vDetalle"."Id"
+				,"vDocumento"."Id"
+				,"vDetalle"."IdProducto"
+				,"vDocumento"."IdUbicacionOrigen"
+				,-1
+				,"vDetalle"."Cantidad"
+				,"vCostoEgreso"
+				,"vDocumento"."FechaDocumento"
+			);
+		END IF;
+
+		/* Pata de ingreso (+1): entrada, existencia_inicial, transferencia, ajuste.
+		   En transferencia, el ingreso lleva el MISMO costo que el egreso (mueve valor).
+		   En el resto, el costo es el del detalle (NULL permitido en compras sin costo). */
+		IF "vDocumento"."IdUbicacionDestino" IS NOT NULL
+		   AND "vDocumento"."TipoDocumento" IN ('entrada','existencia_inicial','transferencia','ajuste') THEN
+			INSERT INTO "inv"."T_MovimientoStock"
+			(
+				"IdDocumentoInventarioDetalle"
+				,"IdDocumentoInventario"
+				,"IdProducto"
+				,"IdUbicacion"
+				,"Direccion"
+				,"Cantidad"
+				,"CostoUnitario"
+				,"FechaMovimiento"
+			)
+			VALUES
+			(
+				"vDetalle"."Id"
+				,"vDocumento"."Id"
+				,"vDetalle"."IdProducto"
+				,"vDocumento"."IdUbicacionDestino"
+				,1
+				,"vDetalle"."Cantidad"
+				,CASE WHEN "vDocumento"."TipoDocumento" = 'transferencia'
+					THEN "vCostoEgreso"
+					ELSE "vDetalle"."CostoUnitario"
+				END
+				,"vDocumento"."FechaDocumento"
+			);
+		END IF;
+	END LOOP;
+
+	UPDATE "inv"."T_DocumentoInventario"
+	SET "Situacion" = 'confirmado'
+		,"FechaConfirmacion" = NOW()
+	WHERE "Id" = "PIdDocumentoInventario";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnConfirmarDocumentoInventario"(UUID) IS 'Confirma un documento borrador: genera el ledger. Egresos se valorizan con el costo promedio movil vigente (o el override del detalle). Transferencias mueven el mismo costo en ambas patas.';
+
+/* ---------------------------------------------------------------------
+	FnRecalcularCostoPromedio: NO recalcula en transferencias (la pata de
+	ingreso de una transferencia ya trae costo y contaminaria el promedio).
+--------------------------------------------------------------------- */
+CREATE OR REPLACE FUNCTION "inv"."FnRecalcularCostoPromedio"()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	"vTotalActual"  NUMERIC(14,3);
+	"vTotalPrevio"  NUMERIC(14,3);
+	"vCostoPrevio"  NUMERIC(14,4);
+	"vCostoNuevo"   NUMERIC(14,4);
+	"vIdProveedor"  UUID;
+	"vTipoDocumento" TEXT;
+BEGIN
+	IF NEW."Direccion" <> 1 OR NEW."CostoUnitario" IS NULL THEN
+		RETURN NEW;
+	END IF;
+
+	SELECT "TipoDocumento" INTO "vTipoDocumento"
+	FROM "inv"."T_DocumentoInventario"
+	WHERE "Id" = NEW."IdDocumentoInventario";
+
+	/* Las transferencias mueven costo, no lo crean: no recalcular promedio */
+	IF "vTipoDocumento" = 'transferencia' THEN
+		RETURN NEW;
+	END IF;
+
+	SELECT COALESCE(SUM("CantidadDisponible"), 0) INTO "vTotalActual"
+	FROM "inv"."T_SaldoStock"
+	WHERE "IdProducto" = NEW."IdProducto";
+
+	"vTotalPrevio" = GREATEST("vTotalActual" - NEW."Cantidad", 0);
+
+	SELECT "CostoPromedio" INTO "vCostoPrevio"
+	FROM "inv"."T_Producto"
+	WHERE "Id" = NEW."IdProducto";
+
+	IF ("vTotalPrevio" + NEW."Cantidad") <= 0 THEN
+		"vCostoNuevo" = NEW."CostoUnitario";
+	ELSE
+		"vCostoNuevo" =
+			(("vTotalPrevio" * COALESCE("vCostoPrevio", 0)) + (NEW."Cantidad" * NEW."CostoUnitario"))
+			/ ("vTotalPrevio" + NEW."Cantidad");
+	END IF;
+
+	UPDATE "inv"."T_Producto"
+	SET "CostoPromedio" = "vCostoNuevo"
+		,"UltimoCosto" = NEW."CostoUnitario"
+	WHERE "Id" = NEW."IdProducto";
+
+	SELECT "IdProveedor" INTO "vIdProveedor"
+	FROM "inv"."T_DocumentoInventario"
+	WHERE "Id" = NEW."IdDocumentoInventario";
+
+	INSERT INTO "inv"."T_ProductoPrecioHistorico"
+	(
+		"IdProducto","Costo","CostoPromedio","FechaPrecio","IdProveedor","IdDocumentoInventario","Origen"
+	)
+	VALUES
+	(
+		NEW."IdProducto"
+		,NEW."CostoUnitario"
+		,"vCostoNuevo"
+		,NEW."FechaMovimiento"
+		,"vIdProveedor"
+		,NEW."IdDocumentoInventario"
+		,CASE WHEN "vTipoDocumento" = 'ajuste' THEN 'ajuste' ELSE 'compra' END
+	);
+
+	RETURN NEW;
+END;
+$$;
+
+/* ---------------------------------------------------------------------
+	Backfill: valorizar salidas historicas que quedaron con costo NULL.
+	Excepcion unica y documentada a la inmutabilidad del ledger (datos demo).
+--------------------------------------------------------------------- */
+ALTER TABLE "inv"."T_MovimientoStock" DISABLE TRIGGER "TR_T_MovimientoStock_BloquearUpdate";
+
+UPDATE "inv"."T_MovimientoStock" M
+SET "CostoUnitario" = P."CostoPromedio"
+FROM "inv"."T_Producto" P
+WHERE P."Id" = M."IdProducto"
+  AND M."Direccion" = -1
+  AND M."CostoUnitario" IS NULL;
+
+ALTER TABLE "inv"."T_MovimientoStock" ENABLE TRIGGER "TR_T_MovimientoStock_BloquearUpdate";
+
+/* ===================== migrations/0017_vistas_imagen.sql ===================== */
+/*
+	Base de Datos: Inventario JJ Congeminco (Supabase / PostgreSQL)
+	Objeto: vistas con imagen principal + saldo por ubicacion
+	Tipo de Cambio: REPLACE vistas + CREATE vista
+	Autor: Equipo Desarrollo
+	Fecha: 2026-06-08
+	Descripcion: Agrega la URL de la imagen principal a las vistas de stock
+	             (catalogo, combobox, saldos) y crea la vista de saldo por
+	             ubicacion para la pantalla Saldos (mobile-first).
+	NOTA: las columnas nuevas se agregan AL FINAL para permitir CREATE OR REPLACE
+	      (no se puede reordenar columnas de una vista existente).
+*/
+
+CREATE OR REPLACE VIEW "inv"."V_Producto_StockConsolidado"
+WITH (security_invoker = true) AS
+	SELECT
+		P."Id" AS "IdProducto"
+		,P."Sku"
+		,P."Nombre" AS "NombreProducto"
+		,C."Nombre" AS "NombreCategoria"
+		,UM."Codigo" AS "CodigoUnidad"
+		,P."StockMinimo"
+		,COALESCE(SUM(S."CantidadDisponible"), 0) AS "StockTotal"
+		,COALESCE(SUM(S."CantidadDisponible"), 0) < P."StockMinimo" AS "BajoMinimo"
+		,P."IdCategoria"
+		,P."CostoPromedio"
+		,(SELECT PI."Url" FROM "inv"."T_ProductoImagen" PI
+			WHERE PI."IdProducto" = P."Id" AND PI."Estado" = TRUE
+			ORDER BY PI."EsPrincipal" DESC, PI."Orden" ASC LIMIT 1) AS "UrlImagenPrincipal"
+	FROM "inv"."T_Producto" P
+	INNER JOIN "inv"."T_Categoria" C ON C."Id" = P."IdCategoria"
+	INNER JOIN "inv"."T_UnidadMedida" UM ON UM."Id" = P."IdUnidadMedida"
+	LEFT JOIN "inv"."T_SaldoStock" S ON S."IdProducto" = P."Id"
+	WHERE P."Estado" = TRUE
+	GROUP BY P."Id", P."Sku", P."Nombre", C."Nombre", UM."Codigo", P."StockMinimo", P."IdCategoria", P."CostoPromedio";
+
+COMMENT ON VIEW "inv"."V_Producto_StockConsolidado" IS 'Saldo total por producto con imagen principal y alerta BajoMinimo.';
+
+CREATE OR REPLACE VIEW "inv"."V_Producto_Valorizado"
+WITH (security_invoker = true) AS
+	SELECT
+		P."Id" AS "IdProducto"
+		,P."Sku"
+		,P."Nombre" AS "NombreProducto"
+		,C."Nombre" AS "NombreCategoria"
+		,UM."Codigo" AS "CodigoUnidad"
+		,P."StockMinimo"
+		,P."CostoPromedio"
+		,P."UltimoCosto"
+		,COALESCE(SUM(S."CantidadDisponible"), 0) AS "StockTotal"
+		,(COALESCE(SUM(S."CantidadDisponible"), 0) * P."CostoPromedio") AS "ValorTotal"
+		,COALESCE(SUM(S."CantidadDisponible"), 0) < P."StockMinimo" AS "BajoMinimo"
+		,(SELECT PI."Url" FROM "inv"."T_ProductoImagen" PI
+			WHERE PI."IdProducto" = P."Id" AND PI."Estado" = TRUE
+			ORDER BY PI."EsPrincipal" DESC, PI."Orden" ASC LIMIT 1) AS "UrlImagenPrincipal"
+	FROM "inv"."T_Producto" P
+	INNER JOIN "inv"."T_Categoria" C ON C."Id" = P."IdCategoria"
+	INNER JOIN "inv"."T_UnidadMedida" UM ON UM."Id" = P."IdUnidadMedida"
+	LEFT JOIN "inv"."T_SaldoStock" S ON S."IdProducto" = P."Id"
+	WHERE P."Estado" = TRUE
+	GROUP BY P."Id", P."Sku", P."Nombre", C."Nombre", UM."Codigo", P."StockMinimo", P."CostoPromedio", P."UltimoCosto";
+
+COMMENT ON VIEW "inv"."V_Producto_Valorizado" IS 'Stock total y valor (StockTotal * CostoPromedio) por producto, con imagen.';
+
+CREATE OR REPLACE VIEW "inv"."V_SaldoStock_PorUbicacion"
+WITH (security_invoker = true) AS
+	SELECT
+		S."IdProducto"
+		,P."Sku"
+		,P."Nombre" AS "NombreProducto"
+		,S."IdUbicacion"
+		,U."Nombre" AS "NombreUbicacion"
+		,U."Codigo" AS "CodigoUbicacion"
+		,S."CantidadDisponible"
+		,P."StockMinimo"
+		,P."CostoPromedio"
+	FROM "inv"."T_SaldoStock" S
+	INNER JOIN "inv"."T_Producto" P ON P."Id" = S."IdProducto"
+	INNER JOIN "inv"."T_Ubicacion" U ON U."Id" = S."IdUbicacion"
+	WHERE P."Estado" = TRUE AND S."CantidadDisponible" <> 0;
+
+COMMENT ON VIEW "inv"."V_SaldoStock_PorUbicacion" IS 'Saldo de cada producto en cada ubicacion (para la consulta de saldos mobile).';
 
 /* ===================== seed/seed.sql ===================== */
 /*

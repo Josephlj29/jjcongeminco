@@ -3,30 +3,56 @@
 /**
  * app/(app)/movimientos/page.tsx — Registro de documentos de inventario
  *
- * Funcionalidades:
- * - Formulario para crear documento (entrada/salida/transferencia/ajuste)
- * - Líneas de detalle dinámicas (react-hook-form useFieldArray)
- * - Salida exige placa (IdVehiculo) — validación en schema
- * - Lista de documentos recientes
+ * Form organizado en secciones (Documento / Ubicaciones / Destino del consumo /
+ * Detalle). El selector de producto usa ProductoCombobox (imagen + sku + stock).
+ *
+ * Valorización de salidas (NIC 2 / SUNAT — promedio móvil):
+ * - En SALIDA, el costo por línea se muestra en SOLO LECTURA = CostoPromedio del
+ *   producto (de saldos). Si no se envía CostoUnitario, la BD congela el promedio.
+ * - El usuario puede abrir el historial de precios y elegir uno como OVERRIDE
+ *   manual; ese valor se setea en Detalle.{i}.CostoUnitario y se manda explícito.
+ *   "Volver al promedio" limpia el override (CostoUnitario = undefined).
+ * - En ENTRADA, el costo es editable libremente como antes.
+ *
+ * Compatibilidad: en salida con placa, el toggle "Solo productos compatibles"
+ * filtra el combobox a los productos asociados al tipo de equipo de la placa
+ * (vía vehículo -> equipo -> tipo) MÁS los productos generales (sin asociaciones).
  */
-import { useForm, useFieldArray } from "react-hook-form";
+import { useMemo, useState } from "react";
+import {
+  useForm,
+  useFieldArray,
+  useWatch,
+  type Control,
+  type UseFormSetValue,
+  type UseFormRegister,
+} from "react-hook-form";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, History, Info } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearDocumentoSchema,
   TIPO_DOCUMENTO,
   type CrearDocumento,
+  type ProductoStockConsolidado,
 } from "@congeminco/shared";
-import { useCrearDocumento, useDocumentos, type DocumentoResumen } from "@/hooks/useDocumentos";
-import { useProductos } from "@/hooks/useProductos";
-import { useUbicaciones, useProveedores } from "@/hooks/useCatalogo";
-import { useVehiculos } from "@/hooks/useEquipos";
+import {
+  useCrearDocumento,
+  useDocumentos,
+  type DocumentoResumen,
+} from "@/hooks/useDocumentos";
+import { useSaldos } from "@/hooks/useSaldos";
+import { useUbicaciones } from "@/hooks/useCatalogo";
+import { useVehiculos, useEquipos } from "@/hooks/useEquipos";
+import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
+import { ProductoCombobox } from "@/components/ProductoCombobox";
+import { DialogHistorialPrecios } from "@/components/productos/DialogHistorialPrecios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -45,6 +71,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /* Labels en español para tipos de documento */
 const TIPO_LABEL: Record<string, string> = {
@@ -55,13 +87,196 @@ const TIPO_LABEL: Record<string, string> = {
   ajuste: "Ajuste",
 };
 
+/* ── Línea de detalle (subcomponente para aislar el watch por fila) ── */
+interface LineaDetalleProps {
+  index: number;
+  control: Control<CrearDocumento>;
+  register: UseFormRegister<CrearDocumento>;
+  setValue: UseFormSetValue<CrearDocumento>;
+  productos: ProductoStockConsolidado[];
+  esSalida: boolean;
+  puedeBorrar: boolean;
+  onBorrar: () => void;
+  onAbrirHistorial: (idProducto: string) => void;
+  errorProducto?: string;
+}
+
+function LineaDetalle({
+  index,
+  control,
+  register,
+  setValue,
+  productos,
+  esSalida,
+  puedeBorrar,
+  onBorrar,
+  onAbrirHistorial,
+  errorProducto,
+}: LineaDetalleProps) {
+  const idProducto = useWatch({ control, name: `Detalle.${index}.IdProducto` });
+  const costoUnitario = useWatch({
+    control,
+    name: `Detalle.${index}.CostoUnitario`,
+  });
+
+  const producto = useMemo(
+    () => productos.find((p) => p.IdProducto === idProducto) ?? null,
+    [productos, idProducto]
+  );
+  const costoPromedio = producto?.CostoPromedio ?? 0;
+  const tieneOverride = costoUnitario !== undefined && costoUnitario !== null;
+
+  return (
+    <TableRow>
+      <TableCell className="align-top">
+        <ProductoCombobox
+          productos={productos}
+          value={idProducto ?? null}
+          onChange={(v) =>
+            setValue(`Detalle.${index}.IdProducto`, v ?? "", {
+              shouldValidate: true,
+            })
+          }
+        />
+        {errorProducto && (
+          <p className="text-xs text-destructive mt-1">{errorProducto}</p>
+        )}
+      </TableCell>
+      <TableCell className="align-top">
+        <Input
+          type="number"
+          min={1}
+          className="h-9"
+          {...register(`Detalle.${index}.Cantidad`, {
+            valueAsNumber: true,
+          })}
+        />
+      </TableCell>
+      <TableCell className="align-top">
+        {esSalida ? (
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <Input
+                readOnly={!tieneOverride}
+                type="number"
+                min={0}
+                step="0.01"
+                className="h-9 bg-muted/40"
+                value={
+                  tieneOverride
+                    ? (costoUnitario as number)
+                    : costoPromedio.toFixed(2)
+                }
+                onChange={(e) => {
+                  if (tieneOverride) {
+                    const v = e.target.valueAsNumber;
+                    setValue(
+                      `Detalle.${index}.CostoUnitario`,
+                      Number.isNaN(v) ? 0 : v
+                    );
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+                disabled={!idProducto}
+                title="Ver historial de precios"
+                onClick={() => idProducto && onAbrirHistorial(idProducto)}
+              >
+                <History className="h-4 w-4" />
+              </Button>
+            </div>
+            {tieneOverride ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <Badge variant="warning">Manual</Badge>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-xs"
+                    onClick={() =>
+                      setValue(`Detalle.${index}.CostoUnitario`, undefined)
+                    }
+                  >
+                    Volver al promedio
+                  </Button>
+                </div>
+                <p className="text-[11px] leading-tight text-muted-foreground">
+                  El método oficial es promedio (NIC 2); este override queda
+                  registrado.
+                </p>
+              </div>
+            ) : (
+              <p className="flex items-center gap-1 text-[11px] leading-tight text-muted-foreground">
+                Costo promedio móvil vigente (NIC 2/SUNAT)
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3 w-3 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      Las salidas se valorizan al costo promedio móvil del
+                      producto. Si no se envía un costo, la BD congela el
+                      promedio vigente al momento del movimiento.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </p>
+            )}
+            {idProducto && costoPromedio === 0 && !tieneOverride && (
+              <p className="text-[11px] leading-tight text-amber-600">
+                Producto sin compras registradas.
+              </p>
+            )}
+          </div>
+        ) : (
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            className="h-9"
+            placeholder="0.00"
+            {...register(`Detalle.${index}.CostoUnitario`, {
+              valueAsNumber: true,
+            })}
+          />
+        )}
+      </TableCell>
+      <TableCell className="align-top">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground hover:text-destructive"
+          onClick={onBorrar}
+          disabled={!puedeBorrar}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function MovimientosPage() {
   const { mutateAsync, isPending } = useCrearDocumento();
-  const { data: productos } = useProductos();
+  const { data: productos } = useSaldos();
   const { data: ubicaciones } = useUbicaciones();
   const { data: vehiculos } = useVehiculos();
-  const { data: documentos, isLoading: cargandoDocs } =
-    useDocumentos();
+  const { data: equipos } = useEquipos();
+  const { data: asociaciones } = useAsociacionesTiposEquipo();
+  const { data: documentos, isLoading: cargandoDocs } = useDocumentos();
+
+  const [soloCompatibles, setSoloCompatibles] = useState(true);
+  const [dialogProducto, setDialogProducto] = useState<{
+    open: boolean;
+    idProducto: string | null;
+    linea: number;
+  }>({ open: false, idProducto: null, linea: 0 });
 
   const paginacion = usePaginacion(documentos ?? [], 10);
 
@@ -86,8 +301,67 @@ export default function MovimientosPage() {
     name: "Detalle",
   });
   const tipoDocumento = watch("TipoDocumento");
+  const idVehiculo = watch("IdVehiculo");
+
+  const esTransferencia = tipoDocumento === "transferencia";
+  const esEntrada =
+    tipoDocumento === "entrada" || tipoDocumento === "existencia_inicial";
+  const esSalida = tipoDocumento === "salida";
+
+  const todosProductos = useMemo(() => productos ?? [], [productos]);
+
+  /* Set de IdProducto que TIENEN al menos una asociación (no son generales). */
+  const productosConAsociacion = useMemo(() => {
+    const s = new Set<string>();
+    (asociaciones ?? []).forEach((a) => s.add(a.IdProducto));
+    return s;
+  }, [asociaciones]);
+
+  /* Tipo de equipo de la placa seleccionada (vehículo -> equipo -> tipo). */
+  const idTipoEquipoPlaca = useMemo(() => {
+    if (!idVehiculo) return null;
+    const vehiculo = vehiculos?.find((v) => v.Id === idVehiculo);
+    if (!vehiculo?.IdEquipo) return null;
+    const equipo = equipos?.find((e) => e.Id === vehiculo.IdEquipo);
+    return equipo?.IdTipoEquipo ?? null;
+  }, [idVehiculo, vehiculos, equipos]);
+
+  /* IdProducto compatibles con ese tipo de equipo (asociaciones de ese tipo). */
+  const productosDelTipo = useMemo(() => {
+    if (!idTipoEquipoPlaca) return new Set<string>();
+    const s = new Set<string>();
+    (asociaciones ?? [])
+      .filter((a) => a.IdTipoEquipo === idTipoEquipoPlaca)
+      .forEach((a) => s.add(a.IdProducto));
+    return s;
+  }, [asociaciones, idTipoEquipoPlaca]);
+
+  /* Productos a mostrar en el combobox según el toggle. */
+  const productosVisibles = useMemo(() => {
+    const filtroActivo =
+      esSalida && !!idVehiculo && !!idTipoEquipoPlaca && soloCompatibles;
+    if (!filtroActivo) return todosProductos;
+    return todosProductos.filter(
+      (p) =>
+        productosDelTipo.has(p.IdProducto) ||
+        !productosConAsociacion.has(p.IdProducto)
+    );
+  }, [
+    esSalida,
+    idVehiculo,
+    idTipoEquipoPlaca,
+    soloCompatibles,
+    todosProductos,
+    productosDelTipo,
+    productosConAsociacion,
+  ]);
+
+  const mostrarToggleCompatibles = esSalida && !!idVehiculo && !!idTipoEquipoPlaca;
 
   const onSubmit = async (data: CrearDocumento) => {
+    /* En salidas sin override (CostoUnitario undefined) no se manda el costo:
+       la BD congela el promedio móvil automáticamente. zodResolver ya deja el
+       campo en undefined cuando el input está en solo lectura. */
     try {
       await mutateAsync(data);
       toast.success("Documento registrado correctamente");
@@ -100,11 +374,6 @@ export default function MovimientosPage() {
     }
   };
 
-  const esTransferencia = tipoDocumento === "transferencia";
-  const esEntrada =
-    tipoDocumento === "entrada" || tipoDocumento === "existencia_inicial";
-  const esSalida = tipoDocumento === "salida";
-
   return (
     <div className="space-y-8">
       <div>
@@ -114,14 +383,13 @@ export default function MovimientosPage() {
         </p>
       </div>
 
-      {/* Formulario */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Nuevo documento</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Cabecera */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* ── Sección: Documento ── */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Documento</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <Label>Tipo de documento</Label>
@@ -129,7 +397,8 @@ export default function MovimientosPage() {
                   onValueChange={(v) =>
                     setValue(
                       "TipoDocumento",
-                      v as CrearDocumento["TipoDocumento"]
+                      v as CrearDocumento["TipoDocumento"],
+                      { shouldValidate: true }
                     )
                   }
                 >
@@ -178,56 +447,72 @@ export default function MovimientosPage() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Ubicaciones */}
-            <div className="grid grid-cols-2 gap-4">
-              {(esTransferencia || !esEntrada) && (
-                <div className="space-y-1">
-                  <Label>Ubicación origen</Label>
-                  <Select
-                    onValueChange={(v) => setValue("IdUbicacionOrigen", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ubicaciones?.map((u) => (
-                        <SelectItem key={u.Id} value={u.Id}>
-                          {u.Nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {(esTransferencia || esEntrada) && (
-                <div className="space-y-1">
-                  <Label>Ubicación destino</Label>
-                  <Select
-                    onValueChange={(v) => setValue("IdUbicacionDestino", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ubicaciones?.map((u) => (
-                        <SelectItem key={u.Id} value={u.Id}>
-                          {u.Nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
+        {/* ── Sección: Ubicaciones ── */}
+        {tipoDocumento && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Ubicaciones</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                {(esTransferencia || !esEntrada) && (
+                  <div className="space-y-1">
+                    <Label>Ubicación origen</Label>
+                    <Select
+                      onValueChange={(v) => setValue("IdUbicacionOrigen", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ubicaciones?.map((u) => (
+                          <SelectItem key={u.Id} value={u.Id}>
+                            {u.Nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {(esTransferencia || esEntrada) && (
+                  <div className="space-y-1">
+                    <Label>Ubicación destino</Label>
+                    <Select
+                      onValueChange={(v) => setValue("IdUbicacionDestino", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ubicaciones?.map((u) => (
+                          <SelectItem key={u.Id} value={u.Id}>
+                            {u.Nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Placa — obligatoria para salidas */}
-            {esSalida && (
+        {/* ── Sección: Destino del consumo (placa) — solo salida ── */}
+        {esSalida && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Destino del consumo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               <div className="space-y-1 max-w-sm">
                 <Label>
                   Placa <span className="text-destructive">*</span>
                 </Label>
-                <Select onValueChange={(v) => setValue("IdVehiculo", v)}>
+                <Select onValueChange={(v) => setValue("IdVehiculo", v, { shouldValidate: true })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar placa..." />
                   </SelectTrigger>
@@ -246,110 +531,92 @@ export default function MovimientosPage() {
                   </p>
                 )}
               </div>
-            )}
 
-            <Separator />
+              {mostrarToggleCompatibles && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
+                  <input
+                    type="checkbox"
+                    checked={soloCompatibles}
+                    onChange={(e) => setSoloCompatibles(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  Solo productos compatibles con esta placa
+                </label>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Líneas de detalle */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">Detalle</h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({ IdProducto: "", Cantidad: 1 })}
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  Agregar línea
-                </Button>
-              </div>
-
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Producto</TableHead>
-                      <TableHead className="w-28">Cantidad</TableHead>
-                      <TableHead className="w-32">Costo unit. (opt.)</TableHead>
-                      <TableHead className="w-12"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {fields.map((field, idx) => (
-                      <TableRow key={field.id}>
-                        <TableCell>
-                          <Select
-                            onValueChange={(v) =>
-                              setValue(`Detalle.${idx}.IdProducto`, v)
-                            }
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue placeholder="Buscar producto..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {productos?.map((p) => (
-                                <SelectItem key={p.IdProducto} value={p.IdProducto}>
-                                  {p.Sku} — {p.NombreProducto}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {errors.Detalle?.[idx]?.IdProducto && (
-                            <p className="text-xs text-destructive mt-1">
-                              {errors.Detalle[idx]?.IdProducto?.message}
-                            </p>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={1}
-                            className="h-8"
-                            {...register(`Detalle.${idx}.Cantidad`, {
-                              valueAsNumber: true,
-                            })}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            className="h-8"
-                            placeholder="0.00"
-                            {...register(`Detalle.${idx}.CostoUnitario`, {
-                              valueAsNumber: true,
-                            })}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => fields.length > 1 && remove(idx)}
-                            disabled={fields.length === 1}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+        {/* ── Sección: Detalle ── */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base">Detalle</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => append({ IdProducto: "", Cantidad: 1 })}
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              Agregar línea
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Separator className="mb-4" />
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-64">Producto</TableHead>
+                    <TableHead className="w-24">Cantidad</TableHead>
+                    <TableHead className="w-56">
+                      {esSalida ? "Costo (valorización)" : "Costo unit. (opt.)"}
+                    </TableHead>
+                    <TableHead className="w-12" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fields.map((field, idx) => (
+                    <LineaDetalle
+                      key={field.id}
+                      index={idx}
+                      control={control}
+                      register={register}
+                      setValue={setValue}
+                      productos={productosVisibles}
+                      esSalida={esSalida}
+                      puedeBorrar={fields.length > 1}
+                      onBorrar={() => fields.length > 1 && remove(idx)}
+                      onAbrirHistorial={(idProducto) =>
+                        setDialogProducto({ open: true, idProducto, linea: idx })
+                      }
+                      errorProducto={errors.Detalle?.[idx]?.IdProducto?.message}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end mt-6">
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Registrando..." : "Registrar documento"}
               </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </form>
+
+      {/* Dialog de historial de precios (override de costo en salidas) */}
+      <DialogHistorialPrecios
+        idProducto={dialogProducto.idProducto}
+        open={dialogProducto.open}
+        onOpenChange={(open) =>
+          setDialogProducto((prev) => ({ ...prev, open }))
+        }
+        onUsarPrecio={(costo) =>
+          setValue(`Detalle.${dialogProducto.linea}.CostoUnitario`, costo)
+        }
+      />
 
       {/* Documentos recientes */}
       <div>
@@ -373,10 +640,11 @@ export default function MovimientosPage() {
                   <TableHead>Tipo</TableHead>
                   <TableHead>N° Documento</TableHead>
                   <TableHead>Comprobante</TableHead>
+                  <TableHead>Situación</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginacion.itemsPagina.map((d) => (
+                {paginacion.itemsPagina.map((d: DocumentoResumen) => (
                   <TableRow key={d.Id}>
                     <TableCell className="text-xs">
                       {new Date(d.FechaDocumento).toLocaleDateString("es-PE")}
@@ -389,6 +657,11 @@ export default function MovimientosPage() {
                     </TableCell>
                     <TableCell className="text-xs">
                       {d.Comprobante ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={d.Estado ? "success" : "destructive"}>
+                        {d.Estado ? "Activo" : "Anulado"}
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}

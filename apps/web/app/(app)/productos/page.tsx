@@ -8,12 +8,15 @@
  * - Dialog para crear nuevo producto (valida con CrearProductoSchema)
  * - Gestión de imágenes (subir hasta MAX_IMAGENES_PRODUCTO a Supabase Storage)
  * - Ver kardex del producto en un dialog
+ * - Columna "Tipos de equipo": chips derivados de useAsociacionesTiposEquipo() (1 sola query)
+ * - Acción "Tipos" por fila: abre DialogTiposEquipo (Command con checkboxes)
+ * - Botón toolbar "Asociar por categoría": asociación masiva categoría→tipo
  * - Acciones restringidas por rol (productoEscritura)
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Search, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Plus, Search, Image as ImageIcon, Trash2, Wrench, Tags } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
@@ -28,6 +31,13 @@ import { useProductos, useCrearProducto, useEliminarProducto } from "@/hooks/use
 import { useImagenesProducto, useCrearImagenProducto, useEliminarImagenProducto } from "@/hooks/useImagenes";
 import { useCategorias, useUnidades } from "@/hooks/useCatalogo";
 import { useKardex } from "@/hooks/useKardex";
+import {
+  useTiposEquipo,
+  useAsociacionesTiposEquipo,
+  useTiposEquipoDeProducto,
+  useAsignarTiposEquipo,
+  useAsociarCategoria,
+} from "@/hooks/useTiposEquipo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +64,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
@@ -69,6 +87,7 @@ interface ProductoConsolidado {
   StockMinimo: number;
   StockTotal: number;
   BajoMinimo: boolean;
+  IdCategoria: string;
 }
 
 /* ─── Hook: rol del usuario actual ─── */
@@ -243,7 +262,6 @@ function DialogImagenes({
 
     try {
       const supabase = crearClienteNavegador();
-      // Subir al bucket "productos" en Supabase Storage
       const ruta = `${idProducto}/${Date.now()}-${archivo.name}`;
       const { data: storageData, error: storageError } =
         await supabase.storage.from("productos").upload(ruta, archivo, {
@@ -252,12 +270,10 @@ function DialogImagenes({
 
       if (storageError) throw new Error(storageError.message);
 
-      // Obtener la URL pública
       const { data: urlData } = supabase.storage
         .from("productos")
         .getPublicUrl(storageData.path);
 
-      // Registrar la URL en la BD vía API
       const orden = (imagenes?.length ?? 0) + 1;
       await crearImagen({
         Url: urlData.publicUrl,
@@ -423,24 +439,293 @@ function DialogKardex({
   );
 }
 
+/* ─── Dialog: Tipos de equipo del producto ─── */
+function DialogTiposEquipo({
+  idProducto,
+  nombreProducto,
+  onClose,
+}: {
+  idProducto: string | null;
+  nombreProducto: string;
+  onClose: () => void;
+}) {
+  const { data: todosLosTipos, isLoading: cargandoTodos } = useTiposEquipo();
+  const { data: actuales, isLoading: cargandoActuales } = useTiposEquipoDeProducto(idProducto);
+  const { mutateAsync: asignar, isPending: guardando } = useAsignarTiposEquipo();
+
+  // IDs seleccionados: sincroniza con los actuales cuando cargan
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (actuales !== undefined) {
+      setSeleccionados(new Set(actuales.map((a) => a.IdTipoEquipo)));
+    }
+  }, [actuales]);
+
+  const toggleTipo = (id: string) => {
+    setSeleccionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleGuardar = async () => {
+    if (!idProducto) return;
+    try {
+      await asignar({ idProducto, idsTipoEquipo: [...seleccionados] });
+      toast.success("Tipos de equipo actualizados");
+      onClose();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const handleOpenChange = (v: boolean) => {
+    if (!v) {
+      setSeleccionados(new Set());
+      onClose();
+    }
+  };
+
+  const isLoading = cargandoTodos || cargandoActuales;
+
+  return (
+    <Dialog open={!!idProducto} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            Tipos de equipo compatibles
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground pt-1">
+            {nombreProducto}
+          </p>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-2">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-9" />
+            ))}
+          </div>
+        ) : (
+          <Command className="rounded-lg border">
+            <CommandInput placeholder="Buscar tipo..." />
+            <CommandList>
+              <CommandEmpty>No se encontraron tipos.</CommandEmpty>
+              <CommandGroup>
+                {todosLosTipos?.map((tipo) => {
+                  const activo = seleccionados.has(tipo.Id);
+                  return (
+                    <CommandItem
+                      key={tipo.Id}
+                      value={tipo.Nombre}
+                      onSelect={() => toggleTipo(tipo.Id)}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <div
+                        className={`h-4 w-4 rounded border flex items-center justify-center text-xs font-bold ${
+                          activo
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-muted-foreground/40"
+                        }`}
+                      >
+                        {activo && "✓"}
+                      </div>
+                      <span className="flex-1">{tipo.Nombre}</span>
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {tipo.Codigo}
+                      </span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        )}
+
+        {seleccionados.size === 0 && !isLoading && (
+          <p className="text-xs text-muted-foreground text-center">
+            Sin selección → el producto se considera &quot;General&quot; (compatible con todos).
+          </p>
+        )}
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleGuardar} disabled={guardando || isLoading}>
+            {guardando ? "Guardando..." : "Guardar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Dialog: Asociar categoría a tipo ─── */
+function DialogAsociarCategoria({
+  open,
+  onClose,
+  productos,
+}: {
+  open: boolean;
+  onClose: () => void;
+  productos: ProductoConsolidado[];
+}) {
+  const { data: categorias } = useCategorias();
+  const { data: tipos } = useTiposEquipo();
+  const { mutateAsync: asociarCategoria, isPending } = useAsociarCategoria();
+
+  const [idCategoriaSeleccionada, setIdCategoriaSeleccionada] = useState("");
+  const [idTipoSeleccionado, setIdTipoSeleccionado] = useState("");
+
+  // Contar cuántos productos hay en la categoría seleccionada (memoria local)
+  const cantidadProductosCategoria = useMemo(() => {
+    if (!idCategoriaSeleccionada) return 0;
+    return productos.filter((p) => p.IdCategoria === idCategoriaSeleccionada).length;
+  }, [productos, idCategoriaSeleccionada]);
+
+  const handleConfirmar = async () => {
+    if (!idTipoSeleccionado || !idCategoriaSeleccionada) {
+      toast.error("Seleccioná una categoría y un tipo de equipo");
+      return;
+    }
+    try {
+      const resultado = await asociarCategoria({
+        idTipoEquipo: idTipoSeleccionado,
+        idCategoria: idCategoriaSeleccionada,
+      });
+      toast.success(
+        `${resultado.insertados} producto${resultado.insertados !== 1 ? "s" : ""} asociados (los ya asociados se omitieron)`
+      );
+      setIdCategoriaSeleccionada("");
+      setIdTipoSeleccionado("");
+      onClose();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const handleOpenChange = (v: boolean) => {
+    if (!v) {
+      setIdCategoriaSeleccionada("");
+      setIdTipoSeleccionado("");
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Asociar categoría a tipo de equipo</DialogTitle>
+          <p className="text-sm text-muted-foreground pt-1">
+            Todos los productos de la categoría elegida quedarán asociados al tipo seleccionado.
+            Los productos ya asociados a ese tipo se omiten.
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Label>Categoría</Label>
+            <Select
+              value={idCategoriaSeleccionada}
+              onValueChange={setIdCategoriaSeleccionada}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar categoría..." />
+              </SelectTrigger>
+              <SelectContent>
+                {categorias?.map((c) => (
+                  <SelectItem key={c.Id} value={c.Id}>
+                    {c.Nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {idCategoriaSeleccionada && (
+            <p className="text-xs text-muted-foreground">
+              Productos en esta categoría:{" "}
+              <span className="font-semibold">{cantidadProductosCategoria}</span>
+            </p>
+          )}
+
+          <div className="space-y-1">
+            <Label>Tipo de equipo</Label>
+            <Select
+              value={idTipoSeleccionado}
+              onValueChange={setIdTipoSeleccionado}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar tipo..." />
+              </SelectTrigger>
+              <SelectContent>
+                {tipos?.map((t) => (
+                  <SelectItem key={t.Id} value={t.Id}>
+                    {t.Nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmar}
+            disabled={isPending || !idCategoriaSeleccionada || !idTipoSeleccionado}
+          >
+            {isPending ? "Asociando..." : "Confirmar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ─── Página principal ─── */
 export default function ProductosPage() {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("__todas__");
   const [mostrarNuevo, setMostrarNuevo] = useState(false);
+  const [mostrarAsociarCategoria, setMostrarAsociarCategoria] = useState(false);
   const [productoKardex, setProductoKardex] =
     useState<ProductoConsolidado | null>(null);
   const [productoImagenes, setProductoImagenes] =
     useState<ProductoConsolidado | null>(null);
   const [productoEliminar, setProductoEliminar] =
     useState<ProductoConsolidado | null>(null);
+  const [productoTipos, setProductoTipos] =
+    useState<ProductoConsolidado | null>(null);
 
-  // Cargamos todos los productos sin filtro server-side para poder derivar
-  // las categorías disponibles y filtrar en memoria
   const { data: productos, isLoading } = useProductos();
   const { data: yo } = useRolActual();
   const puedeEscribir = puede(yo?.rol ?? null, "productoEscritura");
   const { mutateAsync: eliminarProducto } = useEliminarProducto();
+
+  // Una sola query para TODA la puente producto<->tipo
+  const { data: todasAsociaciones } = useAsociacionesTiposEquipo();
+
+  // Agrupación en memoria: IdProducto → NombreTipoEquipo[]
+  const tiposPorProducto = useMemo(() => {
+    const mapa = new Map<string, string[]>();
+    for (const a of todasAsociaciones ?? []) {
+      const lista = mapa.get(a.IdProducto) ?? [];
+      lista.push(a.NombreTipoEquipo);
+      mapa.set(a.IdProducto, lista);
+    }
+    return mapa;
+  }, [todasAsociaciones]);
 
   // Categorías únicas derivadas de los datos reales
   const categorias = useMemo(() => {
@@ -463,7 +748,11 @@ export default function ProductosPage() {
     });
   }, [productos, busqueda, categoriaFiltro]);
 
-  const paginacion = usePaginacion(productosFiltrados, 10);
+  // El tipo local del hook useProductos no incluye IdCategoria; lo casteamos
+  // desde ProductoStockConsolidado que sí lo tiene (la API lo devuelve).
+  const productosFiltradosConId = productosFiltrados as ProductoConsolidado[];
+
+  const paginacion = usePaginacion(productosFiltradosConId, 10);
 
   return (
     <div className="space-y-6">
@@ -484,7 +773,7 @@ export default function ProductosPage() {
         )}
       </div>
 
-      {/* Búsqueda + filtro por categoría */}
+      {/* Búsqueda + filtro por categoría + asociar por categoría */}
       <div className="flex flex-wrap gap-3">
         <div className="relative w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -509,6 +798,16 @@ export default function ProductosPage() {
             ))}
           </SelectContent>
         </Select>
+
+        {puedeEscribir && (
+          <Button
+            variant="outline"
+            onClick={() => setMostrarAsociarCategoria(true)}
+          >
+            <Tags className="mr-2 h-4 w-4" />
+            Asociar por categoría
+          </Button>
+        )}
       </div>
 
       {/* Tabla */}
@@ -526,6 +825,7 @@ export default function ProductosPage() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Categoría</TableHead>
+                <TableHead>Tipos de equipo</TableHead>
                 <TableHead className="text-right">Stock mín.</TableHead>
                 <TableHead className="text-right">Stock actual</TableHead>
                 <TableHead>Estado</TableHead>
@@ -536,67 +836,94 @@ export default function ProductosPage() {
               {!paginacion.itemsPagina.length ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center text-muted-foreground py-10"
                   >
                     No se encontraron productos.
                   </TableCell>
                 </TableRow>
               ) : (
-                paginacion.itemsPagina.map((p) => (
-                  <TableRow key={p.IdProducto}>
-                    <TableCell className="font-mono text-xs">{p.Sku}</TableCell>
-                    <TableCell className="font-medium">
-                      {p.NombreProducto}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {p.NombreCategoria}
-                    </TableCell>
-                    <TableCell className="text-right">{p.StockMinimo}</TableCell>
-                    <TableCell
-                      className={`text-right font-semibold ${
-                        p.BajoMinimo ? "text-amber-600" : ""
-                      }`}
-                    >
-                      {p.StockTotal}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={p.BajoMinimo ? "warning" : "default"}>
-                        {p.BajoMinimo ? "Bajo mínimo" : "OK"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setProductoKardex(p)}
+                paginacion.itemsPagina.map((p) => {
+                  const tiposNombres = tiposPorProducto.get(p.IdProducto);
+                  return (
+                    <TableRow key={p.IdProducto}>
+                      <TableCell className="font-mono text-xs">{p.Sku}</TableCell>
+                      <TableCell className="font-medium">
+                        {p.NombreProducto}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {p.NombreCategoria}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {tiposNombres?.length ? (
+                            tiposNombres.map((nombre) => (
+                              <Badge key={nombre} variant="secondary" className="text-xs">
+                                {nombre}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              General
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{p.StockMinimo}</TableCell>
+                      <TableCell
+                        className={`text-right font-semibold ${
+                          p.BajoMinimo ? "text-amber-600" : ""
+                        }`}
                       >
-                        Kardex
-                      </Button>
-                      {puedeEscribir && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setProductoImagenes(p)}
-                          >
-                            <ImageIcon className="h-3.5 w-3.5 mr-1" />
-                            Imágenes
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setProductoEliminar(p)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 mr-1" />
-                            Eliminar
-                          </Button>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                        {p.StockTotal}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={p.BajoMinimo ? "warning" : "default"}>
+                          {p.BajoMinimo ? "Bajo mínimo" : "OK"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setProductoKardex(p)}
+                        >
+                          Kardex
+                        </Button>
+                        {puedeEscribir && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setProductoTipos(p)}
+                              title="Asignar tipos de equipo"
+                            >
+                              <Wrench className="h-3.5 w-3.5 mr-1" />
+                              Tipos
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setProductoImagenes(p)}
+                            >
+                              <ImageIcon className="h-3.5 w-3.5 mr-1" />
+                              Imágenes
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setProductoEliminar(p)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1" />
+                              Eliminar
+                            </Button>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -625,6 +952,16 @@ export default function ProductosPage() {
         idProducto={productoImagenes?.IdProducto ?? null}
         onClose={() => setProductoImagenes(null)}
       />
+      <DialogTiposEquipo
+        idProducto={productoTipos?.IdProducto ?? null}
+        nombreProducto={productoTipos?.NombreProducto ?? ""}
+        onClose={() => setProductoTipos(null)}
+      />
+      <DialogAsociarCategoria
+        open={mostrarAsociarCategoria}
+        onClose={() => setMostrarAsociarCategoria(false)}
+        productos={productosFiltradosConId}
+      />
 
       <DialogEliminar
         entidad="producto"
@@ -639,7 +976,6 @@ export default function ProductosPage() {
             toast.success("Producto eliminado correctamente");
           } catch (e) {
             toast.error((e as Error).message);
-            // Re-lanzamos para que DialogEliminar no cierre el modal en error 409
             throw e;
           }
         }}

@@ -101,11 +101,36 @@ export const ActualizarUbicacionSchema = CrearUbicacionSchema.partial().extend({
 });
 export type ActualizarUbicacion = z.infer<typeof ActualizarUbicacionSchema>;
 
+/* ─── Tipo de equipo ─── */
+export const CrearTipoEquipoSchema = z.object({
+  Codigo: z.string().min(1).max(20),
+  Nombre: z.string().min(1).max(120),
+  Descripcion: z.string().max(200).optional(),
+});
+export type CrearTipoEquipo = z.infer<typeof CrearTipoEquipoSchema>;
+export const ActualizarTipoEquipoSchema = CrearTipoEquipoSchema.partial().extend({
+  Estado: z.boolean().optional(),
+});
+export type ActualizarTipoEquipo = z.infer<typeof ActualizarTipoEquipoSchema>;
+
+/* Asignar el conjunto de tipos compatibles de un producto (replace-set; vacío = general) */
+export const AsignarTiposEquipoProductoSchema = z.object({
+  IdsTipoEquipo: z.array(z.string().uuid()),
+});
+export type AsignarTiposEquipoProducto = z.infer<typeof AsignarTiposEquipoProductoSchema>;
+
+/* Asociación masiva: todos los productos de una categoría a un tipo */
+export const AsociarCategoriaTipoEquipoSchema = z.object({
+  IdCategoria: z.string().uuid(),
+});
+export type AsociarCategoriaTipoEquipo = z.infer<typeof AsociarCategoriaTipoEquipoSchema>;
+
 /* ─── Equipo ─── */
 export const CrearEquipoSchema = z.object({
   Codigo: z.string().min(1).max(20),
   Nombre: z.string().min(1).max(120),
   Descripcion: z.string().max(200).optional(),
+  IdTipoEquipo: z.string().uuid().optional(),
 });
 export type CrearEquipo = z.infer<typeof CrearEquipoSchema>;
 export const ActualizarEquipoSchema = CrearEquipoSchema.partial().extend({
