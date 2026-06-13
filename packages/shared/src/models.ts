@@ -93,6 +93,34 @@ export interface Requerimiento extends CamposAuditoria {
   IdDocumentoInventario: string | null;
 }
 
+/* Línea de detalle de un requerimiento (con datos del producto para la bandeja). */
+export interface RequerimientoDetalleLinea {
+  Id: string;
+  IdProducto: string;
+  NombreProducto: string;
+  Sku: string;
+  Cantidad: number;
+  CantidadAtendida: number;
+  CostoPromedio: number;
+  Notas: string | null;
+}
+
+/* Requerimiento con su detalle y nombres de equipo/placa (vista de aprobación). */
+export interface RequerimientoConDetalle {
+  Id: string;
+  NumeroRequerimiento: string | null;
+  FechaRequerimiento: string;
+  Origen: "planificado" | "presupuestado" | "desgaste_prematuro";
+  Situacion: "pendiente" | "atendido" | "anulado";
+  IdEquipo: string | null;
+  NombreEquipo: string | null;
+  IdVehiculo: string | null;
+  Placa: string | null;
+  Notas: string | null;
+  IdDocumentoInventario: string | null;
+  Detalle: RequerimientoDetalleLinea[];
+}
+
 export interface ProductoImagen extends CamposAuditoria {
   Id: string;
   IdProducto: string;

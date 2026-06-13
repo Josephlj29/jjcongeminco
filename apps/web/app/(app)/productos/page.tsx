@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Search, Image as ImageIcon, Trash2, Wrench, Tags } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
+import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
 import { toast } from "sonner";
@@ -307,11 +308,10 @@ function DialogImagenes({
                 key={img.Id}
                 className="flex items-center gap-3 rounded-md border p-2"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.Url}
+                <ImagenAmpliable
+                  url={img.Url}
+                  size={64}
                   alt={`Imagen ${img.Orden}`}
-                  className="h-16 w-16 rounded object-cover"
                 />
                 <div className="flex-1 text-xs text-muted-foreground">
                   Orden: {img.Orden}

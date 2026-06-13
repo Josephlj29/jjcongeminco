@@ -8,11 +8,12 @@
  * Sheet (bottom en móvil, right en desktop) con el detalle: costo promedio,
  * stock mínimo, stock POR UBICACIÓN (fetch lazy) y tipos de equipo compatibles.
  */
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { Search, Package, AlertTriangle, Boxes } from "lucide-react";
 import type { ProductoStockConsolidado } from "@congeminco/shared";
 import { useSaldos, useSaldosPorUbicacion } from "@/hooks/useSaldos";
 import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
+import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,7 +86,12 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
   return (
     <div className="space-y-6 overflow-y-auto pb-6">
       <div className="flex items-center gap-4">
-        <ImagenProducto url={producto.UrlImagenPrincipal} size={72} />
+        <ImagenAmpliable
+          url={producto.UrlImagenPrincipal}
+          size={72}
+          nombre={producto.NombreProducto}
+          alt={producto.NombreProducto}
+        />
         <div className="min-w-0">
           <p className="font-mono text-xs text-muted-foreground">
             {producto.Sku}
@@ -183,12 +189,60 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
   );
 }
 
+/* ── Tarjeta de producto (memoizada) ──
+   Crítico para el rendimiento: sin memo, seleccionar un producto re-renderiza
+   las cientos de tarjetas de la grilla en el mismo commit que monta el Sheet,
+   y eso traba la animación de apertura. Con props estables (producto + onSelect
+   memoizado) la grilla no se vuelve a renderizar al cambiar la selección. */
+const TarjetaSaldo = memo(function TarjetaSaldo({
+  producto,
+  onSelect,
+}: {
+  producto: ProductoStockConsolidado;
+  onSelect: (p: ProductoStockConsolidado) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(producto)}
+      className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50 min-h-[68px]"
+    >
+      <ImagenProducto url={producto.UrlImagenPrincipal} size={56} />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium leading-tight truncate">
+          {producto.NombreProducto}
+        </p>
+        <p className="font-mono text-xs text-muted-foreground">{producto.Sku}</p>
+        {producto.BajoMinimo && (
+          <Badge variant="warning" className="mt-1">
+            Bajo mínimo
+          </Badge>
+        )}
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-2xl font-bold leading-none">{producto.StockTotal}</p>
+        <p className="text-[11px] text-muted-foreground">
+          {producto.CodigoUnidad}
+        </p>
+      </div>
+    </button>
+  );
+});
+
 export default function SaldosPage() {
   const { data: saldos, isLoading } = useSaldos();
+  // Precarga las asociaciones producto↔tipo para que la sección "Equipos
+  // compatibles" del detalle aparezca al instante al abrir el Sheet.
+  useAsociacionesTiposEquipo();
   const [busqueda, setBusqueda] = useState("");
   const [categoria, setCategoria] = useState<string | null>(null);
   const [seleccionado, setSeleccionado] =
     useState<ProductoStockConsolidado | null>(null);
+
+  const handleSelect = useCallback(
+    (p: ProductoStockConsolidado) => setSeleccionado(p),
+    []
+  );
 
   /* Categorías presentes en los datos (para los chips). */
   const categorias = useMemo(() => {
@@ -281,35 +335,11 @@ export default function SaldosPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtrados.map((p) => (
-            <button
+            <TarjetaSaldo
               key={p.IdProducto}
-              type="button"
-              onClick={() => setSeleccionado(p)}
-              className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50 min-h-[68px]"
-            >
-              <ImagenProducto url={p.UrlImagenPrincipal} size={56} />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium leading-tight truncate">
-                  {p.NombreProducto}
-                </p>
-                <p className="font-mono text-xs text-muted-foreground">
-                  {p.Sku}
-                </p>
-                {p.BajoMinimo && (
-                  <Badge variant="warning" className="mt-1">
-                    Bajo mínimo
-                  </Badge>
-                )}
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="text-2xl font-bold leading-none">
-                  {p.StockTotal}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {p.CodigoUnidad}
-                </p>
-              </div>
-            </button>
+              producto={p}
+              onSelect={handleSelect}
+            />
           ))}
         </div>
       )}

@@ -8,18 +8,23 @@
  * - Debe apuntar a equipo O vehículo (placa)
  * - Lista de requerimientos recientes
  */
+import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Trash2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearRequerimientoSchema,
   ORIGEN_REQUERIMIENTO,
+  puede,
   type CrearRequerimiento,
+  type RoleCode,
 } from "@congeminco/shared";
 import { useCrearRequerimiento, useRequerimientos } from "@/hooks/useRequerimientos";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
+import { DialogAprobarRequerimiento } from "@/components/requerimientos/DialogAprobarRequerimiento";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
@@ -58,6 +63,19 @@ const SITUACION_VARIANTE = {
   anulado: "destructive" as const,
 };
 
+/* Rol del usuario actual (para gating de acciones de escritura), igual que el
+   resto de los maestros. */
+function useRolActual() {
+  return useQuery({
+    queryKey: ["yo"],
+    queryFn: async () => {
+      const res = await fetch("/api/yo");
+      if (!res.ok) throw new Error("Sin sesión");
+      return res.json() as Promise<{ rol: RoleCode }>;
+    },
+  });
+}
+
 export default function RequerimientosPage() {
   const { mutateAsync, isPending } = useCrearRequerimiento();
   const { data: productos } = useSaldos();
@@ -65,7 +83,11 @@ export default function RequerimientosPage() {
   const { data: vehiculos } = useVehiculos();
   const { data: requerimientos, isLoading: cargandoReqs } = useRequerimientos();
 
+  const { data: yo } = useRolActual();
+  const puedeAprobar = puede(yo?.rol ?? null, "documentoEscritura");
+
   const paginacion = usePaginacion(requerimientos ?? [], 10);
+  const [reqSeleccionado, setReqSeleccionado] = useState<string | null>(null);
 
   const {
     register,
@@ -123,8 +145,11 @@ export default function RequerimientosPage() {
               <div className="space-y-1">
                 <Label>Origen</Label>
                 <Select
+                  value={origenSeleccionado ?? ""}
                   onValueChange={(v) =>
-                    setValue("Origen", v as CrearRequerimiento["Origen"])
+                    setValue("Origen", v as CrearRequerimiento["Origen"], {
+                      shouldValidate: true,
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -170,7 +195,12 @@ export default function RequerimientosPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Equipo</Label>
-                <Select onValueChange={(v) => setValue("IdEquipo", v)}>
+                <Select
+                  value={watch("IdEquipo") ?? ""}
+                  onValueChange={(v) =>
+                    setValue("IdEquipo", v, { shouldValidate: true })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar equipo..." />
                   </SelectTrigger>
@@ -185,7 +215,12 @@ export default function RequerimientosPage() {
               </div>
               <div className="space-y-1">
                 <Label>Vehículo (placa)</Label>
-                <Select onValueChange={(v) => setValue("IdVehiculo", v)}>
+                <Select
+                  value={watch("IdVehiculo") ?? ""}
+                  onValueChange={(v) =>
+                    setValue("IdVehiculo", v, { shouldValidate: true })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar placa..." />
                   </SelectTrigger>
@@ -322,11 +357,16 @@ export default function RequerimientosPage() {
                   <TableHead>N° Req.</TableHead>
                   <TableHead>Origen</TableHead>
                   <TableHead>Situación</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginacion.itemsPagina.map((r) => (
-                  <TableRow key={r.Id}>
+                  <TableRow
+                    key={r.Id}
+                    className="cursor-pointer"
+                    onClick={() => setReqSeleccionado(r.Id)}
+                  >
                     <TableCell className="text-xs">
                       {new Date(r.FechaRequerimiento).toLocaleDateString(
                         "es-PE"
@@ -344,8 +384,11 @@ export default function RequerimientosPage() {
                           SITUACION_VARIANTE[r.Situacion] ?? "default"
                         }
                       >
-                        {r.Situacion}
+                        {r.Situacion === "pendiente" ? "pendiente · revisar" : r.Situacion}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -362,6 +405,12 @@ export default function RequerimientosPage() {
           </div>
         )}
       </div>
+
+      <DialogAprobarRequerimiento
+        idRequerimiento={reqSeleccionado}
+        puedeAprobar={puedeAprobar}
+        onClose={() => setReqSeleccionado(null)}
+      />
     </div>
   );
 }
