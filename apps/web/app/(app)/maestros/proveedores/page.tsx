@@ -188,7 +188,7 @@ export default function ProveedoresPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Proveedores</h1>
-          <p className="text-muted-foreground">Administrá los proveedores de la empresa</p>
+          <p className="text-muted-foreground">Administra los proveedores de la empresa</p>
         </div>
         {puedeEscribir && (
           <Button onClick={abrirNuevo}>

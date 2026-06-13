@@ -223,7 +223,7 @@ export default function AlmacenesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Almacenes</h1>
-          <p className="text-muted-foreground">Administrá las ubicaciones y almacenes</p>
+          <p className="text-muted-foreground">Administra las ubicaciones y almacenes</p>
         </div>
         {puedeEscribir && (
           <Button onClick={abrirNuevo}>

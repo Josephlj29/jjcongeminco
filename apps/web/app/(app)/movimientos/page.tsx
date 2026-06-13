@@ -379,7 +379,7 @@ export default function MovimientosPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Movimientos</h1>
         <p className="text-muted-foreground">
-          Registrá entradas, salidas y transferencias de inventario
+          Registra entradas, salidas y transferencias de inventario
         </p>
       </div>
 

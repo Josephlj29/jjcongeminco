@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   if (!puede(usuario.rol, "catalogoAdmin")) {
-    return respuestaError("No tenés permiso para crear ubicaciones.", 403);
+    return respuestaError("No tienes permiso para crear ubicaciones.", 403);
   }
 
   const body = await request.json().catch(() => null);

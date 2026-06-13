@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   if (!puede(usuario.rol, "documentoEscritura")) {
     return respuestaError(
-      "No tenés permiso para registrar documentos de inventario.",
+      "No tienes permiso para registrar documentos de inventario.",
       403
     );
   }

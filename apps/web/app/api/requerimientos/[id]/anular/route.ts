@@ -20,7 +20,7 @@ export async function POST(
   if (error) return error;
 
   if (!puede(usuario.rol, "documentoEscritura")) {
-    return respuestaError("No tenés permiso para rechazar requerimientos.", 403);
+    return respuestaError("No tienes permiso para rechazar requerimientos.", 403);
   }
 
   const { id } = await params;

@@ -20,7 +20,7 @@ let clienteAdmin: SupabaseClient | null = null;
  * No se construye al importar el módulo: si se hiciera, el build de Next
  * (al "collect page data") lo evaluaría sin tener la SERVICE_ROLE_KEY
  * disponible y fallaría con "supabaseUrl/supabaseKey is required".
- * Acá se crea recién al ejecutar el handler, donde el runtime ya tiene las env.
+ * Aquí se crea recién al ejecutar el handler, donde el runtime ya tiene las env.
  */
 export function crearClienteAdmin(): SupabaseClient {
   if (clienteAdmin) return clienteAdmin;

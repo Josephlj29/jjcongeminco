@@ -270,7 +270,7 @@ export default function SaldosPage() {
       <div>
         <h1 className="text-xl font-bold tracking-tight">Saldos</h1>
         <p className="text-sm text-muted-foreground">
-          Consultá el stock disponible de cada producto
+          Consulta el stock disponible de cada producto
         </p>
       </div>
 

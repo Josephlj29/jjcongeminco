@@ -70,7 +70,7 @@ export async function PUT(
   if (error) return error;
 
   if (!puede(usuario.rol, "productoEscritura")) {
-    return respuestaError("No tenés permiso para asignar tipos de equipo.", 403);
+    return respuestaError("No tienes permiso para asignar tipos de equipo.", 403);
   }
 
   const { id } = await params;

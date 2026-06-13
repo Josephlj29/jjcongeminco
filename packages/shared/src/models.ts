@@ -1,5 +1,5 @@
 /* Tipos de fila (reflejan las tablas BSG). Cuando uses supabase gen types,
-   podés reemplazar/complementar estos con los generados. */
+   puedes reemplazar/complementar estos con los generados. */
 
 export interface CamposAuditoria {
   Estado: boolean;

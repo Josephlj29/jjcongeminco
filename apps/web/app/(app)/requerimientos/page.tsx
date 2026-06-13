@@ -130,7 +130,7 @@ export default function RequerimientosPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Requerimientos</h1>
         <p className="text-muted-foreground">
-          Creá solicitudes de materiales asociadas a equipos o vehículos
+          Crea solicitudes de materiales asociadas a equipos o vehículos
         </p>
       </div>
 

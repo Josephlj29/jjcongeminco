@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   if (!puede(usuario.rol, "documentoEscritura")) {
-    return respuestaError("No tenés permiso para crear requerimientos.", 403);
+    return respuestaError("No tienes permiso para crear requerimientos.", 403);
   }
 
   const body = await request.json().catch(() => null);

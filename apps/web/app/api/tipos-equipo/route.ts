@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   if (!puede(usuario.rol, "productoEscritura")) {
-    return respuestaError("No tenés permiso para crear tipos de equipo.", 403);
+    return respuestaError("No tienes permiso para crear tipos de equipo.", 403);
   }
 
   const body = await request.json().catch(() => null);

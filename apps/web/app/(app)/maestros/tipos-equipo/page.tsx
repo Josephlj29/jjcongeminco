@@ -235,7 +235,7 @@ export default function TiposEquipoPage() {
                     <EmptyState
                       icon={Wrench}
                       titulo="No hay tipos de equipo registrados"
-                      descripcion="Creá el primer tipo para poder clasificar los equipos y asociarlos a productos."
+                      descripcion="Crea el primer tipo para poder clasificar los equipos y asociarlos a productos."
                       accion={
                         puedeEscribir ? (
                           <Button size="sm" onClick={abrirNuevo}>

@@ -21,7 +21,7 @@ export async function POST(
   if (error) return error;
 
   if (!puede(usuario.rol, "productoEscritura")) {
-    return respuestaError("No tenés permiso para asociar categorías a tipos de equipo.", 403);
+    return respuestaError("No tienes permiso para asociar categorías a tipos de equipo.", 403);
   }
 
   const { id } = await params;

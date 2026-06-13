@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
   if (!csvTexto || !csvTexto.trim()) {
     return respuestaError(
-      "No se recibió contenido CSV. Enviá multipart/form-data o text/csv.",
+      "No se recibió contenido CSV. Envía multipart/form-data o text/csv.",
       400
     );
   }

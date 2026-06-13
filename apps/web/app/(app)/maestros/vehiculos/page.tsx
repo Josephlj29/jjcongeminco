@@ -216,7 +216,7 @@ export default function VehiculosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Vehículos</h1>
-          <p className="text-muted-foreground">Administrá las placas y su equipo asignado</p>
+          <p className="text-muted-foreground">Administra las placas y su equipo asignado</p>
         </div>
         {puedeEscribir && (
           <Button onClick={abrirNuevo}>

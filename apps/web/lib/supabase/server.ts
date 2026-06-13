@@ -5,7 +5,7 @@
  * Usa @supabase/ssr para persistir la sesión en cookies (patrón oficial).
  *
  * GOTCHA: las tablas viven en los esquemas "inv" y "seg", NO en "public".
- * Siempre usá .schema("inv") o .schema("seg") antes de .from() / .rpc().
+ * Siempre usa .schema("inv") o .schema("seg") antes de .from() / .rpc().
  */
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";

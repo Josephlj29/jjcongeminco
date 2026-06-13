@@ -337,7 +337,7 @@ export default function ReportesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Reportes</h1>
         <p className="text-muted-foreground">
-          Analizá movimientos y stock valorizado
+          Analiza movimientos y stock valorizado
         </p>
       </div>
 

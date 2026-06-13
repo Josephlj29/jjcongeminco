@@ -48,7 +48,7 @@ export async function POST(
   if (error) return error;
 
   if (!puede(usuario.rol, "productoEscritura")) {
-    return respuestaError("No tenés permiso para gestionar imágenes.", 403);
+    return respuestaError("No tienes permiso para gestionar imágenes.", 403);
   }
 
   const { id } = await params;

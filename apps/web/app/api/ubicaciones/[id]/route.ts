@@ -19,7 +19,7 @@ export async function PATCH(
   if (error) return error;
 
   if (!puede(usuario.rol, "catalogoAdmin")) {
-    return respuestaError("No tenés permiso para editar ubicaciones.", 403);
+    return respuestaError("No tienes permiso para editar ubicaciones.", 403);
   }
 
   const { id } = await params;
@@ -62,7 +62,7 @@ export async function DELETE(
   if (error) return error;
 
   if (!puede(usuario.rol, "catalogoAdmin")) {
-    return respuestaError("No tenés permiso para eliminar ubicaciones.", 403);
+    return respuestaError("No tienes permiso para eliminar ubicaciones.", 403);
   }
 
   const { id } = await params;

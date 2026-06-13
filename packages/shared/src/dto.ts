@@ -181,7 +181,7 @@ export type CrearRequerimiento = z.infer<typeof CrearRequerimientoSchema>;
 
 /* Aprobar un requerimiento: genera la salida desde el almacén origen elegido. */
 export const AtenderRequerimientoSchema = z.object({
-  IdUbicacionOrigen: z.string().uuid({ message: "Elegí un almacén de origen." }),
+  IdUbicacionOrigen: z.string().uuid({ message: "Elige un almacén de origen." }),
   Notas: z.string().max(500).optional(),
 });
 export type AtenderRequerimiento = z.infer<typeof AtenderRequerimientoSchema>;

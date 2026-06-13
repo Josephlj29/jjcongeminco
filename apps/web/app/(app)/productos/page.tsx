@@ -592,7 +592,7 @@ function DialogAsociarCategoria({
 
   const handleConfirmar = async () => {
     if (!idTipoSeleccionado || !idCategoriaSeleccionada) {
-      toast.error("Seleccioná una categoría y un tipo de equipo");
+      toast.error("Selecciona una categoría y un tipo de equipo");
       return;
     }
     try {
@@ -762,7 +762,7 @@ export default function ProductosPage() {
             Catálogo de productos
           </h1>
           <p className="text-muted-foreground">
-            Administrá el inventario de materiales
+            Administra el inventario de materiales
           </p>
         </div>
         {puedeEscribir && (

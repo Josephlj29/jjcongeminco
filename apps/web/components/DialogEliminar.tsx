@@ -101,7 +101,7 @@ export function DialogEliminar({
           <AlertDialogHeader>
             <AlertDialogTitle>No se pudo verificar</AlertDialogTitle>
             <AlertDialogDescription>
-              Ocurrió un error al consultar las dependencias. Intentá nuevamente.
+              Ocurrió un error al consultar las dependencias. Intenta nuevamente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -126,7 +126,7 @@ export function DialogEliminar({
             </AlertDialogTitle>
             <AlertDialogDescription>
               &quot;{nombre}&quot; tiene datos enlazados que impiden su eliminación.
-              Para eliminarlo, primero anulá o reasigná esos registros.
+              Para eliminarlo, primero anula o reasigna esos registros.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {items.length > 0 && (
@@ -163,7 +163,7 @@ export function DialogEliminar({
           </AlertDialogTitle>
           <AlertDialogDescription>
             Esto desactivará &quot;{nombre}&quot; (eliminación lógica: el registro
-            deja de estar disponible pero se conserva para auditoría). ¿Confirmás?
+            deja de estar disponible pero se conserva para auditoría). ¿Confirmas?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -94,7 +94,7 @@ export default function ImportarPage() {
           Importar productos
         </h1>
         <p className="text-muted-foreground">
-          Subí un archivo CSV para cargar productos en masa. Solo disponible para
+          Sube un archivo CSV para cargar productos en masa. Solo disponible para
           administradores.
         </p>
       </div>
@@ -121,7 +121,7 @@ export default function ImportarPage() {
                   {archivoSeleccionado.name}
                 </span>
               ) : (
-                "Hacé clic para seleccionar un archivo .csv"
+                "Haz clic para seleccionar un archivo .csv"
               )}
             </p>
             <input

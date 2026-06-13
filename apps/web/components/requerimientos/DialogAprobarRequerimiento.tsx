@@ -140,7 +140,7 @@ export function DialogAprobarRequerimiento({
           </DialogTitle>
           <DialogDescription>
             {puedeActuar
-              ? "Revisá el detalle y aprobá para generar la salida valorizada, o rechazá el pedido."
+              ? "Revisa el detalle y aprueba para generar la salida valorizada, o rechaza el pedido."
               : "Detalle del requerimiento."}
           </DialogDescription>
         </DialogHeader>
@@ -228,7 +228,7 @@ export function DialogAprobarRequerimiento({
               <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
                 {sinAlmacenes ? (
                   <p className="text-sm text-muted-foreground">
-                    No hay almacenes activos. Creá uno en Maestros → Almacenes para
+                    No hay almacenes activos. Crea uno en Maestros → Almacenes para
                     poder aprobar.
                   </p>
                 ) : (
