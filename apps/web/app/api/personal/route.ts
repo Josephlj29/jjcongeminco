@@ -44,7 +44,10 @@ export async function GET() {
   const idsUsuario = filas.map((p) => p.IdUsuario).filter((x): x is string => !!x);
   const nombrePorUsuario = new Map<string, string>();
   if (idsUsuario.length) {
-    const { data: usuarios } = await supabase
+    // Service-role: seg.T_Usuario está fuera del alcance RLS de los roles no-admin;
+    // sin esto un no-admin vería "Sin login" para personal que sí tiene usuario.
+    const admin = crearClienteAdmin();
+    const { data: usuarios } = await admin
       .schema("seg")
       .from("T_Usuario")
       .select("Id, NombreCompleto")
