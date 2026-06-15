@@ -17,7 +17,9 @@ import { ChevronRight, ClipboardCheck, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { puede, type RoleCode } from "@congeminco/shared";
 import { useRequerimientos, type RequerimientoResumen } from "@/hooks/useRequerimientos";
+import { useOrdenesMantenimiento } from "@/hooks/useOrdenesMantenimiento";
 import { DialogAprobarRequerimiento } from "@/components/requerimientos/DialogAprobarRequerimiento";
+import { DialogReconciliarOrden } from "@/components/mantenimiento/DialogReconciliarOrden";
 import { imprimirSolicitudRequerimiento } from "@/lib/imprimir-solicitud";
 import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +87,11 @@ export default function AprobacionesPage() {
   const { data: yo } = useRolActual();
   const puedeAprobar = puede(yo?.rol ?? null, "requerimientoAprobar");
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
+  const [ordenReconciliar, setOrdenReconciliar] = useState<string | null>(null);
+
+  const { data: ordenesConsumidas, isLoading: cargandoOrdenes } = useOrdenesMantenimiento({
+    situacion: "consumida",
+  });
 
   const { data: pendientes, isLoading: cargandoPend } = useRequerimientos({
     situacion: "pendiente",
@@ -131,6 +138,9 @@ export default function AprobacionesPage() {
         <TabsList>
           <TabsTrigger value="pendientes">
             Pendientes{pendientes?.length ? ` (${pendientes.length})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="mantenimiento">
+            Mantenimiento{ordenesConsumidas?.length ? ` (${ordenesConsumidas.length})` : ""}
           </TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
@@ -184,6 +194,62 @@ export default function AprobacionesPage() {
                       <TableCell className="text-right">
                         <BotonPdf id={r.Id} />
                       </TableCell>
+                      <TableCell>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ─── Mantenimiento (consumos por aprobar) ─── */}
+        <TabsContent value="mantenimiento">
+          {cargandoOrdenes ? (
+            <div className="space-y-2">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-12" />
+              ))}
+            </div>
+          ) : !ordenesConsumidas?.length ? (
+            <EmptyState
+              icon={ClipboardCheck}
+              titulo="Sin consumos por aprobar"
+              descripcion="No hay órdenes de mantenimiento que hayan consumido repuestos a la espera de ratificación."
+            />
+          ) : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>N° OT</TableHead>
+                    <TableHead>Placa</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Mecánico</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ordenesConsumidas.map((o) => (
+                    <TableRow
+                      key={o.Id}
+                      className="cursor-pointer"
+                      onClick={() => setOrdenReconciliar(o.Id)}
+                    >
+                      <TableCell className="text-xs">
+                        {new Date(o.FechaOrden).toLocaleDateString("es-PE")}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {o.NumeroOrden ?? o.Id.slice(0, 8)}
+                      </TableCell>
+                      <TableCell className="text-xs">{o.Placa ?? "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {o.TipoMantenimiento === "correctivo" ? "Correctivo" : "Preventivo"}
+                      </TableCell>
+                      <TableCell className="text-xs">{o.NombreMecanico ?? "—"}</TableCell>
                       <TableCell>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </TableCell>
@@ -255,6 +321,13 @@ export default function AprobacionesPage() {
         puedeAprobar={puedeAprobar}
         onClose={() => setSeleccionado(null)}
       />
+
+      {ordenReconciliar && (
+        <DialogReconciliarOrden
+          idOrden={ordenReconciliar}
+          onClose={() => setOrdenReconciliar(null)}
+        />
+      )}
     </div>
   );
 }

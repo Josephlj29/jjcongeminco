@@ -27,6 +27,7 @@ const ENTIDADES_VALIDAS = [
   "categoria",
   "cargo",
   "personal",
+  "ordenMantenimiento",
 ] as const;
 
 type EntidadValida = (typeof ENTIDADES_VALIDAS)[number];

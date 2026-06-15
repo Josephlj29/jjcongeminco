@@ -21,6 +21,7 @@ import {
   Upload,
   ClipboardList,
   ClipboardCheck,
+  Hammer,
   BarChart2,
   BookOpen,
   Truck,
@@ -67,6 +68,7 @@ const NAV_ITEMS = [
   { href: "/productos", label: "Catálogo", icon: Package, exact: false },
   { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight, exact: false },
   { href: "/requerimientos", label: "Requerimientos", icon: ClipboardList, exact: false },
+  { href: "/mantenimiento", label: "Mantenimiento", icon: Hammer, exact: false },
   { href: "/reportes", label: "Reportes", icon: BarChart2, exact: false },
   { href: "/importar", label: "Importar", icon: Upload, exact: false },
 ];

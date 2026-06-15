@@ -285,6 +285,81 @@ export const AnularRequerimientoSchema = z.object({
 });
 export type AnularRequerimiento = z.infer<typeof AnularRequerimientoSchema>;
 
+/* ─── Orden de Trabajo de Mantenimiento (OT) ─── */
+export const TIPO_MANTENIMIENTO = ["preventivo", "correctivo"] as const;
+export type TipoMantenimiento = (typeof TIPO_MANTENIMIENTO)[number];
+
+export const TURNO = ["dia", "tarde", "noche"] as const;
+export type Turno = (typeof TURNO)[number];
+
+export const TrabajoMantenimientoSchema = z.object({
+  Secuencia: z.number().int().positive(),
+  Descripcion: z.string().min(1).max(300),
+});
+
+export const CrearOrdenMantenimientoSchema = z.object({
+  NumeroOrden: z.string().max(40).optional(),
+  TipoMantenimiento: z.enum(TIPO_MANTENIMIENTO),
+  FechaOrden: z.string().date(),
+  Turno: z.enum(TURNO),
+  Kilometraje: z.number().nonnegative().optional(),
+  IdVehiculo: z.string().uuid({ message: "Elige una placa." }),
+  IdMecanicoResponsable: z.string().uuid({ message: "Elige un mecánico responsable." }),
+  Observaciones: z.string().max(500).optional(),
+  Trabajos: z.array(TrabajoMantenimientoSchema).default([]),
+});
+export type CrearOrdenMantenimiento = z.infer<typeof CrearOrdenMantenimientoSchema>;
+
+export const ActualizarOrdenMantenimientoSchema = CrearOrdenMantenimientoSchema.partial();
+export type ActualizarOrdenMantenimiento = z.infer<typeof ActualizarOrdenMantenimientoSchema>;
+
+/* Consumo de repuestos: genera la salida de inmediato (Model 2). Modo 'stock'
+   sale del almacén; 'compra' = compra directa (entrada+salida) con proveedor +
+   comprobante + costo por línea. */
+export const LineaConsumoSchema = z.object({
+  IdProducto: z.string().uuid(),
+  Cantidad: z.number().positive(),
+  Modo: z.enum(MODO_ENTREGA).default("stock"),
+  Costo: z.number().positive().optional(),
+});
+
+export const ConsumirRepuestosSchema = z
+  .object({
+    IdUbicacionOrigen: z.string().uuid({ message: "Elige un almacén de origen." }),
+    IdProveedor: z.string().uuid().optional(),
+    Comprobante: z.string().max(60).optional(),
+    Lineas: z.array(LineaConsumoSchema).min(1, { message: "Agrega al menos un repuesto." }),
+  })
+  .refine(
+    (d) =>
+      !d.Lineas.some((l) => l.Modo === "compra") ||
+      (!!d.IdProveedor && !!d.Comprobante),
+    {
+      message: "La compra directa requiere proveedor y comprobante.",
+      path: ["IdProveedor"],
+    }
+  )
+  .refine((d) => !d.Lineas.some((l) => l.Modo === "compra" && !l.Costo), {
+    message: "La compra directa requiere costo por línea.",
+    path: ["Lineas"],
+  });
+export type ConsumirRepuestos = z.infer<typeof ConsumirRepuestosSchema>;
+export type LineaConsumo = z.infer<typeof LineaConsumoSchema>;
+
+/* Reconciliar (admin): aprobar (cerrar) o rechazar (anular + reversa). */
+export const ReconciliarOrdenSchema = z.object({
+  Aprobar: z.boolean(),
+  Motivo: z.string().max(500).optional(),
+});
+export type ReconciliarOrden = z.infer<typeof ReconciliarOrdenSchema>;
+
+/* Cerrar/anular una OT abierta sin repuestos. */
+export const FinalizarOrdenSchema = z.object({
+  Anular: z.boolean().default(false),
+  Motivo: z.string().max(500).optional(),
+});
+export type FinalizarOrden = z.infer<typeof FinalizarOrdenSchema>;
+
 /* ─── Importación masiva ─── */
 
 /* Modo ante un registro que ya existe: solo crear, o crear y actualizar. */

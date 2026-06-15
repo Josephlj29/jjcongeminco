@@ -150,6 +150,52 @@ export interface RequerimientoConDetalle {
   Detalle: RequerimientoDetalleLinea[];
 }
 
+/* ─── Orden de Trabajo de Mantenimiento (OT) ─── */
+export type SituacionOrden = "abierta" | "consumida" | "cerrada" | "anulada";
+
+export interface TrabajoMantenimiento {
+  Id: string;
+  Secuencia: number;
+  Descripcion: string;
+}
+
+/* Repuesto consumido = línea del requerimiento enlazado, con datos del producto. */
+export interface RepuestoConsumido {
+  IdProducto: string;
+  NombreProducto: string;
+  Sku: string;
+  CodigoUnidad: string | null;
+  Cantidad: number;
+  CostoUnitario: number;
+}
+
+/* Fila de la lista de órdenes de mantenimiento. */
+export interface OrdenMantenimientoResumen {
+  Id: string;
+  NumeroOrden: string | null;
+  FechaOrden: string;
+  TipoMantenimiento: "preventivo" | "correctivo";
+  Turno: "dia" | "tarde" | "noche";
+  Kilometraje: number | null;
+  IdVehiculo: string;
+  Placa: string | null;
+  IdMecanicoResponsable: string;
+  NombreMecanico: string | null;
+  Situacion: SituacionOrden;
+}
+
+/* OT con trabajos y repuestos resueltos (vista de detalle + PDF). */
+export interface OrdenMantenimientoConDetalle extends OrdenMantenimientoResumen {
+  CargoMecanico: string | null;
+  Observaciones: string | null;
+  IdRequerimiento: string | null;
+  IdDocumentoInventarioReversa: string | null;
+  MotivoReconciliacion: string | null;
+  FechaReconciliacion: string | null;
+  Trabajos: TrabajoMantenimiento[];
+  Repuestos: RepuestoConsumido[];
+}
+
 export interface ProductoImagen extends CamposAuditoria {
   Id: string;
   IdProducto: string;

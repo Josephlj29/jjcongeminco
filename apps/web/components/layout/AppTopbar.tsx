@@ -48,6 +48,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/productos": "Catálogo",
   "/movimientos": "Movimientos",
   "/requerimientos": "Requerimientos",
+  "/mantenimiento": "Mantenimiento",
   "/reportes": "Reportes",
   "/importar": "Importar",
   "/saldos": "Saldos",
