@@ -122,8 +122,8 @@ export default function AprobacionesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Aprobaciones</h1>
         <p className="text-muted-foreground">
-          Revisa los requerimientos pendientes (aprueba o rechaza) y consultá el
-          histórico. Generá el PDF de cada solicitud para gestión o impresión.
+          Revisa los requerimientos pendientes (aprueba o rechaza) y consulta el
+          histórico. Genera el PDF de cada solicitud para gestión o impresión.
         </p>
       </div>
 

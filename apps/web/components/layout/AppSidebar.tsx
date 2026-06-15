@@ -30,6 +30,8 @@ import {
   Boxes,
   Tags,
   FolderTree,
+  Users,
+  BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -70,6 +72,8 @@ const NAV_ITEMS = [
 
 const MAESTROS_ITEMS = [
   { href: "/maestros/categorias", label: "Categorías", icon: FolderTree, exact: false },
+  { href: "/maestros/personal", label: "Personal", icon: Users, exact: false },
+  { href: "/maestros/cargos", label: "Cargos", icon: BriefcaseBusiness, exact: false },
   { href: "/maestros/proveedores", label: "Proveedores", icon: Truck, exact: false },
   { href: "/maestros/almacenes", label: "Almacenes", icon: Warehouse, exact: false },
   { href: "/maestros/equipos", label: "Equipos", icon: Wrench, exact: false },

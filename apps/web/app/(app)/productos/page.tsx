@@ -211,7 +211,7 @@ function DialogProducto({
   const onSubmit = async (data: CrearProducto) => {
     if (!data.EsGeneral && (data.IdsTipoEquipo?.length ?? 0) === 0) {
       toast.error(
-        "Elegí al menos un tipo de equipo o marcá el producto como general."
+        "Elige al menos un tipo de equipo o marca el producto como general."
       );
       return;
     }
@@ -369,7 +369,7 @@ function DialogProducto({
             {!esGeneral && (
               <div className="space-y-1 pt-1">
                 <p className="text-xs text-muted-foreground">
-                  Seleccioná los tipos de equipo compatibles:
+                  Selecciona los tipos de equipo compatibles:
                 </p>
                 <Command className="rounded-lg border">
                   <CommandInput placeholder="Buscar tipo..." />
@@ -406,7 +406,7 @@ function DialogProducto({
                 </Command>
                 {idsTipo.length === 0 && (
                   <p className="text-xs text-destructive">
-                    Elegí al menos un tipo, o marcá el producto como general.
+                    Elige al menos un tipo, o marca el producto como general.
                   </p>
                 )}
               </div>

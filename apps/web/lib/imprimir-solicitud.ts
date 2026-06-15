@@ -104,6 +104,15 @@ function construirHtml(r: RequerimientoConDetalle): string {
       <td class="k">Origen</td><td>${esc(ORIGEN[r.Origen] ?? r.Origen)}</td>
       <td class="k">Destino</td><td>${destino}</td>
     </tr>
+    <tr>
+      <td class="k">Solicitante</td>
+      <td colspan="3">${
+        r.NombreSolicitante
+          ? esc(r.NombreSolicitante) +
+            (r.CargoSolicitante ? ` (${esc(r.CargoSolicitante)})` : "")
+          : "—"
+      }</td>
+    </tr>
   </table>
 
   <h1>Materiales solicitados</h1>
@@ -124,7 +133,11 @@ function construirHtml(r: RequerimientoConDetalle): string {
   ${r.Notas ? `<div class="notas"><strong>Observaciones:</strong> ${esc(r.Notas)}</div>` : ""}
 
   <div class="firmas">
-    <div class="firma">Solicitado por</div>
+    <div class="firma">Solicitado por${
+      r.NombreSolicitante
+        ? `<br/><span style="color:#111">${esc(r.NombreSolicitante)}</span>`
+        : ""
+    }</div>
     <div class="firma">Aprobado por</div>
     <div class="firma">Recibido por</div>
   </div>
@@ -145,7 +158,7 @@ export async function imprimirSolicitudRequerimiento(id: string): Promise<void> 
 
   const win = window.open("", "_blank", "width=820,height=900");
   if (!win) {
-    throw new Error("Permití las ventanas emergentes para generar el PDF.");
+    throw new Error("Permite las ventanas emergentes para generar el PDF.");
   }
   win.document.open();
   win.document.write(construirHtml(r));

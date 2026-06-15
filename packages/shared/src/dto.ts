@@ -89,9 +89,9 @@ export type MonedaCuenta = (typeof MONEDA_CUENTA)[number];
 /* Cuenta bancaria de un proveedor (1:N). Id presente = cuenta existente. */
 export const CuentaBancariaSchema = z.object({
   Id: z.string().uuid().optional(),
-  Banco: z.string().trim().min(1, "Indicá el banco.").max(80),
+  Banco: z.string().trim().min(1, "Indica el banco.").max(80),
   TipoCuenta: z.enum(TIPO_CUENTA).default("corriente"),
-  NumeroCuenta: z.string().trim().min(1, "Indicá el número de cuenta.").max(40),
+  NumeroCuenta: z.string().trim().min(1, "Indica el número de cuenta.").max(40),
   Cci: z.string().trim().max(25).optional(),
   Moneda: z.enum(MONEDA_CUENTA).default("PEN"),
   TitularCuenta: z.string().trim().max(150).optional(),
@@ -141,6 +141,32 @@ export const ActualizarCategoriaSchema = CrearCategoriaSchema.partial().extend({
   Estado: z.boolean().optional(),
 });
 export type ActualizarCategoria = z.infer<typeof ActualizarCategoriaSchema>;
+
+/* ─── Cargo (catálogo de cargos del personal) ─── */
+export const CrearCargoSchema = z.object({
+  Codigo: z.string().min(1).max(20),
+  Nombre: z.string().min(1).max(80),
+  Descripcion: z.string().max(200).optional(),
+});
+export type CrearCargo = z.infer<typeof CrearCargoSchema>;
+export const ActualizarCargoSchema = CrearCargoSchema.partial().extend({
+  Estado: z.boolean().optional(),
+});
+export type ActualizarCargo = z.infer<typeof ActualizarCargoSchema>;
+
+/* ─── Personal (solicitantes; login opcional vía IdUsuario) ─── */
+export const CrearPersonalSchema = z.object({
+  NombreCompleto: z.string().min(1).max(150),
+  Dni: z.string().max(15).optional(),
+  Telefono: z.string().max(20).optional(),
+  IdCargo: z.string().uuid({ message: "Elige un cargo." }),
+  IdUsuario: z.string().uuid().optional(),
+});
+export type CrearPersonal = z.infer<typeof CrearPersonalSchema>;
+export const ActualizarPersonalSchema = CrearPersonalSchema.partial().extend({
+  Estado: z.boolean().optional(),
+});
+export type ActualizarPersonal = z.infer<typeof ActualizarPersonalSchema>;
 
 /* ─── Tipo de equipo ─── */
 export const CrearTipoEquipoSchema = z.object({
@@ -206,6 +232,7 @@ export const CrearRequerimientoSchema = z
     NumeroRequerimiento: z.string().max(40).optional(),
     IdEquipo: z.string().uuid().optional(),
     IdVehiculo: z.string().uuid().optional(),
+    IdPersonalSolicitante: z.string().uuid().optional(),
     Notas: z.string().max(500).optional(),
     Detalle: z.array(DetalleRequerimientoSchema).min(1),
   })
@@ -236,7 +263,7 @@ export const AtenderRequerimientoSchema = z
     Lineas: z.array(LineaEntregaSchema).min(1),
   })
   .refine((d) => d.Lineas.some((l) => l.Cantidad > 0), {
-    message: "Indicá al menos una cantidad a entregar.",
+    message: "Indica al menos una cantidad a entregar.",
     path: ["Lineas"],
   })
   .refine(

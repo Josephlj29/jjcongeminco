@@ -152,7 +152,7 @@ export function DialogAprobarRequerimiento({
     });
 
     if (!payload.some((l) => l.Cantidad > 0)) {
-      toast.error("Indicá al menos una cantidad a entregar.");
+      toast.error("Indica al menos una cantidad a entregar.");
       return;
     }
     if (hayCompra && (!idProveedor || !comprobante.trim())) {
@@ -209,7 +209,7 @@ export function DialogAprobarRequerimiento({
           </DialogTitle>
           <DialogDescription>
             {puedeActuar
-              ? "Ajustá la cantidad a entregar por línea (parcial si falta stock) y elegí el modo. Compra directa genera la compra + salida automáticamente."
+              ? "Ajusta la cantidad a entregar por línea (parcial si falta stock) y elige el modo. Compra directa genera la compra + salida automáticamente."
               : "Detalle del requerimiento."}
           </DialogDescription>
         </DialogHeader>
@@ -235,6 +235,15 @@ export function DialogAprobarRequerimiento({
                 <p className="text-xs text-muted-foreground">Destino</p>
                 <p>{req.Placa ?? req.NombreEquipo ?? "—"}</p>
               </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Solicitante</p>
+                <p>
+                  {req.NombreSolicitante ?? "—"}
+                  {req.CargoSolicitante ? (
+                    <span className="text-muted-foreground"> · {req.CargoSolicitante}</span>
+                  ) : null}
+                </p>
+              </div>
             </div>
 
             {/* Almacén origen (solo si puede actuar) */}
@@ -243,7 +252,7 @@ export function DialogAprobarRequerimiento({
                 <Label>Almacén de origen</Label>
                 {sinAlmacenes ? (
                   <p className="text-sm text-muted-foreground">
-                    No hay almacenes activos. Creá uno en Maestros → Almacenes.
+                    No hay almacenes activos. Crea uno en Maestros → Almacenes.
                   </p>
                 ) : (
                   <Select value={idUbicacion} onValueChange={setIdUbicacion}>

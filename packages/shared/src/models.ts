@@ -142,6 +142,9 @@ export interface RequerimientoConDetalle {
   NombreEquipo: string | null;
   IdVehiculo: string | null;
   Placa: string | null;
+  IdPersonalSolicitante: string | null;
+  NombreSolicitante: string | null;
+  CargoSolicitante: string | null;
   Notas: string | null;
   IdDocumentoInventario: string | null;
   Detalle: RequerimientoDetalleLinea[];
@@ -169,6 +172,32 @@ export interface Ubicacion extends CamposAuditoria {
   Nombre: string;
   Tipo: "almacen_central" | "proyecto" | "otro";
   Direccion: string | null;
+}
+
+export interface Cargo extends CamposAuditoria {
+  Id: string;
+  Codigo: string;
+  Nombre: string;
+  Descripcion: string | null;
+}
+
+/* Personal con cargo y usuario de acceso resueltos (para el maestro). */
+export interface PersonalConDetalle {
+  Id: string;
+  NombreCompleto: string;
+  Dni: string | null;
+  Telefono: string | null;
+  IdCargo: string;
+  NombreCargo: string | null;
+  IdUsuario: string | null;
+  NombreUsuario: string | null;
+}
+
+/* Usuario de acceso (seg.T_Usuario) para vincular personal. */
+export interface UsuarioAcceso {
+  Id: string;
+  NombreCompleto: string;
+  Rol: string | null;
 }
 
 /* Salida de la vista inv.V_Producto_StockConsolidado */

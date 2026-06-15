@@ -24,6 +24,7 @@ import {
 import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
+import { usePersonal } from "@/hooks/usePersonal";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ export default function RequerimientosPage() {
   const { data: productos } = useSaldos();
   const { data: equipos } = useEquipos();
   const { data: vehiculos } = useVehiculos();
+  const { data: personal } = usePersonal();
 
   const { data: yo } = useRolActual();
   const puedeCrear = puede(yo?.rol ?? null, "requerimientoCrear");
@@ -174,6 +176,31 @@ export default function RequerimientosPage() {
                   placeholder="REQ-0001"
                   {...register("NumeroRequerimiento")}
                 />
+              </div>
+            </div>
+
+            {/* Solicitante (personal) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Solicitante</Label>
+                <Select
+                  value={watch("IdPersonalSolicitante") ?? ""}
+                  onValueChange={(v) =>
+                    setValue("IdPersonalSolicitante", v, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="¿Quién lo solicita?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {personal?.map((p) => (
+                      <SelectItem key={p.Id} value={p.Id}>
+                        {p.NombreCompleto}
+                        {p.NombreCargo ? ` · ${p.NombreCargo}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

@@ -38,6 +38,7 @@ const ETIQUETAS_DEPENDENCIA: Record<string, string> = {
   productosAsociados: "Productos asociados",
   productos: "Productos",
   subcategorias: "Subcategorías",
+  personal: "Personal",
 };
 
 /** Devuelve los pares [etiqueta, valor] de dependencias con valor > 0 */

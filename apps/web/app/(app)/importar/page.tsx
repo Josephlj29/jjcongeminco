@@ -99,7 +99,7 @@ function ZonaArchivo({
         <>
           <Upload className="h-8 w-8 text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">
-            Hacé clic para seleccionar un archivo .xlsx
+            Haz clic para seleccionar un archivo .xlsx
           </p>
         </>
       )}
@@ -402,7 +402,7 @@ function TabSaldos() {
   const importar = async () => {
     if (!archivo) return;
     if (!fecha) {
-      toast.error("Indicá la fecha de corte del inventario.");
+      toast.error("Indica la fecha de corte del inventario.");
       return;
     }
     setCargando(true);

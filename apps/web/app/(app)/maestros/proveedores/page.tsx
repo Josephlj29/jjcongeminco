@@ -183,7 +183,7 @@ function DialogProveedor({
 
             {fields.length === 0 ? (
               <p className="text-xs text-muted-foreground py-2">
-                Sin cuentas. Agregá una si el proveedor tiene datos bancarios.
+                Sin cuentas. Agrega una si el proveedor tiene datos bancarios.
               </p>
             ) : (
               fields.map((field, i) => (

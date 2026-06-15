@@ -19,10 +19,12 @@ interface FilaHeader {
   Situacion: RequerimientoConDetalle["Situacion"];
   IdEquipo: string | null;
   IdVehiculo: string | null;
+  IdPersonalSolicitante: string | null;
   Notas: string | null;
   IdDocumentoInventario: string | null;
   T_Equipo: { Codigo: string; Nombre: string } | null;
   T_Vehiculo: { Placa: string } | null;
+  T_Personal: { NombreCompleto: string; T_Cargo: { Nombre: string } | null } | null;
 }
 
 interface FilaDetalle {
@@ -48,7 +50,7 @@ export async function GET(
     .schema("inv")
     .from("T_Requerimiento")
     .select(
-      "Id, NumeroRequerimiento, FechaRequerimiento, Origen, Situacion, IdEquipo, IdVehiculo, Notas, IdDocumentoInventario, T_Equipo(Codigo, Nombre), T_Vehiculo(Placa)"
+      "Id, NumeroRequerimiento, FechaRequerimiento, Origen, Situacion, IdEquipo, IdVehiculo, IdPersonalSolicitante, Notas, IdDocumentoInventario, T_Equipo(Codigo, Nombre), T_Vehiculo(Placa), T_Personal(NombreCompleto, T_Cargo(Nombre))"
     )
     .eq("Id", id)
     .eq("Estado", true)
@@ -87,6 +89,9 @@ export async function GET(
     NombreEquipo: h.T_Equipo ? `${h.T_Equipo.Codigo} — ${h.T_Equipo.Nombre}` : null,
     IdVehiculo: h.IdVehiculo,
     Placa: h.T_Vehiculo?.Placa ?? null,
+    IdPersonalSolicitante: h.IdPersonalSolicitante,
+    NombreSolicitante: h.T_Personal?.NombreCompleto ?? null,
+    CargoSolicitante: h.T_Personal?.T_Cargo?.Nombre ?? null,
     Notas: h.Notas,
     IdDocumentoInventario: h.IdDocumentoInventario,
     Detalle: lineas.map((l) => ({
