@@ -30,7 +30,7 @@ import {
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, History, Info } from "lucide-react";
+import { Plus, Trash2, History, Info, Package } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearDocumentoSchema,
@@ -49,6 +49,7 @@ import { useVehiculos, useEquipos } from "@/hooks/useEquipos";
 import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { DialogHistorialPrecios } from "@/components/productos/DialogHistorialPrecios";
+import { GaleriaProductoDialog } from "@/components/GaleriaProductoDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,6 +99,7 @@ interface LineaDetalleProps {
   puedeBorrar: boolean;
   onBorrar: () => void;
   onAbrirHistorial: (idProducto: string) => void;
+  onAbrirGaleria: (idProducto: string) => void;
   errorProducto?: string;
 }
 
@@ -111,6 +113,7 @@ function LineaDetalle({
   puedeBorrar,
   onBorrar,
   onAbrirHistorial,
+  onAbrirGaleria,
   errorProducto,
 }: LineaDetalleProps) {
   const idProducto = useWatch({ control, name: `Detalle.${index}.IdProducto` });
@@ -138,6 +141,28 @@ function LineaDetalle({
             })
           }
         />
+        {producto && (
+          <button
+            type="button"
+            onClick={() => onAbrirGaleria(producto.IdProducto)}
+            title="Ver / ampliar imágenes"
+            className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {producto.UrlImagenPrincipal ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={producto.UrlImagenPrincipal}
+                alt=""
+                className="h-9 w-9 rounded border object-cover"
+              />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded border bg-muted">
+                <Package className="h-4 w-4" />
+              </span>
+            )}
+            <span className="underline-offset-2 hover:underline">Ver imágenes</span>
+          </button>
+        )}
         {errorProducto && (
           <p className="text-xs text-destructive mt-1">{errorProducto}</p>
         )}
@@ -278,6 +303,10 @@ export default function MovimientosPage() {
     linea: number;
   }>({ open: false, idProducto: null, linea: 0 });
 
+  const [galeria, setGaleria] = useState<{ open: boolean; idProducto: string | null }>(
+    { open: false, idProducto: null }
+  );
+
   const paginacion = usePaginacion(documentos ?? [], 10);
 
   const {
@@ -310,13 +339,6 @@ export default function MovimientosPage() {
 
   const todosProductos = useMemo(() => productos ?? [], [productos]);
 
-  /* Set de IdProducto que TIENEN al menos una asociación (no son generales). */
-  const productosConAsociacion = useMemo(() => {
-    const s = new Set<string>();
-    (asociaciones ?? []).forEach((a) => s.add(a.IdProducto));
-    return s;
-  }, [asociaciones]);
-
   /* Tipo de equipo de la placa seleccionada (vehículo -> equipo -> tipo). */
   const idTipoEquipoPlaca = useMemo(() => {
     if (!idVehiculo) return null;
@@ -341,10 +363,9 @@ export default function MovimientosPage() {
     const filtroActivo =
       esSalida && !!idVehiculo && !!idTipoEquipoPlaca && soloCompatibles;
     if (!filtroActivo) return todosProductos;
+    // Compatibles = del tipo de la placa, o productos generales (EsGeneral).
     return todosProductos.filter(
-      (p) =>
-        productosDelTipo.has(p.IdProducto) ||
-        !productosConAsociacion.has(p.IdProducto)
+      (p) => productosDelTipo.has(p.IdProducto) || p.EsGeneral
     );
   }, [
     esSalida,
@@ -353,7 +374,6 @@ export default function MovimientosPage() {
     soloCompatibles,
     todosProductos,
     productosDelTipo,
-    productosConAsociacion,
   ]);
 
   const mostrarToggleCompatibles = esSalida && !!idVehiculo && !!idTipoEquipoPlaca;
@@ -590,6 +610,9 @@ export default function MovimientosPage() {
                       onAbrirHistorial={(idProducto) =>
                         setDialogProducto({ open: true, idProducto, linea: idx })
                       }
+                      onAbrirGaleria={(idProducto) =>
+                        setGaleria({ open: true, idProducto })
+                      }
                       errorProducto={errors.Detalle?.[idx]?.IdProducto?.message}
                     />
                   ))}
@@ -616,6 +639,17 @@ export default function MovimientosPage() {
         onUsarPrecio={(costo) =>
           setValue(`Detalle.${dialogProducto.linea}.CostoUnitario`, costo)
         }
+      />
+
+      {/* Galería de imágenes del producto elegido (ampliar / carrusel) */}
+      <GaleriaProductoDialog
+        idProducto={galeria.idProducto}
+        nombre={
+          todosProductos.find((p) => p.IdProducto === galeria.idProducto)
+            ?.NombreProducto
+        }
+        open={galeria.open}
+        onClose={() => setGaleria({ open: false, idProducto: null })}
       />
 
       {/* Documentos recientes */}

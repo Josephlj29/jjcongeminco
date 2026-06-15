@@ -20,6 +20,7 @@ import {
   ArrowLeftRight,
   Upload,
   ClipboardList,
+  ClipboardCheck,
   BarChart2,
   BookOpen,
   Truck,
@@ -28,6 +29,7 @@ import {
   Car,
   Boxes,
   Tags,
+  FolderTree,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -41,7 +43,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import type { RoleCode } from "@congeminco/shared";
+import { puede, type RoleCode } from "@congeminco/shared";
 
 interface UsuarioProps {
   id: string;
@@ -67,6 +69,7 @@ const NAV_ITEMS = [
 ];
 
 const MAESTROS_ITEMS = [
+  { href: "/maestros/categorias", label: "Categorías", icon: FolderTree, exact: false },
   { href: "/maestros/proveedores", label: "Proveedores", icon: Truck, exact: false },
   { href: "/maestros/almacenes", label: "Almacenes", icon: Warehouse, exact: false },
   { href: "/maestros/equipos", label: "Equipos", icon: Wrench, exact: false },
@@ -124,12 +127,26 @@ function NavLink({
 
 /** Contenido puro del sidebar — usado tanto en AppSidebar (desktop) como en Sheet (mobile) */
 export function AppSidebarContent({
-  usuario: _usuario,
+  usuario,
   collapsed,
 }: {
   usuario: UsuarioProps;
   collapsed: boolean;
 }) {
+  // El panel de Aprobaciones solo lo ve quien puede aprobar requerimientos.
+  const navItems = puede(usuario.rol, "requerimientoAprobar")
+    ? [
+        ...NAV_ITEMS.slice(0, 5),
+        {
+          href: "/aprobaciones",
+          label: "Aprobaciones",
+          icon: ClipboardCheck,
+          exact: false,
+        },
+        ...NAV_ITEMS.slice(5),
+      ]
+    : NAV_ITEMS;
+
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -163,7 +180,7 @@ export function AppSidebarContent({
             collapsed ? "px-2 flex flex-col items-center" : "px-3"
           )}
         >
-          {NAV_ITEMS.map(({ href, label, icon, exact }) => (
+          {navItems.map(({ href, label, icon, exact }) => (
             <NavLink
               key={href}
               href={href}

@@ -4,7 +4,7 @@
  * GET  /api/requerimientos — lista de requerimientos recientes (soporta ?limit=N)
  * POST /api/requerimientos — crea requerimiento vía RPC inv.FnRegistrarRequerimiento
  *
- * Rol requerido para POST: documentoEscritura (admin, almacenero, supervision).
+ * Rol requerido para POST: requerimientoCrear (admin, almacenero, supervision).
  */
 export const runtime = "nodejs";
 
@@ -20,15 +20,22 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const limitParam = searchParams.get("limit");
   const cantidad = parseInt(limitParam ?? "50", 10) || 50;
+  const situacion = searchParams.get("situacion"); // pendiente | atendido | anulado
 
   const supabase = await crearClienteServidor();
-  const { data, error: dbError } = await supabase
+  let query = supabase
     .schema("inv")
     .from("T_Requerimiento")
     .select(
       "Id, NumeroRequerimiento, FechaRequerimiento, Origen, IdEquipo, IdVehiculo, Situacion"
     )
-    .eq("Estado", true)
+    .eq("Estado", true);
+
+  if (situacion) {
+    query = query.eq("Situacion", situacion);
+  }
+
+  const { data, error: dbError } = await query
     .order("FechaRequerimiento", { ascending: false })
     .limit(cantidad);
 
@@ -43,7 +50,7 @@ export async function POST(request: NextRequest) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
-  if (!puede(usuario.rol, "documentoEscritura")) {
+  if (!puede(usuario.rol, "requerimientoCrear")) {
     return respuestaError("No tienes permiso para crear requerimientos.", 403);
   }
 

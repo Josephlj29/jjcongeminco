@@ -20,12 +20,17 @@ export interface RequerimientoResumen {
   Situacion: "pendiente" | "atendido" | "anulado";
 }
 
-export function useRequerimientos(limit?: number) {
-  const qs = limit ? `?limit=${limit}` : "";
+export function useRequerimientos(
+  opts: { limit?: number; situacion?: "pendiente" | "atendido" | "anulado" } = {}
+) {
+  const sp = new URLSearchParams();
+  if (opts.limit) sp.set("limit", String(opts.limit));
+  if (opts.situacion) sp.set("situacion", opts.situacion);
+  const qs = sp.toString();
   return useQuery({
-    queryKey: ["requerimientos", limit],
+    queryKey: ["requerimientos", opts.limit ?? null, opts.situacion ?? null],
     queryFn: async () => {
-      const res = await fetch(`/api/requerimientos${qs}`);
+      const res = await fetch(`/api/requerimientos${qs ? `?${qs}` : ""}`);
       if (!res.ok)
         throw new Error(`Error ${res.status} al cargar requerimientos`);
       return res.json() as Promise<RequerimientoResumen[]>;

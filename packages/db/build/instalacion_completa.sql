@@ -1,6 +1,6 @@
 /*
 	 INSTALACION COMPLETA - Inventario JJ Congeminco (re-ejecutable)
-	 reset + 0001-0019 + seed + 222 productos. No incluye Storage ni admin.
+	 reset + 0001-0026 + seed + 222 productos. No incluye Storage ni admin.
 */
 
 BEGIN;
@@ -2455,6 +2455,813 @@ $$;
 
 COMMENT ON FUNCTION "inv"."FnAplicarMovimientoSaldo"() IS 'Trigger: actualiza el saldo cacheado por cada movimiento (upsert). Rechaza egresos que dejarian el saldo negativo (serializa salidas concurrentes via row-lock del upsert). Los ingresos nunca se bloquean.';
 
+/* ===================== migrations/0020_producto_general.sql ===================== */
+/*
+	Compatibilidad producto<->tipo de equipo en el PRODUCTO (fitment), no en la
+	categoria. "General" pasa a ser un flag intensional (EsGeneral). Invariante:
+	general XOR >=1 tipo. FnGuardarProducto crea/edita producto + compatibilidad.
+*/
+ALTER TABLE "inv"."T_Producto"
+	ADD COLUMN IF NOT EXISTS "EsGeneral" BOOLEAN NOT NULL DEFAULT FALSE;
+
+COMMENT ON COLUMN "inv"."T_Producto"."EsGeneral" IS 'TRUE = compatible con cualquier tipo de equipo (presente o futuro). Si es TRUE, no lleva filas en T_ProductoTipoEquipo.';
+
+CREATE OR REPLACE FUNCTION "inv"."FnBloquearTipoEnProductoGeneral"()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	IF (SELECT "EsGeneral" FROM "inv"."T_Producto" WHERE "Id" = NEW."IdProducto") THEN
+		RAISE EXCEPTION 'Un producto marcado como general no puede tener tipos de equipo asociados.';
+	END IF;
+	RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS "TR_T_ProductoTipoEquipo_BloquearGeneral" ON "inv"."T_ProductoTipoEquipo";
+CREATE TRIGGER "TR_T_ProductoTipoEquipo_BloquearGeneral"
+	BEFORE INSERT ON "inv"."T_ProductoTipoEquipo"
+	FOR EACH ROW EXECUTE FUNCTION "inv"."FnBloquearTipoEnProductoGeneral"();
+
+CREATE OR REPLACE FUNCTION "inv"."FnGuardarProducto"
+(
+	"PProducto" JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	"vId"        UUID;
+	"vEsGeneral" BOOLEAN;
+	"vUsuario"   VARCHAR(50);
+	"vTipos"     JSONB;
+	"vCantTipos" INT;
+BEGIN
+	"vUsuario"   = COALESCE(auth.uid()::TEXT, 'API');
+	"vId"        = NULLIF("PProducto"->>'Id', '')::UUID;
+	"vEsGeneral" = COALESCE(("PProducto"->>'EsGeneral')::BOOLEAN, FALSE);
+	"vTipos"     = COALESCE("PProducto"->'IdsTipoEquipo', '[]'::JSONB);
+	"vCantTipos" = JSONB_ARRAY_LENGTH("vTipos");
+
+	IF "vEsGeneral" AND "vCantTipos" > 0 THEN
+		RAISE EXCEPTION 'Un producto general no lleva tipos de equipo.';
+	END IF;
+	IF NOT "vEsGeneral" AND "vCantTipos" = 0 THEN
+		RAISE EXCEPTION 'Elige al menos un tipo de equipo o marca el producto como general.';
+	END IF;
+
+	IF "vId" IS NULL THEN
+		INSERT INTO "inv"."T_Producto"
+		(
+			"Sku","Nombre","IdCategoria","IdUnidadMedida","StockMinimo",
+			"CodigoBarra","Atributos","EsGeneral","UsuarioCreacion","UsuarioModificacion"
+		)
+		VALUES
+		(
+			"PProducto"->>'Sku',
+			"PProducto"->>'Nombre',
+			("PProducto"->>'IdCategoria')::UUID,
+			("PProducto"->>'IdUnidadMedida')::UUID,
+			COALESCE(("PProducto"->>'StockMinimo')::NUMERIC, 0),
+			NULLIF("PProducto"->>'CodigoBarra', ''),
+			COALESCE("PProducto"->'Atributos', '{}'::JSONB),
+			"vEsGeneral",
+			"vUsuario",
+			"vUsuario"
+		)
+		RETURNING "Id" INTO "vId";
+	ELSE
+		UPDATE "inv"."T_Producto"
+		SET "Sku"                 = "PProducto"->>'Sku',
+			"Nombre"              = "PProducto"->>'Nombre',
+			"IdCategoria"         = ("PProducto"->>'IdCategoria')::UUID,
+			"IdUnidadMedida"      = ("PProducto"->>'IdUnidadMedida')::UUID,
+			"StockMinimo"         = COALESCE(("PProducto"->>'StockMinimo')::NUMERIC, "StockMinimo"),
+			"CodigoBarra"         = NULLIF("PProducto"->>'CodigoBarra', ''),
+			"Atributos"           = COALESCE("PProducto"->'Atributos', "Atributos"),
+			"EsGeneral"           = "vEsGeneral",
+			"UsuarioModificacion" = "vUsuario"
+		WHERE "Id" = "vId";
+
+		IF NOT FOUND THEN
+			RAISE EXCEPTION 'El producto no existe.';
+		END IF;
+	END IF;
+
+	DELETE FROM "inv"."T_ProductoTipoEquipo" WHERE "IdProducto" = "vId";
+
+	IF NOT "vEsGeneral" THEN
+		INSERT INTO "inv"."T_ProductoTipoEquipo"
+			("IdProducto","IdTipoEquipo","UsuarioCreacion","UsuarioModificacion")
+		SELECT "vId", t.elem::UUID, "vUsuario", "vUsuario"
+		FROM JSONB_ARRAY_ELEMENTS_TEXT("vTipos") AS t(elem);
+	END IF;
+
+	RETURN "vId";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnGuardarProducto"(JSONB) IS 'Crea (sin Id) o edita (con Id) un producto y reemplaza su compatibilidad por tipo de equipo en una transaccion. Aplica la invariante general XOR tipos.';
+
+CREATE OR REPLACE FUNCTION "inv"."FnAsociarCategoriaTipoEquipo"
+(
+	"PIdCategoria"   UUID
+	,"PIdTipoEquipo" UUID
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	"vInsertados" INTEGER;
+BEGIN
+	UPDATE "inv"."T_Producto"
+	SET "EsGeneral" = FALSE
+	WHERE "IdCategoria" = "PIdCategoria" AND "Estado" = TRUE AND "EsGeneral" = TRUE;
+
+	INSERT INTO "inv"."T_ProductoTipoEquipo" ("IdProducto","IdTipoEquipo")
+	SELECT P."Id", "PIdTipoEquipo"
+	FROM "inv"."T_Producto" P
+	WHERE P."IdCategoria" = "PIdCategoria" AND P."Estado" = TRUE
+	ON CONFLICT ("IdProducto","IdTipoEquipo") DO NOTHING;
+
+	GET DIAGNOSTICS "vInsertados" = ROW_COUNT;
+	RETURN "vInsertados";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnAsociarCategoriaTipoEquipo"(UUID, UUID) IS 'Asocia todos los productos activos de una categoria a un tipo (los marca no-generales). Idempotente, retorna insertados.';
+
+CREATE OR REPLACE VIEW "inv"."V_Producto_StockConsolidado" AS
+SELECT
+	p."Id" AS "IdProducto",
+	p."Sku",
+	p."Nombre" AS "NombreProducto",
+	c."Nombre" AS "NombreCategoria",
+	um."Codigo" AS "CodigoUnidad",
+	p."StockMinimo",
+	COALESCE(SUM(s."CantidadDisponible"), 0::NUMERIC) AS "StockTotal",
+	COALESCE(SUM(s."CantidadDisponible"), 0::NUMERIC) < p."StockMinimo" AS "BajoMinimo",
+	p."IdCategoria",
+	p."CostoPromedio",
+	(SELECT pi."Url"
+		FROM inv."T_ProductoImagen" pi
+		WHERE pi."IdProducto" = p."Id" AND pi."Estado" = TRUE
+		ORDER BY pi."EsPrincipal" DESC, pi."Orden"
+		LIMIT 1) AS "UrlImagenPrincipal",
+	p."EsGeneral"
+FROM inv."T_Producto" p
+	JOIN inv."T_Categoria" c ON c."Id" = p."IdCategoria"
+	JOIN inv."T_UnidadMedida" um ON um."Id" = p."IdUnidadMedida"
+	LEFT JOIN inv."T_SaldoStock" s ON s."IdProducto" = p."Id"
+WHERE p."Estado" = TRUE
+GROUP BY p."Id", p."Sku", p."Nombre", c."Nombre", um."Codigo", p."StockMinimo", p."IdCategoria", p."CostoPromedio", p."EsGeneral";
+
+/* ===================== migrations/0021_atender_requerimiento_v2.sql ===================== */
+/*
+	Aprobacion con entrega por linea (parcial y/o compra directa). Modo stock =
+	sale del almacen; modo compra = entrada de compra + salida (neto 0), valorizada
+	al costo. SECURITY DEFINER; el creador no puede aprobar lo suyo (admin exento).
+*/
+DROP FUNCTION IF EXISTS "inv"."FnAtenderRequerimiento"(UUID, UUID, VARCHAR);
+
+CREATE OR REPLACE FUNCTION "inv"."FnAtenderRequerimiento"
+(
+	"PIdRequerimiento" UUID,
+	"PEntrega"         JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = "inv", "public"
+AS $$
+DECLARE
+	"vReq"         "inv"."T_Requerimiento";
+	"vUbic"        UUID;
+	"vProveedor"   UUID;
+	"vComprobante" TEXT;
+	"vNotas"       TEXT;
+	"vRol"         TEXT;
+	"vLinea"       JSONB;
+	"vIdDetalle"   UUID;
+	"vModo"        TEXT;
+	"vCant"        NUMERIC;
+	"vCosto"       NUMERIC;
+	"vSolicitada"  NUMERIC;
+	"vIdProducto"  UUID;
+	"vNombreProd"  TEXT;
+	"vSalidaDet"   JSONB := '[]'::JSONB;
+	"vCompraDet"   JSONB := '[]'::JSONB;
+	"vIdSalida"    UUID;
+BEGIN
+	"vUbic"        = NULLIF("PEntrega"->>'IdUbicacionOrigen', '')::UUID;
+	"vProveedor"   = NULLIF("PEntrega"->>'IdProveedor', '')::UUID;
+	"vComprobante" = NULLIF("PEntrega"->>'Comprobante', '');
+	"vNotas"       = NULLIF("PEntrega"->>'Notas', '');
+
+	SELECT * INTO "vReq" FROM "inv"."T_Requerimiento"
+	WHERE "Id" = "PIdRequerimiento" AND "Estado" = TRUE FOR UPDATE;
+	IF "vReq" IS NULL THEN
+		RAISE EXCEPTION 'El requerimiento no existe.';
+	END IF;
+	IF "vReq"."Situacion" <> 'pendiente' THEN
+		RAISE EXCEPTION 'Solo se aprueban requerimientos pendientes (situacion actual: %).', "vReq"."Situacion";
+	END IF;
+
+	"vRol" = "seg"."FnRolUsuario"();
+	IF auth.uid() IS NOT NULL
+	   AND auth.uid()::TEXT = "vReq"."UsuarioCreacion"
+	   AND COALESCE("vRol", '') <> 'admin' THEN
+		RAISE EXCEPTION 'No puedes aprobar un requerimiento que tu mismo creaste.';
+	END IF;
+
+	IF "vUbic" IS NULL OR NOT EXISTS (
+		SELECT 1 FROM "inv"."T_Ubicacion" WHERE "Id" = "vUbic" AND "Estado" = TRUE
+	) THEN
+		RAISE EXCEPTION 'El almacen de origen no existe o esta inactivo.';
+	END IF;
+
+	FOR "vLinea" IN SELECT * FROM JSONB_ARRAY_ELEMENTS("PEntrega"->'Lineas')
+	LOOP
+		"vIdDetalle" = ("vLinea"->>'IdDetalle')::UUID;
+		"vModo"      = COALESCE("vLinea"->>'Modo', 'stock');
+		"vCant"      = ("vLinea"->>'Cantidad')::NUMERIC;
+		"vCosto"     = NULLIF("vLinea"->>'Costo', '')::NUMERIC;
+
+		IF "vCant" IS NULL OR "vCant" <= 0 THEN
+			CONTINUE;
+		END IF;
+
+		SELECT D."Cantidad", D."IdProducto", P."Nombre"
+		INTO "vSolicitada", "vIdProducto", "vNombreProd"
+		FROM "inv"."T_RequerimientoDetalle" D
+		JOIN "inv"."T_Producto" P ON P."Id" = D."IdProducto"
+		WHERE D."Id" = "vIdDetalle"
+		  AND D."IdRequerimiento" = "PIdRequerimiento"
+		  AND D."Estado" = TRUE;
+		IF NOT FOUND THEN
+			RAISE EXCEPTION 'Linea de detalle invalida para este requerimiento.';
+		END IF;
+
+		IF "vCant" > "vSolicitada" THEN
+			RAISE EXCEPTION 'No puedes entregar mas de lo solicitado en %: solicitado %, intento %.',
+				"vNombreProd", "vSolicitada", "vCant";
+		END IF;
+
+		"vSalidaDet" = "vSalidaDet" || JSONB_BUILD_OBJECT('IdProducto', "vIdProducto", 'Cantidad', "vCant");
+
+		IF "vModo" = 'compra' THEN
+			IF "vProveedor" IS NULL OR "vComprobante" IS NULL THEN
+				RAISE EXCEPTION 'La compra directa requiere proveedor y comprobante.';
+			END IF;
+			IF "vCosto" IS NULL OR "vCosto" <= 0 THEN
+				RAISE EXCEPTION 'La compra directa de % requiere un costo unitario mayor a cero.', "vNombreProd";
+			END IF;
+			"vCompraDet" = "vCompraDet" || JSONB_BUILD_OBJECT(
+				'IdProducto', "vIdProducto", 'Cantidad', "vCant", 'CostoUnitario', "vCosto"
+			);
+		END IF;
+
+		UPDATE "inv"."T_RequerimientoDetalle"
+		SET "CantidadAtendida" = "vCant"
+		WHERE "Id" = "vIdDetalle";
+	END LOOP;
+
+	IF JSONB_ARRAY_LENGTH("vSalidaDet") = 0 THEN
+		RAISE EXCEPTION 'No se especifico ninguna cantidad a entregar.';
+	END IF;
+
+	IF JSONB_ARRAY_LENGTH("vCompraDet") > 0 THEN
+		PERFORM "inv"."FnRegistrarDocumentoInventario"(JSONB_BUILD_OBJECT(
+			'TipoDocumento',     'entrada',
+			'FechaDocumento',    to_char(CURRENT_DATE, 'YYYY-MM-DD'),
+			'IdUbicacionDestino', "vUbic",
+			'IdProveedor',       "vProveedor",
+			'Comprobante',       "vComprobante",
+			'Referencia',        'Compra directa REQ ' || COALESCE("vReq"."NumeroRequerimiento", LEFT("PIdRequerimiento"::TEXT, 8)),
+			'Notas',             'Compra inmediata para atender requerimiento',
+			'Detalle',           "vCompraDet"
+		));
+	END IF;
+
+	"vIdSalida" = "inv"."FnRegistrarDocumentoInventario"(JSONB_BUILD_OBJECT(
+		'TipoDocumento',     'salida',
+		'FechaDocumento',    to_char(CURRENT_DATE, 'YYYY-MM-DD'),
+		'IdUbicacionOrigen', "vUbic",
+		'IdVehiculo',        "vReq"."IdVehiculo",
+		'Referencia',        COALESCE("vReq"."NumeroRequerimiento", 'REQ ' || LEFT("PIdRequerimiento"::TEXT, 8)),
+		'Notas',             COALESCE("vNotas", 'Atencion de requerimiento'),
+		'Detalle',           "vSalidaDet"
+	));
+
+	UPDATE "inv"."T_Requerimiento"
+	SET "Situacion" = 'atendido', "IdDocumentoInventario" = "vIdSalida"
+	WHERE "Id" = "PIdRequerimiento";
+
+	RETURN "vIdSalida";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnAtenderRequerimiento"(UUID, JSONB) IS 'Aprueba un requerimiento con entrega por linea (parcial y/o compra directa). Modo stock = sale del almacen; modo compra = entrada de compra + salida (neto 0), valorizada al costo. SECURITY DEFINER; el creador no puede aprobar lo suyo (admin exento).';
+
+/* ===================== migrations/0022_fixes_aprobacion.sql ===================== */
+/*
+	Correcciones del flujo de aprobaciones: FnAnularRequerimiento pasa a SECURITY
+	DEFINER (gerencia puede rechazar; control en la API) + guard creador≠quien
+	rechaza. FnAtenderRequerimiento: guard de lineas duplicadas + comentario
+	correcto sobre la valorizacion (promedio movil; = costo de compra solo si no
+	habia stock previo).
+*/
+CREATE OR REPLACE FUNCTION "inv"."FnAnularRequerimiento"
+(
+	"PIdRequerimiento" UUID,
+	"PMotivo"          VARCHAR DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = "inv", "public"
+AS $$
+DECLARE
+	"vReq" "inv"."T_Requerimiento";
+	"vRol" TEXT;
+BEGIN
+	SELECT * INTO "vReq" FROM "inv"."T_Requerimiento"
+	WHERE "Id" = "PIdRequerimiento" AND "Estado" = TRUE FOR UPDATE;
+
+	IF "vReq" IS NULL THEN
+		RAISE EXCEPTION 'El requerimiento no existe.';
+	END IF;
+	IF "vReq"."Situacion" <> 'pendiente' THEN
+		RAISE EXCEPTION 'Solo se rechazan requerimientos pendientes (situacion actual: %).', "vReq"."Situacion";
+	END IF;
+
+	"vRol" = "seg"."FnRolUsuario"();
+	IF auth.uid() IS NOT NULL
+	   AND auth.uid()::TEXT = "vReq"."UsuarioCreacion"
+	   AND COALESCE("vRol", '') <> 'admin' THEN
+		RAISE EXCEPTION 'No puedes rechazar un requerimiento que tu mismo creaste.';
+	END IF;
+
+	UPDATE "inv"."T_Requerimiento"
+	SET "Situacion" = 'anulado',
+		"Notas" = CASE
+			WHEN "PMotivo" IS NULL OR "PMotivo" = '' THEN "Notas"
+			ELSE LEFT(COALESCE("Notas" || ' | ', '') || 'Rechazado: ' || "PMotivo", 500)
+		END
+	WHERE "Id" = "PIdRequerimiento";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnAnularRequerimiento"(UUID, VARCHAR) IS 'Rechaza un requerimiento pendiente (anulado). SECURITY DEFINER; el control de quién rechaza vive en la API (requerimientoAprobar). El creador no puede rechazar lo suyo (admin exento).';
+
+CREATE OR REPLACE FUNCTION "inv"."FnAtenderRequerimiento"
+(
+	"PIdRequerimiento" UUID,
+	"PEntrega"         JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = "inv", "public"
+AS $$
+DECLARE
+	"vReq"         "inv"."T_Requerimiento";
+	"vUbic"        UUID;
+	"vProveedor"   UUID;
+	"vComprobante" TEXT;
+	"vNotas"       TEXT;
+	"vRol"         TEXT;
+	"vLinea"       JSONB;
+	"vIdDetalle"   UUID;
+	"vModo"        TEXT;
+	"vCant"        NUMERIC;
+	"vCosto"       NUMERIC;
+	"vSolicitada"  NUMERIC;
+	"vIdProducto"  UUID;
+	"vNombreProd"  TEXT;
+	"vSalidaDet"   JSONB := '[]'::JSONB;
+	"vCompraDet"   JSONB := '[]'::JSONB;
+	"vIdSalida"    UUID;
+BEGIN
+	"vUbic"        = NULLIF("PEntrega"->>'IdUbicacionOrigen', '')::UUID;
+	"vProveedor"   = NULLIF("PEntrega"->>'IdProveedor', '')::UUID;
+	"vComprobante" = NULLIF("PEntrega"->>'Comprobante', '');
+	"vNotas"       = NULLIF("PEntrega"->>'Notas', '');
+
+	SELECT * INTO "vReq" FROM "inv"."T_Requerimiento"
+	WHERE "Id" = "PIdRequerimiento" AND "Estado" = TRUE FOR UPDATE;
+	IF "vReq" IS NULL THEN
+		RAISE EXCEPTION 'El requerimiento no existe.';
+	END IF;
+	IF "vReq"."Situacion" <> 'pendiente' THEN
+		RAISE EXCEPTION 'Solo se aprueban requerimientos pendientes (situacion actual: %).', "vReq"."Situacion";
+	END IF;
+
+	"vRol" = "seg"."FnRolUsuario"();
+	IF auth.uid() IS NOT NULL
+	   AND auth.uid()::TEXT = "vReq"."UsuarioCreacion"
+	   AND COALESCE("vRol", '') <> 'admin' THEN
+		RAISE EXCEPTION 'No puedes aprobar un requerimiento que tu mismo creaste.';
+	END IF;
+
+	IF "vUbic" IS NULL OR NOT EXISTS (
+		SELECT 1 FROM "inv"."T_Ubicacion" WHERE "Id" = "vUbic" AND "Estado" = TRUE
+	) THEN
+		RAISE EXCEPTION 'El almacen de origen no existe o esta inactivo.';
+	END IF;
+
+	IF (SELECT COUNT(*) FROM JSONB_ARRAY_ELEMENTS("PEntrega"->'Lineas')) <>
+	   (SELECT COUNT(DISTINCT (e->>'IdDetalle')) FROM JSONB_ARRAY_ELEMENTS("PEntrega"->'Lineas') e) THEN
+		RAISE EXCEPTION 'Hay lineas de entrega duplicadas en la solicitud.';
+	END IF;
+
+	FOR "vLinea" IN SELECT * FROM JSONB_ARRAY_ELEMENTS("PEntrega"->'Lineas')
+	LOOP
+		"vIdDetalle" = ("vLinea"->>'IdDetalle')::UUID;
+		"vModo"      = COALESCE("vLinea"->>'Modo', 'stock');
+		"vCant"      = ("vLinea"->>'Cantidad')::NUMERIC;
+		"vCosto"     = NULLIF("vLinea"->>'Costo', '')::NUMERIC;
+
+		IF "vCant" IS NULL OR "vCant" <= 0 THEN
+			CONTINUE;
+		END IF;
+
+		SELECT D."Cantidad", D."IdProducto", P."Nombre"
+		INTO "vSolicitada", "vIdProducto", "vNombreProd"
+		FROM "inv"."T_RequerimientoDetalle" D
+		JOIN "inv"."T_Producto" P ON P."Id" = D."IdProducto"
+		WHERE D."Id" = "vIdDetalle"
+		  AND D."IdRequerimiento" = "PIdRequerimiento"
+		  AND D."Estado" = TRUE;
+		IF NOT FOUND THEN
+			RAISE EXCEPTION 'Linea de detalle invalida para este requerimiento.';
+		END IF;
+
+		IF "vCant" > "vSolicitada" THEN
+			RAISE EXCEPTION 'No puedes entregar mas de lo solicitado en %: solicitado %, intento %.',
+				"vNombreProd", "vSolicitada", "vCant";
+		END IF;
+
+		"vSalidaDet" = "vSalidaDet" || JSONB_BUILD_OBJECT('IdProducto', "vIdProducto", 'Cantidad', "vCant");
+
+		IF "vModo" = 'compra' THEN
+			IF "vProveedor" IS NULL OR "vComprobante" IS NULL THEN
+				RAISE EXCEPTION 'La compra directa requiere proveedor y comprobante.';
+			END IF;
+			IF "vCosto" IS NULL OR "vCosto" <= 0 THEN
+				RAISE EXCEPTION 'La compra directa de % requiere un costo unitario mayor a cero.', "vNombreProd";
+			END IF;
+			"vCompraDet" = "vCompraDet" || JSONB_BUILD_OBJECT(
+				'IdProducto', "vIdProducto", 'Cantidad', "vCant", 'CostoUnitario', "vCosto"
+			);
+		END IF;
+
+		UPDATE "inv"."T_RequerimientoDetalle"
+		SET "CantidadAtendida" = "vCant"
+		WHERE "Id" = "vIdDetalle";
+	END LOOP;
+
+	IF JSONB_ARRAY_LENGTH("vSalidaDet") = 0 THEN
+		RAISE EXCEPTION 'No se especifico ninguna cantidad a entregar.';
+	END IF;
+
+	IF JSONB_ARRAY_LENGTH("vCompraDet") > 0 THEN
+		PERFORM "inv"."FnRegistrarDocumentoInventario"(JSONB_BUILD_OBJECT(
+			'TipoDocumento',     'entrada',
+			'FechaDocumento',    to_char(CURRENT_DATE, 'YYYY-MM-DD'),
+			'IdUbicacionDestino', "vUbic",
+			'IdProveedor',       "vProveedor",
+			'Comprobante',       "vComprobante",
+			'Referencia',        'Compra directa REQ ' || COALESCE("vReq"."NumeroRequerimiento", LEFT("PIdRequerimiento"::TEXT, 8)),
+			'Notas',             'Compra inmediata para atender requerimiento',
+			'Detalle',           "vCompraDet"
+		));
+	END IF;
+
+	"vIdSalida" = "inv"."FnRegistrarDocumentoInventario"(JSONB_BUILD_OBJECT(
+		'TipoDocumento',     'salida',
+		'FechaDocumento',    to_char(CURRENT_DATE, 'YYYY-MM-DD'),
+		'IdUbicacionOrigen', "vUbic",
+		'IdVehiculo',        "vReq"."IdVehiculo",
+		'Referencia',        COALESCE("vReq"."NumeroRequerimiento", 'REQ ' || LEFT("PIdRequerimiento"::TEXT, 8)),
+		'Notas',             COALESCE("vNotas", 'Atencion de requerimiento'),
+		'Detalle',           "vSalidaDet"
+	));
+
+	UPDATE "inv"."T_Requerimiento"
+	SET "Situacion" = 'atendido', "IdDocumentoInventario" = "vIdSalida"
+	WHERE "Id" = "PIdRequerimiento";
+
+	RETURN "vIdSalida";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnAtenderRequerimiento"(UUID, JSONB) IS 'Aprueba un requerimiento con entrega por linea (parcial y/o compra directa). Modo stock = sale del almacen. Modo compra = entrada de compra + salida: el consumo se valoriza al COSTO PROMEDIO MOVIL resultante (igual al costo de compra solo si el producto no tenia stock previo; con stock previo el promedio se mezcla, NIC 2). Un solo proveedor/comprobante por aprobacion. SECURITY DEFINER; control de quien aprueba en la API; el creador no aprueba lo suyo (admin exento).';
+
+/* ===================== migrations/0023_historial_precios_stock.sql ===================== */
+/*
+	Historial de precios + remanente de stock por lote (FIFO de solo lectura).
+	TieneStock=true si el lote aun respalda stock. No cambia la valorizacion
+	(promedio movil); habilita/inhabilita el override de precio en salidas.
+*/
+CREATE OR REPLACE FUNCTION "inv"."FnHistorialPreciosProducto"
+(
+	"PIdProducto" UUID
+)
+RETURNS TABLE
+(
+	"Id"                    UUID,
+	"IdProducto"            UUID,
+	"Costo"                 NUMERIC,
+	"CostoPromedio"         NUMERIC,
+	"FechaPrecio"           DATE,
+	"IdProveedor"           UUID,
+	"IdDocumentoInventario" UUID,
+	"Origen"                VARCHAR,
+	"NombreProveedor"       TEXT,
+	"CantidadComprada"      NUMERIC,
+	"CantidadRemanente"     NUMERIC,
+	"TieneStock"            BOOLEAN
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = "inv", "public"
+AS $$
+	WITH "stock" AS (
+		SELECT COALESCE(SUM("CantidadDisponible"), 0) AS "s"
+		FROM "inv"."T_SaldoStock"
+		WHERE "IdProducto" = "PIdProducto"
+	),
+	"lotes" AS (
+		SELECT
+			h."Id", h."IdProducto", h."Costo", h."CostoPromedio", h."FechaPrecio",
+			h."IdProveedor", h."IdDocumentoInventario", h."Origen", h."FechaCreacion",
+			COALESCE((
+				SELECT SUM(m."Cantidad")
+				FROM "inv"."T_MovimientoStock" m
+				WHERE m."IdDocumentoInventario" = h."IdDocumentoInventario"
+				  AND m."IdProducto" = h."IdProducto"
+				  AND m."Direccion" = 1
+			), 0) AS "qty"
+		FROM "inv"."T_ProductoPrecioHistorico" h
+		WHERE h."IdProducto" = "PIdProducto" AND h."Estado" = TRUE
+	),
+	"fifo" AS (
+		SELECT *,
+			SUM("qty") OVER (
+				ORDER BY "FechaPrecio" DESC, "FechaCreacion" DESC, "Id" DESC
+				ROWS UNBOUNDED PRECEDING
+			) AS "acum"
+		FROM "lotes"
+	)
+	SELECT
+		f."Id", f."IdProducto", f."Costo", f."CostoPromedio", f."FechaPrecio",
+		f."IdProveedor", f."IdDocumentoInventario", f."Origen",
+		pr."Nombre" AS "NombreProveedor",
+		f."qty" AS "CantidadComprada",
+		GREATEST(0, LEAST(f."qty", (SELECT "s" FROM "stock") - (f."acum" - f."qty"))) AS "CantidadRemanente",
+		(GREATEST(0, LEAST(f."qty", (SELECT "s" FROM "stock") - (f."acum" - f."qty"))) > 0) AS "TieneStock"
+	FROM "fifo" f
+	LEFT JOIN "inv"."T_Proveedor" pr ON pr."Id" = f."IdProveedor"
+	ORDER BY f."FechaPrecio" DESC, f."FechaCreacion" DESC, f."Id" DESC
+	LIMIT 50;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnHistorialPreciosProducto"(UUID) IS 'Historial de precios + remanente de stock por lote (FIFO de solo lectura sobre el ledger). TieneStock=true si el lote aun respalda stock. No cambia la valorizacion (promedio movil); solo habilita/inhabilita el override de precio en salidas.';
+
+/* ===================== migrations/0024_codigo_producto_proveedor.sql ===================== */
+/*
+	Codigo del producto en el proveedor (el que se usa al comprar, ej. 'X123').
+	Campo distinto del codigo de barras. Un solo codigo por producto (si se
+	necesita uno por proveedor, migrar a una puente producto-proveedor).
+*/
+ALTER TABLE "inv"."T_Producto"
+	ADD COLUMN IF NOT EXISTS "CodigoProductoProveedor" VARCHAR(60);
+
+COMMENT ON COLUMN "inv"."T_Producto"."CodigoProductoProveedor" IS 'Código del producto en el proveedor (el que se brinda al comprar). Distinto del código de barras.';
+
+CREATE OR REPLACE FUNCTION "inv"."FnGuardarProducto"
+(
+	"PProducto" JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	"vId"        UUID;
+	"vEsGeneral" BOOLEAN;
+	"vUsuario"   VARCHAR(50);
+	"vTipos"     JSONB;
+	"vCantTipos" INT;
+BEGIN
+	"vUsuario"   = COALESCE(auth.uid()::TEXT, 'API');
+	"vId"        = NULLIF("PProducto"->>'Id', '')::UUID;
+	"vEsGeneral" = COALESCE(("PProducto"->>'EsGeneral')::BOOLEAN, FALSE);
+	"vTipos"     = COALESCE("PProducto"->'IdsTipoEquipo', '[]'::JSONB);
+	"vCantTipos" = JSONB_ARRAY_LENGTH("vTipos");
+
+	IF "vEsGeneral" AND "vCantTipos" > 0 THEN
+		RAISE EXCEPTION 'Un producto general no lleva tipos de equipo.';
+	END IF;
+	IF NOT "vEsGeneral" AND "vCantTipos" = 0 THEN
+		RAISE EXCEPTION 'Elige al menos un tipo de equipo o marca el producto como general.';
+	END IF;
+
+	IF "vId" IS NULL THEN
+		INSERT INTO "inv"."T_Producto"
+		(
+			"Sku","Nombre","IdCategoria","IdUnidadMedida","StockMinimo",
+			"CodigoBarra","CodigoProductoProveedor","Atributos","EsGeneral",
+			"UsuarioCreacion","UsuarioModificacion"
+		)
+		VALUES
+		(
+			"PProducto"->>'Sku',
+			"PProducto"->>'Nombre',
+			("PProducto"->>'IdCategoria')::UUID,
+			("PProducto"->>'IdUnidadMedida')::UUID,
+			COALESCE(("PProducto"->>'StockMinimo')::NUMERIC, 0),
+			NULLIF("PProducto"->>'CodigoBarra', ''),
+			NULLIF("PProducto"->>'CodigoProductoProveedor', ''),
+			COALESCE("PProducto"->'Atributos', '{}'::JSONB),
+			"vEsGeneral",
+			"vUsuario",
+			"vUsuario"
+		)
+		RETURNING "Id" INTO "vId";
+	ELSE
+		UPDATE "inv"."T_Producto"
+		SET "Sku"                     = "PProducto"->>'Sku',
+			"Nombre"                  = "PProducto"->>'Nombre',
+			"IdCategoria"             = ("PProducto"->>'IdCategoria')::UUID,
+			"IdUnidadMedida"          = ("PProducto"->>'IdUnidadMedida')::UUID,
+			"StockMinimo"             = COALESCE(("PProducto"->>'StockMinimo')::NUMERIC, "StockMinimo"),
+			"CodigoBarra"             = NULLIF("PProducto"->>'CodigoBarra', ''),
+			"CodigoProductoProveedor" = NULLIF("PProducto"->>'CodigoProductoProveedor', ''),
+			"Atributos"               = COALESCE("PProducto"->'Atributos', "Atributos"),
+			"EsGeneral"               = "vEsGeneral",
+			"UsuarioModificacion"     = "vUsuario"
+		WHERE "Id" = "vId";
+
+		IF NOT FOUND THEN
+			RAISE EXCEPTION 'El producto no existe.';
+		END IF;
+	END IF;
+
+	DELETE FROM "inv"."T_ProductoTipoEquipo" WHERE "IdProducto" = "vId";
+
+	IF NOT "vEsGeneral" THEN
+		INSERT INTO "inv"."T_ProductoTipoEquipo"
+			("IdProducto","IdTipoEquipo","UsuarioCreacion","UsuarioModificacion")
+		SELECT "vId", t.elem::UUID, "vUsuario", "vUsuario"
+		FROM JSONB_ARRAY_ELEMENTS_TEXT("vTipos") AS t(elem);
+	END IF;
+
+	RETURN "vId";
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnGuardarProducto"(JSONB) IS 'Crea (sin Id) o edita (con Id) un producto (incluye CodigoProductoProveedor) y reemplaza su compatibilidad por tipo de equipo en una transaccion. Aplica la invariante general XOR tipos.';
+
+/* ===================== migrations/0025_dependencias_categoria.sql ===================== */
+/*
+	FnContarDependencias: rama 'categoria' (productos con esa IdCategoria +
+	subcategorias con esa IdCategoriaPadre) para borrado seguro de categorías.
+*/
+CREATE OR REPLACE FUNCTION "inv"."FnContarDependencias"
+(
+	"PEntidad" TEXT
+	,"PId"     UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = "inv", "public"
+AS $$
+DECLARE
+	"vResultado" JSONB;
+	"vTotal"     NUMERIC;
+BEGIN
+	IF "PEntidad" = 'producto' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'movimientos', (SELECT COUNT(*) FROM "inv"."T_MovimientoStock" WHERE "IdProducto" = "PId"),
+			'detalleDocumentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventarioDetalle" WHERE "IdProducto" = "PId"),
+			'detalleRequerimientos', (SELECT COUNT(*) FROM "inv"."T_RequerimientoDetalle" WHERE "IdProducto" = "PId"),
+			'stockDisponible', (SELECT COALESCE(SUM("CantidadDisponible"), 0) FROM "inv"."T_SaldoStock" WHERE "IdProducto" = "PId")
+		);
+	ELSIF "PEntidad" = 'proveedor' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'documentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventario" WHERE "IdProveedor" = "PId"),
+			'precios', (SELECT COUNT(*) FROM "inv"."T_ProductoPrecioHistorico" WHERE "IdProveedor" = "PId")
+		);
+	ELSIF "PEntidad" = 'ubicacion' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'documentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventario" WHERE "IdUbicacionOrigen" = "PId" OR "IdUbicacionDestino" = "PId"),
+			'movimientos', (SELECT COUNT(*) FROM "inv"."T_MovimientoStock" WHERE "IdUbicacion" = "PId"),
+			'stockDisponible', (SELECT COALESCE(SUM("CantidadDisponible"), 0) FROM "inv"."T_SaldoStock" WHERE "IdUbicacion" = "PId")
+		);
+	ELSIF "PEntidad" = 'equipo' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'vehiculos', (SELECT COUNT(*) FROM "inv"."T_Vehiculo" WHERE "IdEquipo" = "PId"),
+			'requerimientos', (SELECT COUNT(*) FROM "inv"."T_Requerimiento" WHERE "IdEquipo" = "PId")
+		);
+	ELSIF "PEntidad" = 'vehiculo' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'documentos', (SELECT COUNT(*) FROM "inv"."T_DocumentoInventario" WHERE "IdVehiculo" = "PId"),
+			'requerimientos', (SELECT COUNT(*) FROM "inv"."T_Requerimiento" WHERE "IdVehiculo" = "PId")
+		);
+	ELSIF "PEntidad" = 'tipoEquipo' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'equipos', (SELECT COUNT(*) FROM "inv"."T_Equipo" WHERE "IdTipoEquipo" = "PId"),
+			'productosAsociados', (SELECT COUNT(*) FROM "inv"."T_ProductoTipoEquipo" WHERE "IdTipoEquipo" = "PId")
+		);
+	ELSIF "PEntidad" = 'categoria' THEN
+		"vResultado" = JSONB_BUILD_OBJECT(
+			'productos', (SELECT COUNT(*) FROM "inv"."T_Producto" WHERE "IdCategoria" = "PId" AND "Estado" = TRUE),
+			'subcategorias', (SELECT COUNT(*) FROM "inv"."T_Categoria" WHERE "IdCategoriaPadre" = "PId" AND "Estado" = TRUE)
+		);
+	ELSE
+		RAISE EXCEPTION 'Entidad no soportada para verificacion de dependencias: %', "PEntidad";
+	END IF;
+
+	SELECT COALESCE(SUM(value::NUMERIC), 0) INTO "vTotal"
+	FROM JSONB_EACH_TEXT("vResultado");
+
+	RETURN "vResultado"
+		|| JSONB_BUILD_OBJECT('total', "vTotal")
+		|| JSONB_BUILD_OBJECT('puedeEliminar', "vTotal" = 0);
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnContarDependencias"(TEXT, UUID) IS 'Cuenta datos enlazados de una entidad (incluye categoria: productos + subcategorias). puedeEliminar=true solo si total=0.';
+
+/* ===================== migrations/0026_recambios.sql ===================== */
+/*
+	V_Recambio_Producto: recambios por equipo/placa × producto con intervalo (días)
+	desde el recambio anterior. Acelerado = desgaste_prematuro marcado o intervalo
+	< 50% del promedio del par. Detecta prematuros sin configurar vida útil.
+*/
+CREATE OR REPLACE VIEW "inv"."V_Recambio_Producto"
+WITH (security_invoker = true) AS
+	WITH "base" AS (
+		SELECT
+			RQ."Id"                  AS "IdRequerimiento",
+			RQ."NumeroRequerimiento",
+			RQ."FechaRequerimiento",
+			RQ."Origen",
+			COALESCE(RQ."IdVehiculo", RQ."IdEquipo") AS "TargetId",
+			CASE WHEN RQ."IdVehiculo" IS NOT NULL THEN 'placa' ELSE 'equipo' END AS "TargetTipo",
+			COALESCE(V."Placa", E."Codigo" || ' — ' || E."Nombre") AS "TargetNombre",
+			RD."IdProducto",
+			P."Sku",
+			P."Nombre" AS "NombreProducto",
+			RD."Cantidad",
+			(RQ."FechaRequerimiento" - LAG(RQ."FechaRequerimiento") OVER (
+				PARTITION BY COALESCE(RQ."IdVehiculo", RQ."IdEquipo"), RD."IdProducto"
+				ORDER BY RQ."FechaRequerimiento", RQ."Id"
+			)) AS "DiasDesdeAnterior"
+		FROM "inv"."T_Requerimiento" RQ
+		JOIN "inv"."T_RequerimientoDetalle" RD ON RD."IdRequerimiento" = RQ."Id" AND RD."Estado" = TRUE
+		JOIN "inv"."T_Producto" P ON P."Id" = RD."IdProducto"
+		LEFT JOIN "inv"."T_Vehiculo" V ON V."Id" = RQ."IdVehiculo"
+		LEFT JOIN "inv"."T_Equipo" E ON E."Id" = RQ."IdEquipo"
+		WHERE RQ."Estado" = TRUE
+	),
+	"conprom" AS (
+		SELECT
+			"base".*,
+			AVG("DiasDesdeAnterior") OVER (PARTITION BY "TargetId", "IdProducto") AS "PromedioDiasPar"
+		FROM "base"
+	)
+	SELECT
+		"IdRequerimiento",
+		"NumeroRequerimiento",
+		"FechaRequerimiento",
+		"Origen",
+		"TargetId",
+		"TargetTipo",
+		"TargetNombre",
+		"IdProducto",
+		"Sku",
+		"NombreProducto",
+		"Cantidad",
+		"DiasDesdeAnterior",
+		ROUND("PromedioDiasPar", 1) AS "PromedioDiasPar",
+		(
+			"Origen" = 'desgaste_prematuro'
+			OR (
+				"DiasDesdeAnterior" IS NOT NULL
+				AND "PromedioDiasPar" IS NOT NULL
+				AND "PromedioDiasPar" > 0
+				AND "DiasDesdeAnterior" < "PromedioDiasPar" * 0.5
+			)
+		) AS "Acelerado"
+	FROM "conprom";
+
+COMMENT ON VIEW "inv"."V_Recambio_Producto" IS 'Recambios por equipo/placa × producto con intervalo (días) desde el recambio anterior. Acelerado = desgaste_prematuro marcado o intervalo < 50% del promedio del par. Detecta prematuros sin configurar vida útil.';
+
 /* ===================== seed/seed.sql ===================== */
 /*
 	Base de Datos: Inventario JJ Congeminco (Supabase / PostgreSQL)
@@ -2770,6 +3577,454 @@ FROM
 INNER JOIN "inv"."T_Categoria" C ON C."Codigo" = D."CodigoCategoria"
 CROSS JOIN (SELECT "Id" FROM "inv"."T_UnidadMedida" WHERE "Codigo" = 'UND') U
 ON CONFLICT ("Sku") DO NOTHING;
+
+
+/* ===================== migrations/0027_importar_productos.sql ===================== */
+CREATE OR REPLACE FUNCTION "inv"."FnImportarProductos"
+(
+	"PLote" JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	"vModo"        TEXT;
+	"vUsuario"     VARCHAR(50);
+	"vFilas"       JSONB;
+	"vFila"        JSONB;
+	"vErrores"     JSONB := '[]'::JSONB;
+	"vOps"         JSONB := '[]'::JSONB;
+	"vSkusVistos"  TEXT[] := ARRAY[]::TEXT[];
+	"vNumFila"     INT;
+	"vSku"         TEXT;
+	"vNombre"      TEXT;
+	"vCodCat"      TEXT;
+	"vCodUni"      TEXT;
+	"vEsGeneral"   BOOLEAN;
+	"vTipos"       JSONB;
+	"vCantTipos"   INT;
+	"vStockMin"    NUMERIC;
+	"vIdCategoria" UUID;
+	"vIdUnidad"    UUID;
+	"vIdProducto"  UUID;
+	"vIdsTipos"    UUID[];
+	"vCodTipo"     TEXT;
+	"vIdTipo"      UUID;
+	"vCodsFaltan"  TEXT[];
+	"vCreados"     INT := 0;
+	"vActualiza"   INT := 0;
+	"vErrorFila"   BOOLEAN;
+BEGIN
+	"vUsuario" = COALESCE(auth.uid()::TEXT, 'API');
+	"vModo"    = LOWER(COALESCE("PLote"->>'Modo', 'crear'));
+	IF "vModo" NOT IN ('crear', 'upsert') THEN
+		RAISE EXCEPTION 'Modo invalido: % (use crear o upsert).', "vModo";
+	END IF;
+
+	"vFilas" = COALESCE("PLote"->'Filas', '[]'::JSONB);
+
+	FOR "vFila" IN SELECT * FROM JSONB_ARRAY_ELEMENTS("vFilas")
+	LOOP
+		"vErrorFila" = FALSE;
+		"vNumFila"   = COALESCE(NULLIF("vFila"->>'Fila','')::INT, 0);
+		"vSku"       = NULLIF(TRIM("vFila"->>'Sku'), '');
+		"vNombre"    = NULLIF(TRIM("vFila"->>'Nombre'), '');
+		"vCodCat"    = NULLIF(TRIM("vFila"->>'CodigoCategoria'), '');
+		"vCodUni"    = NULLIF(TRIM("vFila"->>'CodigoUnidad'), '');
+		"vEsGeneral" = COALESCE(("vFila"->>'EsGeneral')::BOOLEAN, FALSE);
+		"vTipos"     = COALESCE("vFila"->'TiposEquipo', '[]'::JSONB);
+		"vCantTipos" = JSONB_ARRAY_LENGTH("vTipos");
+		"vIdCategoria" = NULL;
+		"vIdUnidad"    = NULL;
+		"vIdProducto"  = NULL;
+		"vIdsTipos"    = ARRAY[]::UUID[];
+
+		IF "vSku" IS NULL THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Sku','codigo','CAMPO_REQUERIDO','error','El Sku es obligatorio.');
+			"vErrorFila" = TRUE;
+		END IF;
+		IF "vNombre" IS NULL THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Nombre','codigo','CAMPO_REQUERIDO','error','El Nombre es obligatorio.');
+			"vErrorFila" = TRUE;
+		END IF;
+
+		BEGIN
+			"vStockMin" = COALESCE(NULLIF("vFila"->>'StockMinimo','')::NUMERIC, 0);
+			IF "vStockMin" < 0 THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','StockMinimo','codigo','CAMPO_INVALIDO','error','StockMinimo no puede ser negativo.');
+				"vErrorFila" = TRUE;
+			END IF;
+		EXCEPTION WHEN others THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','StockMinimo','codigo','CAMPO_INVALIDO','error','StockMinimo debe ser numerico.');
+			"vErrorFila" = TRUE;
+			"vStockMin" = 0;
+		END;
+
+		IF "vCodCat" IS NULL THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CodigoCategoria','codigo','CAMPO_REQUERIDO','error','El CodigoCategoria es obligatorio.');
+			"vErrorFila" = TRUE;
+		ELSE
+			SELECT "Id" INTO "vIdCategoria" FROM "inv"."T_Categoria" WHERE "Codigo" = "vCodCat" AND "Estado" = TRUE;
+			IF "vIdCategoria" IS NULL THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CodigoCategoria','codigo','CATEGORIA_NO_EXISTE','error',FORMAT('La categoria "%s" no existe.', "vCodCat"));
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF "vCodUni" IS NULL THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CodigoUnidad','codigo','CAMPO_REQUERIDO','error','El CodigoUnidad es obligatorio.');
+			"vErrorFila" = TRUE;
+		ELSE
+			SELECT "Id" INTO "vIdUnidad" FROM "inv"."T_UnidadMedida" WHERE "Codigo" = "vCodUni" AND "Estado" = TRUE;
+			IF "vIdUnidad" IS NULL THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CodigoUnidad','codigo','UNIDAD_NO_EXISTE','error',FORMAT('La unidad "%s" no existe.', "vCodUni"));
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF "vEsGeneral" AND "vCantTipos" > 0 THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','EsGeneral','codigo','INVARIANTE_GENERAL','error','Un producto general no lleva tipos de equipo.');
+			"vErrorFila" = TRUE;
+		ELSIF NOT "vEsGeneral" AND "vCantTipos" = 0 THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','TiposEquipo','codigo','INVARIANTE_GENERAL','error','Indique al menos un tipo de equipo o marque EsGeneral.');
+			"vErrorFila" = TRUE;
+		END IF;
+
+		IF NOT "vEsGeneral" AND "vCantTipos" > 0 THEN
+			"vCodsFaltan" = ARRAY[]::TEXT[];
+			FOR "vCodTipo" IN SELECT JSONB_ARRAY_ELEMENTS_TEXT("vTipos")
+			LOOP
+				"vCodTipo" = TRIM("vCodTipo");
+				SELECT "Id" INTO "vIdTipo" FROM "inv"."T_TipoEquipo" WHERE "Codigo" = "vCodTipo" AND "Estado" = TRUE;
+				IF "vIdTipo" IS NULL THEN
+					"vCodsFaltan" = "vCodsFaltan" || "vCodTipo";
+				ELSE
+					"vIdsTipos" = "vIdsTipos" || "vIdTipo";
+				END IF;
+			END LOOP;
+			IF ARRAY_LENGTH("vCodsFaltan", 1) > 0 THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','TiposEquipo','codigo','TIPO_EQUIPO_NO_EXISTE','error',FORMAT('Tipos de equipo inexistentes: %s', ARRAY_TO_STRING("vCodsFaltan", ', ')));
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF "vSku" IS NOT NULL THEN
+			IF "vSku" = ANY("vSkusVistos") THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Sku','codigo','SKU_DUPLICADO','error',FORMAT('El Sku "%s" esta repetido en el archivo.', "vSku"));
+				"vErrorFila" = TRUE;
+			ELSE
+				"vSkusVistos" = "vSkusVistos" || "vSku";
+			END IF;
+
+			SELECT "Id" INTO "vIdProducto" FROM "inv"."T_Producto" WHERE "Sku" = "vSku";
+			IF "vIdProducto" IS NOT NULL AND "vModo" = 'crear' THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Sku','codigo','SKU_DUPLICADO','error',FORMAT('El Sku "%s" ya existe (modo crear).', "vSku"));
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF NOT "vErrorFila" THEN
+			"vOps" = "vOps" || JSONB_BUILD_OBJECT(
+				'idProducto', "vIdProducto",
+				'sku', "vSku",
+				'nombre', "vNombre",
+				'idCategoria', "vIdCategoria",
+				'idUnidad', "vIdUnidad",
+				'esGeneral', "vEsGeneral",
+				'idsTipos', TO_JSONB("vIdsTipos"),
+				'stockMin', "vStockMin",
+				'codigoBarra', NULLIF(TRIM("vFila"->>'CodigoBarra'), ''),
+				'codigoProv', NULLIF(TRIM("vFila"->>'CodigoProductoProveedor'), '')
+			);
+		END IF;
+	END LOOP;
+
+	IF JSONB_ARRAY_LENGTH("vErrores") > 0 THEN
+		RETURN JSONB_BUILD_OBJECT(
+			'cantidadFilas',    JSONB_ARRAY_LENGTH("vFilas"),
+			'cantidadCorrectas',0,
+			'cantidadErrores',  JSONB_ARRAY_LENGTH("vErrores"),
+			'creados',          0,
+			'actualizados',     0,
+			'errores',          "vErrores"
+		);
+	END IF;
+
+	FOR "vFila" IN SELECT * FROM JSONB_ARRAY_ELEMENTS("vOps")
+	LOOP
+		"vSku"         = "vFila"->>'sku';
+		"vIdProducto"  = NULLIF("vFila"->>'idProducto','')::UUID;
+		"vEsGeneral"   = ("vFila"->>'esGeneral')::BOOLEAN;
+		"vIdsTipos"    = ARRAY(SELECT JSONB_ARRAY_ELEMENTS_TEXT("vFila"->'idsTipos'))::UUID[];
+
+		IF "vIdProducto" IS NULL THEN
+			INSERT INTO "inv"."T_Producto"
+			(
+				"Sku","Nombre","IdCategoria","IdUnidadMedida","StockMinimo",
+				"CodigoBarra","CodigoProductoProveedor","EsGeneral",
+				"UsuarioCreacion","UsuarioModificacion"
+			)
+			VALUES
+			(
+				"vSku",
+				"vFila"->>'nombre',
+				("vFila"->>'idCategoria')::UUID,
+				("vFila"->>'idUnidad')::UUID,
+				COALESCE(("vFila"->>'stockMin')::NUMERIC, 0),
+				NULLIF("vFila"->>'codigoBarra',''),
+				NULLIF("vFila"->>'codigoProv',''),
+				"vEsGeneral",
+				"vUsuario","vUsuario"
+			)
+			RETURNING "Id" INTO "vIdProducto";
+			"vCreados" = "vCreados" + 1;
+		ELSE
+			UPDATE "inv"."T_Producto"
+			SET "Nombre"                  = "vFila"->>'nombre',
+				"IdCategoria"             = ("vFila"->>'idCategoria')::UUID,
+				"IdUnidadMedida"          = ("vFila"->>'idUnidad')::UUID,
+				"StockMinimo"             = COALESCE(("vFila"->>'stockMin')::NUMERIC, "StockMinimo"),
+				"CodigoBarra"             = NULLIF("vFila"->>'codigoBarra',''),
+				"CodigoProductoProveedor" = NULLIF("vFila"->>'codigoProv',''),
+				"EsGeneral"               = "vEsGeneral",
+				"UsuarioModificacion"     = "vUsuario"
+			WHERE "Id" = "vIdProducto";
+			"vActualiza" = "vActualiza" + 1;
+		END IF;
+
+		DELETE FROM "inv"."T_ProductoTipoEquipo" WHERE "IdProducto" = "vIdProducto";
+		IF NOT "vEsGeneral" THEN
+			INSERT INTO "inv"."T_ProductoTipoEquipo"
+				("IdProducto","IdTipoEquipo","UsuarioCreacion","UsuarioModificacion")
+			SELECT "vIdProducto", t.elem, "vUsuario", "vUsuario"
+			FROM UNNEST("vIdsTipos") AS t(elem);
+		END IF;
+	END LOOP;
+
+	RETURN JSONB_BUILD_OBJECT(
+		'cantidadFilas',    JSONB_ARRAY_LENGTH("vFilas"),
+		'cantidadCorrectas',"vCreados" + "vActualiza",
+		'cantidadErrores',  0,
+		'creados',          "vCreados",
+		'actualizados',     "vActualiza",
+		'errores',          '[]'::JSONB
+	);
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnImportarProductos"(JSONB) IS 'Importacion masiva de productos desde JSON con codigos naturales. Valida todo-o-nada, resuelve categoria/unidad/tipos, aplica invariante general XOR tipos, modo crear|upsert. Devuelve reporte con errores por fila.';
+
+
+/* ===================== migrations/0028_importar_saldos.sql ===================== */
+ALTER TABLE "inv"."T_Importacion"
+	DROP CONSTRAINT IF EXISTS "CHK_T_Importacion_Objetivo_Permitido";
+ALTER TABLE "inv"."T_Importacion"
+	ADD CONSTRAINT "CHK_T_Importacion_Objetivo_Permitido"
+	CHECK ("Objetivo" IN ('productos','movimientos','saldos_iniciales'));
+
+CREATE OR REPLACE FUNCTION "inv"."FnImportarSaldosIniciales"
+(
+	"PLote" JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	"vModo"       TEXT;
+	"vFecha"      DATE;
+	"vFilas"      JSONB;
+	"vFila"       JSONB;
+	"vErrores"    JSONB := '[]'::JSONB;
+	"vOps"        JSONB := '[]'::JSONB;
+	"vParesVistos" TEXT[] := ARRAY[]::TEXT[];
+	"vNumFila"    INT;
+	"vCodUbic"    TEXT;
+	"vSku"        TEXT;
+	"vCantidad"   NUMERIC;
+	"vCosto"      NUMERIC;
+	"vIdUbic"     UUID;
+	"vIdProd"     UUID;
+	"vSaldoAct"   NUMERIC;
+	"vDiff"       NUMERIC;
+	"vErrorFila"  BOOLEAN;
+	"vPar"        TEXT;
+	"vCreados"    INT := 0;
+	"vLineas"     INT := 0;
+	"vCorrectas"  INT := 0;
+	"vIdUbicLoop" UUID;
+	"vDetalle"    JSONB;
+	"vDoc"        JSONB;
+BEGIN
+	"vModo"  = LOWER(COALESCE("PLote"->>'Modo', 'inicial'));
+	IF "vModo" NOT IN ('inicial', 'recuento') THEN
+		RAISE EXCEPTION 'Modo invalido: % (use inicial o recuento).', "vModo";
+	END IF;
+
+	BEGIN
+		"vFecha" = ("PLote"->>'FechaDocumento')::DATE;
+	EXCEPTION WHEN others THEN
+		RAISE EXCEPTION 'FechaDocumento invalida o ausente (formato YYYY-MM-DD).';
+	END;
+	IF "vFecha" IS NULL THEN
+		RAISE EXCEPTION 'FechaDocumento es obligatoria.';
+	END IF;
+
+	"vFilas" = COALESCE("PLote"->'Filas', '[]'::JSONB);
+
+	FOR "vFila" IN SELECT * FROM JSONB_ARRAY_ELEMENTS("vFilas")
+	LOOP
+		"vErrorFila" = FALSE;
+		"vNumFila"   = COALESCE(NULLIF("vFila"->>'Fila','')::INT, 0);
+		"vCodUbic"   = NULLIF(TRIM("vFila"->>'CodigoUbicacion'), '');
+		"vSku"       = NULLIF(TRIM("vFila"->>'Sku'), '');
+		"vIdUbic"    = NULL;
+		"vIdProd"    = NULL;
+		"vCosto"     = NULL;
+
+		BEGIN
+			"vCantidad" = NULLIF("vFila"->>'Cantidad','')::NUMERIC;
+		EXCEPTION WHEN others THEN
+			"vCantidad" = NULL;
+		END;
+		IF "vCantidad" IS NULL OR "vCantidad" <= 0 THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Cantidad','codigo','CANTIDAD_INVALIDA','error','La cantidad debe ser un numero mayor a 0.');
+			"vErrorFila" = TRUE;
+		END IF;
+
+		IF NULLIF("vFila"->>'CostoUnitario','') IS NOT NULL THEN
+			BEGIN
+				"vCosto" = ("vFila"->>'CostoUnitario')::NUMERIC;
+			EXCEPTION WHEN others THEN
+				"vCosto" = NULL;
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CostoUnitario','codigo','COSTO_INVALIDO','error','El costo unitario debe ser numerico.');
+				"vErrorFila" = TRUE;
+			END;
+			IF "vCosto" IS NOT NULL AND "vCosto" < 0 THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CostoUnitario','codigo','COSTO_INVALIDO','error','El costo unitario no puede ser negativo.');
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF "vCodUbic" IS NULL THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CodigoUbicacion','codigo','CAMPO_REQUERIDO','error','El CodigoUbicacion es obligatorio.');
+			"vErrorFila" = TRUE;
+		ELSE
+			SELECT "Id" INTO "vIdUbic" FROM "inv"."T_Ubicacion" WHERE "Codigo" = "vCodUbic";
+			IF "vIdUbic" IS NULL THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','CodigoUbicacion','codigo','UBICACION_NO_EXISTE','error',FORMAT('La ubicacion "%s" no existe.', "vCodUbic"));
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF "vSku" IS NULL THEN
+			"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Sku','codigo','CAMPO_REQUERIDO','error','El Sku es obligatorio.');
+			"vErrorFila" = TRUE;
+		ELSE
+			SELECT "Id" INTO "vIdProd" FROM "inv"."T_Producto" WHERE "Sku" = "vSku" AND "Estado" = TRUE;
+			IF "vIdProd" IS NULL THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Sku','codigo','SKU_NO_EXISTE','error',FORMAT('El Sku "%s" no existe en el catalogo.', "vSku"));
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF "vIdUbic" IS NOT NULL AND "vIdProd" IS NOT NULL THEN
+			"vPar" = "vIdUbic"::TEXT || '|' || "vIdProd"::TEXT;
+			IF "vPar" = ANY("vParesVistos") THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Sku','codigo','DUPLICADO','error',FORMAT('El producto "%s" esta repetido para la ubicacion "%s".', "vSku", "vCodUbic"));
+				"vErrorFila" = TRUE;
+			ELSE
+				"vParesVistos" = "vParesVistos" || "vPar";
+			END IF;
+
+			SELECT COALESCE("CantidadDisponible", 0) INTO "vSaldoAct"
+			FROM "inv"."T_SaldoStock"
+			WHERE "IdProducto" = "vIdProd" AND "IdUbicacion" = "vIdUbic";
+			"vSaldoAct" = COALESCE("vSaldoAct", 0);
+
+			IF "vModo" = 'inicial' AND "vSaldoAct" <> 0 THEN
+				"vErrores" = "vErrores" || JSONB_BUILD_OBJECT('fila',"vNumFila",'columna','Cantidad','codigo','SALDO_YA_EXISTE','error',FORMAT('El producto "%s" ya tiene saldo (%s) en "%s". Use modo recuento para ajustar.', "vSku", "vSaldoAct", "vCodUbic"));
+				"vErrorFila" = TRUE;
+			END IF;
+		END IF;
+
+		IF NOT "vErrorFila" THEN
+			"vDiff" = CASE WHEN "vModo" = 'recuento' THEN "vCantidad" - "vSaldoAct" ELSE "vCantidad" END;
+			"vOps" = "vOps" || JSONB_BUILD_OBJECT(
+				'idUbic', "vIdUbic", 'idProd', "vIdProd",
+				'cantidad', "vCantidad", 'diff', "vDiff", 'costo', "vCosto"
+			);
+		END IF;
+	END LOOP;
+
+	IF JSONB_ARRAY_LENGTH("vErrores") > 0 THEN
+		RETURN JSONB_BUILD_OBJECT(
+			'cantidadFilas', JSONB_ARRAY_LENGTH("vFilas"),
+			'cantidadCorrectas', 0, 'cantidadErrores', JSONB_ARRAY_LENGTH("vErrores"),
+			'creados', 0, 'actualizados', 0, 'errores', "vErrores"
+		);
+	END IF;
+
+	"vCorrectas" = JSONB_ARRAY_LENGTH("vOps");
+
+	IF "vModo" = 'inicial' THEN
+		FOR "vIdUbicLoop" IN SELECT DISTINCT (op->>'idUbic')::UUID FROM JSONB_ARRAY_ELEMENTS("vOps") op
+		LOOP
+			"vDetalle" = (
+				SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+					'IdProducto', op->>'idProd', 'Cantidad', (op->>'cantidad')::NUMERIC, 'CostoUnitario', op->>'costo'))
+				FROM JSONB_ARRAY_ELEMENTS("vOps") op WHERE (op->>'idUbic')::UUID = "vIdUbicLoop"
+			);
+			"vDoc" = JSONB_BUILD_OBJECT(
+				'TipoDocumento', 'existencia_inicial', 'FechaDocumento', "vFecha"::TEXT,
+				'IdUbicacionDestino', "vIdUbicLoop"::TEXT, 'Notas', 'Importacion de existencia inicial', 'Detalle', "vDetalle");
+			PERFORM "inv"."FnRegistrarDocumentoInventario"("vDoc");
+			"vCreados" = "vCreados" + 1;
+			"vLineas"  = "vLineas" + JSONB_ARRAY_LENGTH("vDetalle");
+		END LOOP;
+	ELSE
+		FOR "vIdUbicLoop" IN SELECT DISTINCT (op->>'idUbic')::UUID FROM JSONB_ARRAY_ELEMENTS("vOps") op
+		LOOP
+			"vDetalle" = (
+				SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+					'IdProducto', op->>'idProd', 'Cantidad', (op->>'diff')::NUMERIC, 'CostoUnitario', op->>'costo'))
+				FROM JSONB_ARRAY_ELEMENTS("vOps") op
+				WHERE (op->>'idUbic')::UUID = "vIdUbicLoop" AND (op->>'diff')::NUMERIC > 0
+			);
+			IF "vDetalle" IS NOT NULL THEN
+				"vDoc" = JSONB_BUILD_OBJECT(
+					'TipoDocumento', 'ajuste', 'FechaDocumento', "vFecha"::TEXT,
+					'IdUbicacionDestino', "vIdUbicLoop"::TEXT, 'Notas', 'Ajuste por recuento (entrada)', 'Detalle', "vDetalle");
+				PERFORM "inv"."FnRegistrarDocumentoInventario"("vDoc");
+				"vCreados" = "vCreados" + 1;
+				"vLineas"  = "vLineas" + JSONB_ARRAY_LENGTH("vDetalle");
+			END IF;
+
+			"vDetalle" = (
+				SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+					'IdProducto', op->>'idProd', 'Cantidad', (-1 * (op->>'diff')::NUMERIC)))
+				FROM JSONB_ARRAY_ELEMENTS("vOps") op
+				WHERE (op->>'idUbic')::UUID = "vIdUbicLoop" AND (op->>'diff')::NUMERIC < 0
+			);
+			IF "vDetalle" IS NOT NULL THEN
+				"vDoc" = JSONB_BUILD_OBJECT(
+					'TipoDocumento', 'ajuste', 'FechaDocumento', "vFecha"::TEXT,
+					'IdUbicacionOrigen', "vIdUbicLoop"::TEXT, 'Notas', 'Ajuste por recuento (salida)', 'Detalle', "vDetalle");
+				PERFORM "inv"."FnRegistrarDocumentoInventario"("vDoc");
+				"vCreados" = "vCreados" + 1;
+				"vLineas"  = "vLineas" + JSONB_ARRAY_LENGTH("vDetalle");
+			END IF;
+		END LOOP;
+	END IF;
+
+	RETURN JSONB_BUILD_OBJECT(
+		'cantidadFilas', JSONB_ARRAY_LENGTH("vFilas"),
+		'cantidadCorrectas', "vCorrectas", 'cantidadErrores', 0,
+		'creados', "vCreados", 'actualizados', "vLineas", 'errores', '[]'::JSONB
+	);
+END;
+$$;
+
+COMMENT ON FUNCTION "inv"."FnImportarSaldosIniciales"(JSONB) IS 'Carga masiva de saldos desde JSON. Modo inicial (existencia_inicial) o recuento (ajuste por diferencia). No escribe T_SaldoStock directo: genera documentos y reusa el ledger. Todo-o-nada, errores por fila.';
 
 
 COMMIT;

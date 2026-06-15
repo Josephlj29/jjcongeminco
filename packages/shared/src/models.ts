@@ -19,9 +19,18 @@ export interface Producto extends CamposAuditoria {
   IdUnidadMedida: string;
   StockMinimo: number;
   CodigoBarra: string | null;
+  /* Código del producto en el proveedor (el que se brinda al comprar). */
+  CodigoProductoProveedor: string | null;
   CostoPromedio: number;
   UltimoCosto: number | null;
   Atributos: Record<string, unknown>;
+  /* TRUE = compatible con cualquier tipo de equipo (sin filas en la puente). */
+  EsGeneral: boolean;
+}
+
+/* Producto + su compatibilidad (para el formulario de alta/edición). */
+export interface ProductoConDetalle extends Producto {
+  IdsTipoEquipo: string[];
 }
 
 export interface Equipo extends CamposAuditoria {
@@ -76,9 +85,13 @@ export interface ProductoPrecioHistorico {
   Origen: "compra" | "manual" | "ajuste";
 }
 
-/* Historial de precios con el nombre del proveedor (embed para el dialog) */
+/* Historial de precios con el nombre del proveedor y el remanente de stock por
+   lote (FIFO). TieneStock=false → se muestra pero no se puede elegir como override. */
 export interface PrecioHistoricoConProveedor extends ProductoPrecioHistorico {
   NombreProveedor: string | null;
+  CantidadComprada: number;
+  CantidadRemanente: number;
+  TieneStock: boolean;
 }
 
 export interface Requerimiento extends CamposAuditoria {
@@ -158,6 +171,7 @@ export interface ProductoStockConsolidado {
   IdCategoria: string;
   CostoPromedio: number;
   UrlImagenPrincipal: string | null;
+  EsGeneral: boolean;
 }
 
 /* Salida de la vista inv.V_SaldoStock_PorUbicacion */
@@ -225,6 +239,25 @@ export interface ReporteMovimiento {
   CantidadConSigno: number;
   CostoUnitario: number | null;
   ValorMovimiento: number;
+}
+
+/* Salida de la vista inv.V_Recambio_Producto (reporte de recambios prematuros) */
+export interface ReporteRecambio {
+  IdRequerimiento: string;
+  NumeroRequerimiento: string | null;
+  FechaRequerimiento: string;
+  Origen: "planificado" | "presupuestado" | "desgaste_prematuro";
+  TargetId: string;
+  TargetTipo: "placa" | "equipo";
+  TargetNombre: string;
+  IdProducto: string;
+  Sku: string;
+  NombreProducto: string;
+  Cantidad: number;
+  /* Días desde el recambio anterior del mismo producto en el mismo equipo/placa. */
+  DiasDesdeAnterior: number | null;
+  PromedioDiasPar: number | null;
+  Acelerado: boolean;
 }
 
 /* Salida de la vista inv.V_MovimientoStock_Kardex */

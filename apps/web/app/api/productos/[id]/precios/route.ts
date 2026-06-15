@@ -2,11 +2,11 @@
  * app/api/productos/[id]/precios/route.ts
  *
  * GET /api/productos/:id/precios
- * Histórico de precios del producto desde inv.T_ProductoPrecioHistorico,
- * con embed del nombre del proveedor. Devuelve las últimas 50 filas
- * ordenadas por FechaPrecio desc.
+ * Histórico de precios del producto (inv.FnHistorialPreciosProducto) con el
+ * remanente de stock por lote (FIFO). Cada fila trae TieneStock: si es false,
+ * el precio se muestra pero no debe poder elegirse como override (su lote ya
+ * se consumió). No cambia la valorización (promedio móvil).
  *
- * Respuesta: Array<{ ...columnas, NombreProveedor }>
  * Rol: cualquier usuario autenticado (solo lectura).
  */
 export const runtime = "nodejs";
@@ -15,12 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
-interface ProveedorEmbed {
-  Nombre: string;
-}
-
 interface FilaPrecio {
-  T_Proveedor: ProveedorEmbed | null;
   [key: string]: unknown;
 }
 
@@ -36,20 +31,19 @@ export async function GET(
 
   const { data, error: dbError } = await supabase
     .schema("inv")
-    .from("T_ProductoPrecioHistorico")
-    .select("*, T_Proveedor(Nombre)")
-    .eq("IdProducto", id)
-    .order("FechaPrecio", { ascending: false })
-    .limit(50);
+    .rpc("FnHistorialPreciosProducto", { PIdProducto: id });
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  // Aplanar el embed: extraer NombreProveedor y quitar T_Proveedor del objeto
-  const resultado = (data as FilaPrecio[]).map(({ T_Proveedor, ...resto }) => ({
-    ...resto,
-    NombreProveedor: T_Proveedor?.Nombre ?? null,
+  // NUMERIC puede llegar como string; normalizamos a número para el frontend.
+  const resultado = ((data as FilaPrecio[]) ?? []).map((r) => ({
+    ...r,
+    Costo: Number(r.Costo),
+    CostoPromedio: Number(r.CostoPromedio),
+    CantidadComprada: Number(r.CantidadComprada),
+    CantidadRemanente: Number(r.CantidadRemanente),
   }));
 
   return NextResponse.json(resultado);

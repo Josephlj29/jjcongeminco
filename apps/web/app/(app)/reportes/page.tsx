@@ -42,7 +42,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraficoPorTipoDocumento } from "@/components/charts/GraficoPorTipoDocumento";
 import { GraficoDonutCategorias } from "@/components/charts/GraficoDonutCategorias";
-import type { ReporteMovimiento, ProductoValorizado } from "@congeminco/shared";
+import type {
+  ReporteMovimiento,
+  ProductoValorizado,
+  ReporteRecambio,
+} from "@congeminco/shared";
 import { TIPO_DOCUMENTO } from "@congeminco/shared";
 
 const TIPO_LABEL: Record<string, string> = {
@@ -148,12 +152,41 @@ function KpiMini({
   );
 }
 
+interface FiltrosRecambio {
+  desde: string;
+  hasta: string;
+  soloAcelerados: boolean;
+}
+
+function useReporteRecambios(filtros: FiltrosRecambio, habilitado: boolean) {
+  const params = new URLSearchParams();
+  if (filtros.desde) params.set("desde", filtros.desde);
+  if (filtros.hasta) params.set("hasta", filtros.hasta);
+  if (filtros.soloAcelerados) params.set("soloAcelerados", "true");
+
+  return useQuery({
+    queryKey: ["reportes", "recambios", filtros],
+    queryFn: async () => {
+      const res = await fetch(`/api/reportes/recambios?${params.toString()}`);
+      if (!res.ok) throw new Error("Error al cargar reporte de recambios");
+      return res.json() as Promise<ReporteRecambio[]>;
+    },
+    enabled: habilitado,
+  });
+}
+
 export default function ReportesPage() {
   const [filtros, setFiltros] = useState<FiltrosMovimiento>(FILTROS_INICIAL);
   const [buscarMov, setBuscarMov] = useState(false);
   const [catValorizado, setCatValorizado] = useState("");
   const [soloBajoMinimo, setSoloBajoMinimo] = useState(false);
   const [buscarVal, setBuscarVal] = useState(false);
+  const [recFiltros, setRecFiltros] = useState<FiltrosRecambio>({
+    desde: "",
+    hasta: "",
+    soloAcelerados: true,
+  });
+  const [buscarRec, setBuscarRec] = useState(false);
 
   const { data: categorias } = useCategorias();
   const { data: ubicaciones } = useUbicaciones();
@@ -171,6 +204,20 @@ export default function ReportesPage() {
     soloBajoMinimo,
     buscarVal
   );
+  const { data: recambios, isLoading: cargandoRec } = useReporteRecambios(
+    recFiltros,
+    buscarRec
+  );
+
+  const kpisRec = useMemo(() => {
+    const rows = recambios ?? [];
+    const acelerados = rows.filter((r) => r.Acelerado).length;
+    return {
+      total: rows.length,
+      acelerados,
+      pct: rows.length ? Math.round((acelerados / rows.length) * 100) : 0,
+    };
+  }, [recambios]);
 
   const setFiltro =
     (campo: keyof FiltrosMovimiento) => (valor: string) =>
@@ -332,6 +379,33 @@ export default function ReportesPage() {
     );
   };
 
+  const exportarRecambios = () => {
+    const filas = (recambios ?? []).map((r) => ({
+      Destino: r.TargetNombre,
+      Producto: r.NombreProducto,
+      Sku: r.Sku,
+      Fecha: r.FechaRequerimiento,
+      Origen: r.Origen,
+      Dias: r.DiasDesdeAnterior ?? "",
+      Promedio: r.PromedioDiasPar ?? "",
+      Acelerado: r.Acelerado ? "Sí" : "No",
+    }));
+    exportarCsv(
+      filas,
+      [
+        { key: "Destino", label: "Equipo / Placa" },
+        { key: "Producto", label: "Producto" },
+        { key: "Sku", label: "SKU" },
+        { key: "Fecha", label: "Fecha" },
+        { key: "Origen", label: "Origen" },
+        { key: "Dias", label: "Días desde anterior" },
+        { key: "Promedio", label: "Promedio días" },
+        { key: "Acelerado", label: "Acelerado" },
+      ],
+      "reporte-recambios"
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -345,6 +419,7 @@ export default function ReportesPage() {
         <TabsList>
           <TabsTrigger value="movimientos">Movimientos</TabsTrigger>
           <TabsTrigger value="valorizado">Valorizado</TabsTrigger>
+          <TabsTrigger value="recambios">Recambios</TabsTrigger>
         </TabsList>
 
         {/* ── Movimientos ── */}
@@ -731,6 +806,135 @@ export default function ReportesPage() {
                           </TableCell>
                           <TableCell />
                         </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* ── Recambios (detección de prematuros) ── */}
+        <TabsContent value="recambios" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Filtros</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 max-w-md">
+                <div className="space-y-1">
+                  <Label>Desde</Label>
+                  <Input
+                    type="date"
+                    value={recFiltros.desde}
+                    onChange={(e) =>
+                      setRecFiltros((p) => ({ ...p, desde: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Hasta</Label>
+                  <Input
+                    type="date"
+                    value={recFiltros.hasta}
+                    onChange={(e) =>
+                      setRecFiltros((p) => ({ ...p, hasta: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={recFiltros.soloAcelerados}
+                  onChange={(e) =>
+                    setRecFiltros((p) => ({ ...p, soloAcelerados: e.target.checked }))
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                Solo recambios acelerados (prematuros)
+              </label>
+              <p className="text-[11px] leading-tight text-muted-foreground max-w-md">
+                &quot;Acelerado&quot; = marcado como desgaste prematuro, o pedido de
+                nuevo mucho antes del promedio de ese ítem en ese equipo/placa
+                (sin necesidad de configurar vida útil).
+              </p>
+              <Button onClick={() => setBuscarRec(true)}>Generar reporte</Button>
+            </CardContent>
+          </Card>
+
+          {buscarRec && (
+            <>
+              {cargandoRec ? (
+                <div className="space-y-2">
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-10" />
+                  ))}
+                </div>
+              ) : !recambios?.length ? (
+                <div className="flex items-center justify-center rounded-lg border border-dashed h-28 text-muted-foreground text-sm">
+                  No se encontraron recambios con esos filtros.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <KpiMini titulo="Recambios" valor={String(kpisRec.total)} />
+                    <KpiMini
+                      titulo="Acelerados"
+                      valor={String(kpisRec.acelerados)}
+                      acento={kpisRec.acelerados > 0 ? "negativo" : undefined}
+                    />
+                    <KpiMini titulo="% acelerado" valor={`${kpisRec.pct}%`} />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" onClick={exportarRecambios}>
+                      <Download className="mr-1 h-3.5 w-3.5" />
+                      Exportar CSV
+                    </Button>
+                  </div>
+
+                  <div className="rounded-lg border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Equipo / Placa</TableHead>
+                          <TableHead>Producto</TableHead>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead>Origen</TableHead>
+                          <TableHead className="text-right">Días desde anterior</TableHead>
+                          <TableHead className="text-right">Promedio</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {recambios.map((r) => (
+                          <TableRow key={`${r.IdRequerimiento}-${r.IdProducto}`}>
+                            <TableCell className="text-sm">{r.TargetNombre}</TableCell>
+                            <TableCell className="text-sm font-medium">
+                              {r.NombreProducto}
+                              <span className="ml-1 font-mono text-xs text-muted-foreground">
+                                {r.Sku}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-xs whitespace-nowrap">
+                              {new Date(r.FechaRequerimiento).toLocaleDateString("es-PE")}
+                            </TableCell>
+                            <TableCell className="text-xs">{r.Origen}</TableCell>
+                            <TableCell className="text-right">
+                              {r.DiasDesdeAnterior ?? "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-xs text-muted-foreground">
+                              {r.PromedioDiasPar ?? "—"}
+                            </TableCell>
+                            <TableCell>
+                              {r.Acelerado && (
+                                <Badge variant="warning">Acelerado</Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </div>

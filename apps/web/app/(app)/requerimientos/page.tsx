@@ -12,7 +12,7 @@ import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Trash2, ChevronRight } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearRequerimientoSchema,
@@ -24,7 +24,6 @@ import {
 import { useCrearRequerimiento, useRequerimientos } from "@/hooks/useRequerimientos";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
-import { DialogAprobarRequerimiento } from "@/components/requerimientos/DialogAprobarRequerimiento";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
@@ -84,10 +83,9 @@ export default function RequerimientosPage() {
   const { data: requerimientos, isLoading: cargandoReqs } = useRequerimientos();
 
   const { data: yo } = useRolActual();
-  const puedeAprobar = puede(yo?.rol ?? null, "documentoEscritura");
+  const puedeCrear = puede(yo?.rol ?? null, "requerimientoCrear");
 
   const paginacion = usePaginacion(requerimientos ?? [], 10);
-  const [reqSeleccionado, setReqSeleccionado] = useState<string | null>(null);
 
   const {
     register,
@@ -134,7 +132,8 @@ export default function RequerimientosPage() {
         </p>
       </div>
 
-      {/* Formulario */}
+      {/* Formulario (solo para roles que pueden crear) */}
+      {puedeCrear && (
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Nuevo requerimiento</CardTitle>
@@ -334,6 +333,7 @@ export default function RequerimientosPage() {
           </form>
         </CardContent>
       </Card>
+      )}
 
       {/* Lista reciente */}
       <div>
@@ -357,16 +357,11 @@ export default function RequerimientosPage() {
                   <TableHead>N° Req.</TableHead>
                   <TableHead>Origen</TableHead>
                   <TableHead>Situación</TableHead>
-                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginacion.itemsPagina.map((r) => (
-                  <TableRow
-                    key={r.Id}
-                    className="cursor-pointer"
-                    onClick={() => setReqSeleccionado(r.Id)}
-                  >
+                  <TableRow key={r.Id}>
                     <TableCell className="text-xs">
                       {new Date(r.FechaRequerimiento).toLocaleDateString(
                         "es-PE"
@@ -384,11 +379,8 @@ export default function RequerimientosPage() {
                           SITUACION_VARIANTE[r.Situacion] ?? "default"
                         }
                       >
-                        {r.Situacion === "pendiente" ? "pendiente · revisar" : r.Situacion}
+                        {r.Situacion}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -405,12 +397,6 @@ export default function RequerimientosPage() {
           </div>
         )}
       </div>
-
-      <DialogAprobarRequerimiento
-        idRequerimiento={reqSeleccionado}
-        puedeAprobar={puedeAprobar}
-        onClose={() => setReqSeleccionado(null)}
-      />
     </div>
   );
 }

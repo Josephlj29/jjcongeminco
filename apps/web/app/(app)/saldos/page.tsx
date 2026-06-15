@@ -171,10 +171,12 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
       {/* Tipos de equipo compatibles */}
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Equipos compatibles</h3>
-        {tiposCompatibles.length === 0 ? (
+        {producto.EsGeneral ? (
           <p className="text-sm text-muted-foreground">
             Producto general (compatible con todos los equipos).
           </p>
+        ) : tiposCompatibles.length === 0 ? (
+          <Badge variant="warning">Sin clasificar</Badge>
         ) : (
           <div className="flex flex-wrap gap-2">
             {tiposCompatibles.map((t) => (

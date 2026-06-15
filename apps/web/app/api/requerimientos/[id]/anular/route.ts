@@ -3,7 +3,7 @@
  *
  * POST /api/requerimientos/:id/anular — rechaza un requerimiento pendiente.
  * Body: { Motivo?: string }
- * Rol: documentoEscritura (admin, almacenero, supervision).
+ * Rol: requerimientoAprobar (admin, gerencia, supervision).
  */
 export const runtime = "nodejs";
 
@@ -19,7 +19,7 @@ export async function POST(
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
-  if (!puede(usuario.rol, "documentoEscritura")) {
+  if (!puede(usuario.rol, "requerimientoAprobar")) {
     return respuestaError("No tienes permiso para rechazar requerimientos.", 403);
   }
 

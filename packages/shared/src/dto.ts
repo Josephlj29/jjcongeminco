@@ -21,7 +21,15 @@ export const CrearProductoSchema = z.object({
   IdUnidadMedida: z.string().uuid(),
   StockMinimo: z.number().nonnegative().default(0),
   CodigoBarra: z.string().max(50).optional(),
+  // Código del producto en el proveedor (el que se brinda al comprar). Distinto
+  // del código de barras.
+  CodigoProductoProveedor: z.string().max(60).optional(),
   Atributos: z.record(z.unknown()).default({}),
+  // Compatibilidad por tipo de equipo (fitment del producto).
+  // EsGeneral = aplica a todos los tipos; en ese caso IdsTipoEquipo va vacío.
+  // La invariante (general XOR ≥1 tipo) la valida la BD (FnGuardarProducto).
+  EsGeneral: z.boolean().default(false),
+  IdsTipoEquipo: z.array(z.string().uuid()).default([]),
 });
 export type CrearProducto = z.infer<typeof CrearProductoSchema>;
 
@@ -101,6 +109,20 @@ export const ActualizarUbicacionSchema = CrearUbicacionSchema.partial().extend({
 });
 export type ActualizarUbicacion = z.infer<typeof ActualizarUbicacionSchema>;
 
+/* ─── Categoría / familia (jerárquica: IdCategoriaPadre opcional) ─── */
+export const CrearCategoriaSchema = z.object({
+  Codigo: z.string().min(1).max(20),
+  Nombre: z.string().min(1).max(80),
+  Descripcion: z.string().max(200).optional(),
+  // Padre opcional: sin padre = familia raíz. Referencia por Id (FK).
+  IdCategoriaPadre: z.string().uuid().optional(),
+});
+export type CrearCategoria = z.infer<typeof CrearCategoriaSchema>;
+export const ActualizarCategoriaSchema = CrearCategoriaSchema.partial().extend({
+  Estado: z.boolean().optional(),
+});
+export type ActualizarCategoria = z.infer<typeof ActualizarCategoriaSchema>;
+
 /* ─── Tipo de equipo ─── */
 export const CrearTipoEquipoSchema = z.object({
   Codigo: z.string().min(1).max(20),
@@ -112,12 +134,6 @@ export const ActualizarTipoEquipoSchema = CrearTipoEquipoSchema.partial().extend
   Estado: z.boolean().optional(),
 });
 export type ActualizarTipoEquipo = z.infer<typeof ActualizarTipoEquipoSchema>;
-
-/* Asignar el conjunto de tipos compatibles de un producto (replace-set; vacío = general) */
-export const AsignarTiposEquipoProductoSchema = z.object({
-  IdsTipoEquipo: z.array(z.string().uuid()),
-});
-export type AsignarTiposEquipoProducto = z.infer<typeof AsignarTiposEquipoProductoSchema>;
 
 /* Asociación masiva: todos los productos de una categoría a un tipo */
 export const AsociarCategoriaTipoEquipoSchema = z.object({
@@ -179,15 +195,121 @@ export const CrearRequerimientoSchema = z
   });
 export type CrearRequerimiento = z.infer<typeof CrearRequerimientoSchema>;
 
-/* Aprobar un requerimiento: genera la salida desde el almacén origen elegido. */
-export const AtenderRequerimientoSchema = z.object({
-  IdUbicacionOrigen: z.string().uuid({ message: "Elige un almacén de origen." }),
-  Notas: z.string().max(500).optional(),
+/* Aprobar un requerimiento: entrega por línea desde el almacén origen.
+   Modo 'stock' = sale del almacén; 'compra' = compra directa (entrada+salida),
+   exige proveedor + comprobante (batch) y costo por línea. Cantidad 0 = no se
+   entrega esa línea (entrega parcial). La invariante final la valida la BD. */
+export const MODO_ENTREGA = ["stock", "compra"] as const;
+
+export const LineaEntregaSchema = z.object({
+  IdDetalle: z.string().uuid(),
+  Cantidad: z.number().nonnegative(),
+  Modo: z.enum(MODO_ENTREGA).default("stock"),
+  Costo: z.number().positive().optional(),
 });
+
+export const AtenderRequerimientoSchema = z
+  .object({
+    IdUbicacionOrigen: z.string().uuid({ message: "Elige un almacén de origen." }),
+    Notas: z.string().max(500).optional(),
+    IdProveedor: z.string().uuid().optional(),
+    Comprobante: z.string().max(60).optional(),
+    Lineas: z.array(LineaEntregaSchema).min(1),
+  })
+  .refine((d) => d.Lineas.some((l) => l.Cantidad > 0), {
+    message: "Indicá al menos una cantidad a entregar.",
+    path: ["Lineas"],
+  })
+  .refine(
+    (d) =>
+      !d.Lineas.some((l) => l.Modo === "compra" && l.Cantidad > 0) ||
+      (!!d.IdProveedor && !!d.Comprobante),
+    {
+      message: "La compra directa requiere proveedor y comprobante.",
+      path: ["IdProveedor"],
+    }
+  );
 export type AtenderRequerimiento = z.infer<typeof AtenderRequerimientoSchema>;
+export type LineaEntrega = z.infer<typeof LineaEntregaSchema>;
 
 /* Rechazar un requerimiento pendiente, con motivo opcional. */
 export const AnularRequerimientoSchema = z.object({
   Motivo: z.string().max(500).optional(),
 });
 export type AnularRequerimiento = z.infer<typeof AnularRequerimientoSchema>;
+
+/* ─── Importación masiva ─── */
+
+/* Modo ante un registro que ya existe: solo crear, o crear y actualizar. */
+export const MODO_IMPORTACION = ["crear", "upsert"] as const;
+export type ModoImportacion = (typeof MODO_IMPORTACION)[number];
+
+/* Reporte que devuelven las funciones de importación (errores por fila). */
+export interface ErrorImportacion {
+  fila: number;
+  columna: string;
+  codigo: string;
+  error: string;
+}
+export interface ReporteImportacion {
+  cantidadFilas: number;
+  cantidadCorrectas: number;
+  cantidadErrores: number;
+  creados: number;
+  actualizados: number;
+  errores: ErrorImportacion[];
+}
+
+/* Importación de productos (Excel → JSON → inv.FnImportarProductos).
+   La fila es LAXA a propósito: la validación de negocio (requeridos, códigos,
+   invariante general XOR tipos) la hace la BD y vuelve como errores por fila.
+   Zod sólo garantiza la FORMA para no abortar todo el lote por una celda. */
+export const ImportarProductoFilaSchema = z.object({
+  // Línea real del Excel (para reportar el error donde el usuario lo ve).
+  Fila: z.number().int().positive().optional(),
+  Sku: z.string().trim().default(""),
+  Nombre: z.string().trim().default(""),
+  CodigoCategoria: z.string().trim().default(""),
+  CodigoUnidad: z.string().trim().default(""),
+  EsGeneral: z.boolean().default(false),
+  TiposEquipo: z.array(z.string().trim()).default([]),
+  StockMinimo: z.number().nonnegative().optional(),
+  CodigoBarra: z.string().trim().optional(),
+  CodigoProductoProveedor: z.string().trim().optional(),
+});
+export type ImportarProductoFila = z.infer<typeof ImportarProductoFilaSchema>;
+
+export const ImportarProductosSchema = z.object({
+  Modo: z.enum(MODO_IMPORTACION).default("crear"),
+  Filas: z
+    .array(ImportarProductoFilaSchema)
+    .min(1, "El archivo no tiene filas.")
+    .max(5000, "Máximo 5000 filas por archivo."),
+});
+export type ImportarProductos = z.infer<typeof ImportarProductosSchema>;
+
+/* Importación de saldos (Excel → JSON → inv.FnImportarSaldosIniciales).
+   - inicial : crea existencias (rechaza filas con saldo previo).
+   - recuento: ajusta contra el saldo vigente (toma de inventario). */
+export const MODO_IMPORTACION_SALDO = ["inicial", "recuento"] as const;
+export type ModoImportacionSaldo = (typeof MODO_IMPORTACION_SALDO)[number];
+
+export const ImportarSaldoFilaSchema = z.object({
+  Fila: z.number().int().positive().optional(),
+  CodigoUbicacion: z.string().trim().default(""),
+  Sku: z.string().trim().default(""),
+  // Laxo: la BD valida (>0, numérico) y reporta por fila.
+  Cantidad: z.number().nullish(),
+  CostoUnitario: z.number().nullish(),
+});
+export type ImportarSaldoFila = z.infer<typeof ImportarSaldoFilaSchema>;
+
+export const ImportarSaldosSchema = z.object({
+  Modo: z.enum(MODO_IMPORTACION_SALDO).default("inicial"),
+  FechaDocumento: z.string().date("Fecha de corte inválida (YYYY-MM-DD)."),
+  Filas: z
+    .array(ImportarSaldoFilaSchema)
+    .min(1, "El archivo no tiene filas.")
+    .max(5000, "Máximo 5000 filas por archivo."),
+});
+export type ImportarSaldos = z.infer<typeof ImportarSaldosSchema>;

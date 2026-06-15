@@ -79,39 +79,6 @@ export function useAsociacionesTiposEquipo() {
   });
 }
 
-/* Tipos compatibles de un producto puntual. */
-export function useTiposEquipoDeProducto(idProducto: string | null) {
-  return useQuery({
-    queryKey: ["productos", idProducto, "tipos-equipo"],
-    enabled: !!idProducto,
-    queryFn: async () => {
-      const res = await fetch(`/api/productos/${idProducto}/tipos-equipo`);
-      if (!res.ok) throw new Error(`Error ${res.status} al cargar tipos del producto`);
-      return res.json() as Promise<AsociacionProductoTipoEquipo[]>;
-    },
-  });
-}
-
-/* Reemplaza el set de tipos compatibles de un producto. */
-export function useAsignarTiposEquipo() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ idProducto, idsTipoEquipo }: { idProducto: string; idsTipoEquipo: string[] }) => {
-      const res = await fetch(`/api/productos/${idProducto}/tipos-equipo`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ IdsTipoEquipo: idsTipoEquipo }),
-      });
-      if (!res.ok) throw new Error(await leerError(res));
-      return res.json() as Promise<{ ok: true }>;
-    },
-    onSuccess: (_d, vars) => {
-      void qc.invalidateQueries({ queryKey: ["tipos-equipo", "asociaciones"] });
-      void qc.invalidateQueries({ queryKey: ["productos", vars.idProducto, "tipos-equipo"] });
-    },
-  });
-}
-
 /* Asociación masiva: todos los productos de una categoría a un tipo. */
 export function useAsociarCategoria() {
   const qc = useQueryClient();

@@ -1,17 +1,14 @@
 /**
- * app/api/importaciones/productos/route.ts
+ * app/api/importaciones/saldos-iniciales/route.ts
  *
- * POST /api/importaciones/productos
+ * POST /api/importaciones/saldos-iniciales
  *
- * Recibe JSON { Modo, Filas[] } con CÓDIGOS naturales (no UUIDs). El .xlsx se
- * parsea en el cliente (SheetJS) y se envía ya tipado. La validación de negocio
- * (requeridos, códigos, invariante general XOR tipos, duplicados) y la escritura
- * atómica las hace inv.FnImportarProductos, que devuelve un reporte por fila.
+ * Recibe JSON { Modo, FechaDocumento, Filas[] } con CÓDIGOS naturales. El .xlsx
+ * se parsea en el cliente (SheetJS). NO escribe T_SaldoStock directo: la función
+ * inv.FnImportarSaldosIniciales genera documentos (existencia_inicial o ajuste)
+ * que alimentan el ledger y, por trigger, el saldo y el costo promedio.
  *
- * Solo admin (catalogoAdmin). Usa el cliente del usuario (RLS + auth.uid()),
- * NO service-role: la función respeta permisos y registra quién importó.
- *
- * GOTCHA: .schema("inv") OBLIGATORIO; el parámetro de la RPC es "PLote".
+ * Solo admin (catalogoAdmin). Cliente del usuario (RLS + auth.uid()).
  */
 export const runtime = "nodejs";
 
@@ -19,7 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
-  ImportarProductosSchema,
+  ImportarSaldosSchema,
   puede,
   type ReporteImportacion,
 } from "@congeminco/shared";
@@ -28,17 +25,19 @@ export async function POST(request: NextRequest) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
-  // Importación masiva de catálogo: operación de administrador.
   if (!puede(usuario.rol, "catalogoAdmin")) {
-    return respuestaError("Solo administradores pueden importar productos.", 403);
+    return respuestaError("Solo administradores pueden importar saldos.", 403);
   }
 
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
-    return respuestaError("Se esperaba un cuerpo JSON con { Modo, Filas }.", 400);
+    return respuestaError(
+      "Se esperaba un cuerpo JSON con { Modo, FechaDocumento, Filas }.",
+      400
+    );
   }
 
-  const parsed = ImportarProductosSchema.safeParse(body);
+  const parsed = ImportarSaldosSchema.safeParse(body);
   if (!parsed.success) {
     return respuestaError(
       "Formato del lote inválido.",
@@ -50,7 +49,7 @@ export async function POST(request: NextRequest) {
   const supabase = await crearClienteServidor();
   const { data, error: rpcError } = await supabase
     .schema("inv")
-    .rpc("FnImportarProductos", { PLote: parsed.data });
+    .rpc("FnImportarSaldosIniciales", { PLote: parsed.data });
 
   if (rpcError) {
     return respuestaError(`No se pudo importar: ${rpcError.message}`, 500);
@@ -58,20 +57,17 @@ export async function POST(request: NextRequest) {
 
   const reporte = data as ReporteImportacion;
 
-  // Auditoría. Situacion alineada al CHECK de T_Importacion
-  // ('completado' | 'con_errores' | 'fallido'). Productos es todo-o-nada:
-  // o entra todo (completado) o no entra nada (fallido).
   const nombreArchivo =
     typeof (body as { NombreArchivo?: unknown }).NombreArchivo === "string"
       ? (body as { NombreArchivo: string }).NombreArchivo
-      : "importacion-productos.xlsx";
+      : "importacion-saldos.xlsx";
 
   await supabase
     .schema("inv")
     .from("T_Importacion")
     .insert({
       NombreArchivo: nombreArchivo,
-      Objetivo: "productos",
+      Objetivo: "saldos_iniciales",
       CantidadFilas: reporte.cantidadFilas,
       CantidadCorrectas: reporte.cantidadCorrectas,
       LogErrores: reporte.errores,

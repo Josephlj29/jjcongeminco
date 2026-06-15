@@ -8,15 +8,16 @@
  * - Dialog para crear nuevo producto (valida con CrearProductoSchema)
  * - Gestión de imágenes (subir hasta MAX_IMAGENES_PRODUCTO a Supabase Storage)
  * - Ver kardex del producto en un dialog
- * - Columna "Tipos de equipo": chips derivados de useAsociacionesTiposEquipo() (1 sola query)
- * - Acción "Tipos" por fila: abre DialogTiposEquipo (Command con checkboxes)
- * - Botón toolbar "Asociar por categoría": asociación masiva categoría→tipo
+ * - Compatibilidad (general o tipos de equipo) se configura en el ALTA/EDICIÓN
+ *   del producto (DialogProducto), no en la grilla. La grilla solo la muestra.
+ * - Columna "Tipos de equipo": "General" / chips por tipo / "Sin clasificar"
+ * - Botón toolbar "Asociar por categoría": asociación masiva categoría→tipo (atajo)
  * - Acciones restringidas por rol (productoEscritura)
  */
 import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Search, Image as ImageIcon, Trash2, Wrench, Tags } from "lucide-react";
+import { Plus, Search, Image as ImageIcon, Trash2, Pencil, Tags } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { usePaginacion } from "@/hooks/usePaginacion";
@@ -28,15 +29,19 @@ import {
   puede,
   MAX_IMAGENES_PRODUCTO,
 } from "@congeminco/shared";
-import { useProductos, useCrearProducto, useEliminarProducto } from "@/hooks/useProductos";
+import {
+  useProductos,
+  useCrearProducto,
+  useEditarProducto,
+  useProductoDetalle,
+  useEliminarProducto,
+} from "@/hooks/useProductos";
 import { useImagenesProducto, useCrearImagenProducto, useEliminarImagenProducto } from "@/hooks/useImagenes";
 import { useCategorias, useUnidades } from "@/hooks/useCatalogo";
 import { useKardex } from "@/hooks/useKardex";
 import {
   useTiposEquipo,
   useAsociacionesTiposEquipo,
-  useTiposEquipoDeProducto,
-  useAsignarTiposEquipo,
   useAsociarCategoria,
 } from "@/hooks/useTiposEquipo";
 import { Button } from "@/components/ui/button";
@@ -89,6 +94,7 @@ interface ProductoConsolidado {
   StockTotal: number;
   BajoMinimo: boolean;
   IdCategoria: string;
+  EsGeneral: boolean;
 }
 
 /* ─── Hook: rol del usuario actual ─── */
@@ -103,43 +109,132 @@ function useRolActual() {
   });
 }
 
-/* ─── Dialog: Nuevo producto ─── */
-function DialogNuevoProducto({
+/* ─── Dialog: Alta / edición de producto ───
+   La compatibilidad (general o tipos de equipo) se configura ACÁ, en el alta,
+   no en la grilla. */
+function DialogProducto({
   open,
+  producto,
   onClose,
 }: {
   open: boolean;
+  producto: ProductoConsolidado | null;
   onClose: () => void;
 }) {
-  const { mutateAsync, isPending } = useCrearProducto();
+  const esEdicion = !!producto;
+  const { mutateAsync: crear, isPending: creando } = useCrearProducto();
+  const { mutateAsync: editar, isPending: editandoProd } = useEditarProducto();
   const { data: categorias } = useCategorias();
   const { data: unidades } = useUnidades();
+  const { data: tipos } = useTiposEquipo();
+  const { data: detalle, isLoading: cargandoDetalle } = useProductoDetalle(
+    producto?.IdProducto ?? null
+  );
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors },
-  } = useForm<CrearProducto>({ resolver: zodResolver(CrearProductoSchema) });
+  } = useForm<CrearProducto>({
+    resolver: zodResolver(CrearProductoSchema),
+    defaultValues: {
+      StockMinimo: 0,
+      Atributos: {},
+      EsGeneral: false,
+      IdsTipoEquipo: [],
+    },
+  });
+
+  const esGeneral = watch("EsGeneral");
+  const idsTipo = watch("IdsTipoEquipo") ?? [];
+  const idCategoria = watch("IdCategoria");
+  const idUnidad = watch("IdUnidadMedida");
+
+  // Prellenar al abrir (edición) o limpiar (alta).
+  useEffect(() => {
+    if (!open) return;
+    if (esEdicion && detalle) {
+      reset({
+        Sku: detalle.Sku,
+        Nombre: detalle.Nombre,
+        IdCategoria: detalle.IdCategoria,
+        IdUnidadMedida: detalle.IdUnidadMedida,
+        StockMinimo: detalle.StockMinimo,
+        CodigoBarra: detalle.CodigoBarra ?? undefined,
+        CodigoProductoProveedor: detalle.CodigoProductoProveedor ?? undefined,
+        Atributos: detalle.Atributos,
+        EsGeneral: detalle.EsGeneral,
+        IdsTipoEquipo: detalle.IdsTipoEquipo,
+      });
+    } else if (!esEdicion) {
+      reset({
+        Sku: "",
+        Nombre: "",
+        IdCategoria: undefined,
+        IdUnidadMedida: undefined,
+        StockMinimo: 0,
+        CodigoBarra: undefined,
+        CodigoProductoProveedor: undefined,
+        Atributos: {},
+        EsGeneral: false,
+        IdsTipoEquipo: [],
+      });
+    }
+  }, [open, esEdicion, detalle, reset]);
+
+  const toggleTipo = (id: string) => {
+    const next = idsTipo.includes(id)
+      ? idsTipo.filter((x) => x !== id)
+      : [...idsTipo, id];
+    setValue("IdsTipoEquipo", next, { shouldValidate: true });
+  };
 
   const onSubmit = async (data: CrearProducto) => {
+    if (!data.EsGeneral && (data.IdsTipoEquipo?.length ?? 0) === 0) {
+      toast.error(
+        "Elegí al menos un tipo de equipo o marcá el producto como general."
+      );
+      return;
+    }
+    const payload: CrearProducto = {
+      ...data,
+      IdsTipoEquipo: data.EsGeneral ? [] : data.IdsTipoEquipo,
+    };
     try {
-      await mutateAsync(data);
-      toast.success("Producto creado correctamente");
-      reset();
+      if (esEdicion && producto) {
+        await editar({ id: producto.IdProducto, data: payload });
+        toast.success("Producto actualizado");
+      } else {
+        await crear(payload);
+        toast.success("Producto creado correctamente");
+      }
       onClose();
     } catch (e) {
       toast.error((e as Error).message);
     }
   };
 
+  const guardando = creando || editandoProd;
+  // En edición, no renderizamos el form hasta tener el detalle: evita mostrar
+  // (y peor, guardar) los datos del producto editado anteriormente.
+  const cargandoEdicion = esEdicion && (cargandoDetalle || !detalle);
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nuevo producto</DialogTitle>
+          <DialogTitle>{esEdicion ? "Editar producto" : "Nuevo producto"}</DialogTitle>
         </DialogHeader>
+        {cargandoEdicion ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-10" />
+            ))}
+          </div>
+        ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -155,7 +250,6 @@ function DialogNuevoProducto({
                 id="StockMinimo"
                 type="number"
                 min={0}
-                defaultValue={0}
                 {...register("StockMinimo", { valueAsNumber: true })}
               />
             </div>
@@ -169,16 +263,17 @@ function DialogNuevoProducto({
               {...register("Nombre")}
             />
             {errors.Nombre && (
-              <p className="text-xs text-destructive">
-                {errors.Nombre.message}
-              </p>
+              <p className="text-xs text-destructive">{errors.Nombre.message}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Categoría</Label>
-              <Select onValueChange={(v) => setValue("IdCategoria", v)}>
+              <Select
+                value={idCategoria ?? ""}
+                onValueChange={(v) => setValue("IdCategoria", v, { shouldValidate: true })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar..." />
                 </SelectTrigger>
@@ -191,14 +286,15 @@ function DialogNuevoProducto({
                 </SelectContent>
               </Select>
               {errors.IdCategoria && (
-                <p className="text-xs text-destructive">
-                  {errors.IdCategoria.message}
-                </p>
+                <p className="text-xs text-destructive">{errors.IdCategoria.message}</p>
               )}
             </div>
             <div className="space-y-1">
               <Label>Unidad de medida</Label>
-              <Select onValueChange={(v) => setValue("IdUnidadMedida", v)}>
+              <Select
+                value={idUnidad ?? ""}
+                onValueChange={(v) => setValue("IdUnidadMedida", v, { shouldValidate: true })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar..." />
                 </SelectTrigger>
@@ -211,16 +307,94 @@ function DialogNuevoProducto({
                 </SelectContent>
               </Select>
               {errors.IdUnidadMedida && (
-                <p className="text-xs text-destructive">
-                  {errors.IdUnidadMedida.message}
-                </p>
+                <p className="text-xs text-destructive">{errors.IdUnidadMedida.message}</p>
               )}
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="CodigoBarra">Código de barra (opcional)</Label>
-            <Input id="CodigoBarra" {...register("CodigoBarra")} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="CodigoProductoProveedor">Código del proveedor</Label>
+              <Input
+                id="CodigoProductoProveedor"
+                placeholder="Ej. X123"
+                {...register("CodigoProductoProveedor")}
+              />
+              <p className="text-[11px] leading-tight text-muted-foreground">
+                Con el que el proveedor identifica el producto (para comprar).
+              </p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="CodigoBarra">Código de barra (opcional)</Label>
+              <Input id="CodigoBarra" {...register("CodigoBarra")} />
+            </div>
+          </div>
+
+          {/* Compatibilidad: general o tipos específicos */}
+          <div className="space-y-2 rounded-lg border p-3">
+            <Label>¿A qué equipos aplica?</Label>
+            <button
+              type="button"
+              onClick={() => setValue("EsGeneral", !esGeneral, { shouldValidate: true })}
+              className="flex w-full items-center gap-2 text-left text-sm"
+            >
+              <span
+                className={`h-4 w-4 rounded border flex items-center justify-center text-xs font-bold ${
+                  esGeneral
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "border-muted-foreground/40"
+                }`}
+              >
+                {esGeneral && "✓"}
+              </span>
+              <span>General — compatible con todos los equipos</span>
+            </button>
+
+            {!esGeneral && (
+              <div className="space-y-1 pt-1">
+                <p className="text-xs text-muted-foreground">
+                  Seleccioná los tipos de equipo compatibles:
+                </p>
+                <Command className="rounded-lg border">
+                  <CommandInput placeholder="Buscar tipo..." />
+                  <CommandList>
+                    <CommandEmpty>No se encontraron tipos.</CommandEmpty>
+                    <CommandGroup>
+                      {tipos?.map((tipo) => {
+                        const activo = idsTipo.includes(tipo.Id);
+                        return (
+                          <CommandItem
+                            key={tipo.Id}
+                            value={tipo.Nombre}
+                            onSelect={() => toggleTipo(tipo.Id)}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <span
+                              className={`h-4 w-4 rounded border flex items-center justify-center text-xs font-bold ${
+                                activo
+                                  ? "bg-primary border-primary text-primary-foreground"
+                                  : "border-muted-foreground/40"
+                              }`}
+                            >
+                              {activo && "✓"}
+                            </span>
+                            <span className="flex-1">{tipo.Nombre}</span>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {tipo.Codigo}
+                            </span>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+                {idsTipo.length === 0 && (
+                  <p className="text-xs text-destructive">
+                    Elegí al menos un tipo, o marcá el producto como general.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <p className="text-xs text-muted-foreground">
@@ -232,11 +406,16 @@ function DialogNuevoProducto({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Guardando..." : "Crear producto"}
+            <Button type="submit" disabled={guardando}>
+              {guardando
+                ? "Guardando..."
+                : esEdicion
+                  ? "Guardar cambios"
+                  : "Crear producto"}
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -439,134 +618,6 @@ function DialogKardex({
   );
 }
 
-/* ─── Dialog: Tipos de equipo del producto ─── */
-function DialogTiposEquipo({
-  idProducto,
-  nombreProducto,
-  onClose,
-}: {
-  idProducto: string | null;
-  nombreProducto: string;
-  onClose: () => void;
-}) {
-  const { data: todosLosTipos, isLoading: cargandoTodos } = useTiposEquipo();
-  const { data: actuales, isLoading: cargandoActuales } = useTiposEquipoDeProducto(idProducto);
-  const { mutateAsync: asignar, isPending: guardando } = useAsignarTiposEquipo();
-
-  // IDs seleccionados: sincroniza con los actuales cuando cargan
-  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (actuales !== undefined) {
-      setSeleccionados(new Set(actuales.map((a) => a.IdTipoEquipo)));
-    }
-  }, [actuales]);
-
-  const toggleTipo = (id: string) => {
-    setSeleccionados((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const handleGuardar = async () => {
-    if (!idProducto) return;
-    try {
-      await asignar({ idProducto, idsTipoEquipo: [...seleccionados] });
-      toast.success("Tipos de equipo actualizados");
-      onClose();
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
-  };
-
-  const handleOpenChange = (v: boolean) => {
-    if (!v) {
-      setSeleccionados(new Set());
-      onClose();
-    }
-  };
-
-  const isLoading = cargandoTodos || cargandoActuales;
-
-  return (
-    <Dialog open={!!idProducto} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            Tipos de equipo compatibles
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground pt-1">
-            {nombreProducto}
-          </p>
-        </DialogHeader>
-
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-9" />
-            ))}
-          </div>
-        ) : (
-          <Command className="rounded-lg border">
-            <CommandInput placeholder="Buscar tipo..." />
-            <CommandList>
-              <CommandEmpty>No se encontraron tipos.</CommandEmpty>
-              <CommandGroup>
-                {todosLosTipos?.map((tipo) => {
-                  const activo = seleccionados.has(tipo.Id);
-                  return (
-                    <CommandItem
-                      key={tipo.Id}
-                      value={tipo.Nombre}
-                      onSelect={() => toggleTipo(tipo.Id)}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <div
-                        className={`h-4 w-4 rounded border flex items-center justify-center text-xs font-bold ${
-                          activo
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-muted-foreground/40"
-                        }`}
-                      >
-                        {activo && "✓"}
-                      </div>
-                      <span className="flex-1">{tipo.Nombre}</span>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {tipo.Codigo}
-                      </span>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        )}
-
-        {seleccionados.size === 0 && !isLoading && (
-          <p className="text-xs text-muted-foreground text-center">
-            Sin selección → el producto se considera &quot;General&quot; (compatible con todos).
-          </p>
-        )}
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleGuardar} disabled={guardando || isLoading}>
-            {guardando ? "Guardando..." : "Guardar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 /* ─── Dialog: Asociar categoría a tipo ─── */
 function DialogAsociarCategoria({
   open,
@@ -697,15 +748,14 @@ function DialogAsociarCategoria({
 export default function ProductosPage() {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("__todas__");
-  const [mostrarNuevo, setMostrarNuevo] = useState(false);
+  // null = cerrado; "nuevo" = alta; producto = edición.
+  const [editando, setEditando] = useState<ProductoConsolidado | "nuevo" | null>(null);
   const [mostrarAsociarCategoria, setMostrarAsociarCategoria] = useState(false);
   const [productoKardex, setProductoKardex] =
     useState<ProductoConsolidado | null>(null);
   const [productoImagenes, setProductoImagenes] =
     useState<ProductoConsolidado | null>(null);
   const [productoEliminar, setProductoEliminar] =
-    useState<ProductoConsolidado | null>(null);
-  const [productoTipos, setProductoTipos] =
     useState<ProductoConsolidado | null>(null);
 
   const { data: productos, isLoading } = useProductos();
@@ -766,7 +816,7 @@ export default function ProductosPage() {
           </p>
         </div>
         {puedeEscribir && (
-          <Button onClick={() => setMostrarNuevo(true)}>
+          <Button onClick={() => setEditando("nuevo")}>
             <Plus className="mr-2 h-4 w-4" />
             Nuevo producto
           </Button>
@@ -856,15 +906,19 @@ export default function ProductosPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {tiposNombres?.length ? (
+                          {p.EsGeneral ? (
+                            <Badge variant="outline" className="text-xs">
+                              General
+                            </Badge>
+                          ) : tiposNombres?.length ? (
                             tiposNombres.map((nombre) => (
                               <Badge key={nombre} variant="secondary" className="text-xs">
                                 {nombre}
                               </Badge>
                             ))
                           ) : (
-                            <Badge variant="outline" className="text-xs">
-                              General
+                            <Badge variant="warning" className="text-xs">
+                              Sin clasificar
                             </Badge>
                           )}
                         </div>
@@ -895,11 +949,11 @@ export default function ProductosPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setProductoTipos(p)}
-                              title="Asignar tipos de equipo"
+                              onClick={() => setEditando(p)}
+                              title="Editar producto"
                             >
-                              <Wrench className="h-3.5 w-3.5 mr-1" />
-                              Tipos
+                              <Pencil className="h-3.5 w-3.5 mr-1" />
+                              Editar
                             </Button>
                             <Button
                               variant="ghost"
@@ -939,9 +993,10 @@ export default function ProductosPage() {
       )}
 
       {/* Dialogs */}
-      <DialogNuevoProducto
-        open={mostrarNuevo}
-        onClose={() => setMostrarNuevo(false)}
+      <DialogProducto
+        open={editando !== null}
+        producto={editando === "nuevo" ? null : editando}
+        onClose={() => setEditando(null)}
       />
       <DialogKardex
         idProducto={productoKardex?.IdProducto ?? null}
@@ -951,11 +1006,6 @@ export default function ProductosPage() {
       <DialogImagenes
         idProducto={productoImagenes?.IdProducto ?? null}
         onClose={() => setProductoImagenes(null)}
-      />
-      <DialogTiposEquipo
-        idProducto={productoTipos?.IdProducto ?? null}
-        nombreProducto={productoTipos?.NombreProducto ?? ""}
-        onClose={() => setProductoTipos(null)}
       />
       <DialogAsociarCategoria
         open={mostrarAsociarCategoria}

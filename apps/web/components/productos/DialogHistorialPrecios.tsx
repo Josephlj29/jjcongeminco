@@ -67,8 +67,9 @@ export function DialogHistorialPrecios({
         <DialogHeader>
           <DialogTitle>Historial de precios</DialogTitle>
           <DialogDescription>
-            Costos registrados por compras, ajustes o cargas manuales. El método
-            oficial de valorización es el promedio móvil (NIC 2 / SUNAT).
+            Costos registrados por compras, ajustes o cargas manuales. Solo se
+            puede elegir un precio cuyo lote todavía tiene stock; los agotados se
+            muestran pero no son seleccionables. Valorización: promedio móvil (NIC 2).
           </DialogDescription>
         </DialogHeader>
 
@@ -92,12 +93,13 @@ export function DialogHistorialPrecios({
                   <TableHead className="text-right">Promedio result.</TableHead>
                   <TableHead>Proveedor</TableHead>
                   <TableHead>Origen</TableHead>
+                  <TableHead className="text-right">Remanente</TableHead>
                   <TableHead className="w-28" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {precios.map((p) => (
-                  <TableRow key={p.Id}>
+                  <TableRow key={p.Id} className={p.TieneStock ? "" : "opacity-50"}>
                     <TableCell className="text-xs whitespace-nowrap">
                       {new Date(p.FechaPrecio).toLocaleDateString("es-PE")}
                     </TableCell>
@@ -115,18 +117,31 @@ export function DialogHistorialPrecios({
                         {ORIGEN_LABEL[p.Origen]}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right text-xs">
+                      {p.TieneStock ? (
+                        <span className="font-medium">{p.CantidadRemanente}</span>
+                      ) : (
+                        <Badge variant="secondary">Agotado</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          onUsarPrecio(p.Costo);
-                          onOpenChange(false);
-                        }}
-                      >
-                        Usar este precio
-                      </Button>
+                      {p.TieneStock ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            onUsarPrecio(p.Costo);
+                            onOpenChange(false);
+                          }}
+                        >
+                          Usar este precio
+                        </Button>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">
+                          Sin stock
+                        </span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

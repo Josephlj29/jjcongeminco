@@ -4,7 +4,7 @@
  * POST /api/requerimientos/:id/atender — aprueba el requerimiento: genera la
  * salida valorizada desde el almacén origen y lo marca atendido.
  * Body: { IdUbicacionOrigen: uuid, Notas?: string }
- * Rol: documentoEscritura (admin, almacenero, supervision).
+ * Rol: requerimientoAprobar (admin, gerencia, supervision).
  *
  * Errores de regla de negocio de la función (stock insuficiente, no pendiente)
  * se devuelven como 409 con el mensaje, no como 500.
@@ -23,7 +23,7 @@ export async function POST(
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
-  if (!puede(usuario.rol, "documentoEscritura")) {
+  if (!puede(usuario.rol, "requerimientoAprobar")) {
     return respuestaError("No tienes permiso para aprobar requerimientos.", 403);
   }
 
@@ -39,8 +39,7 @@ export async function POST(
     .schema("inv")
     .rpc("FnAtenderRequerimiento", {
       PIdRequerimiento: id,
-      PIdUbicacionOrigen: parsed.data.IdUbicacionOrigen,
-      PNotas: parsed.data.Notas ?? null,
+      PEntrega: parsed.data,
     });
 
   if (dbError) {
@@ -48,7 +47,7 @@ export async function POST(
     // reformulaciones del mensaje SQL; el guard del ledger usa ERRCODE 23514.
     const reglaNegocio =
       dbError.code === "23514" ||
-      /stock insuficiente|pendiente|no existe|no tiene l[ií]neas|almac[eé]n/i.test(
+      /stock insuficiente|pendiente|no existe|no entregar|solicitado|proveedor|comprobante|costo|creaste|almac[eé]n/i.test(
         dbError.message
       );
     return NextResponse.json(

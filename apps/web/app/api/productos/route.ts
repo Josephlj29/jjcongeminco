@@ -61,24 +61,22 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await crearClienteServidor();
+  // FnGuardarProducto crea el producto y su compatibilidad (puente) en una
+  // transacción, aplicando la invariante general XOR tipos.
   const { data, error: dbError } = await supabase
     .schema("inv")
-    .from("T_Producto")
-    .insert({
-      Sku: parsed.data.Sku,
-      Nombre: parsed.data.Nombre,
-      IdCategoria: parsed.data.IdCategoria,
-      IdUnidadMedida: parsed.data.IdUnidadMedida,
-      StockMinimo: parsed.data.StockMinimo,
-      CodigoBarra: parsed.data.CodigoBarra ?? null,
-      Atributos: parsed.data.Atributos,
-    })
-    .select()
-    .single();
+    .rpc("FnGuardarProducto", { PProducto: parsed.data });
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    // Las violaciones de invariante son errores de validación (400), no de infra.
+    const reglaNegocio = /general no lleva|al menos un tipo|no existe/i.test(
+      dbError.message
+    );
+    return NextResponse.json(
+      { error: dbError.message },
+      { status: reglaNegocio ? 400 : 500 }
+    );
   }
 
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json({ Id: data as string }, { status: 201 });
 }
