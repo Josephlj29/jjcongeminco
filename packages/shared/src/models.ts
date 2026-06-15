@@ -66,12 +66,25 @@ export interface Vehiculo extends CamposAuditoria {
   IdEquipo: string | null;
 }
 
+export interface CuentaBancaria {
+  Id: string;
+  Banco: string;
+  TipoCuenta: string;
+  NumeroCuenta: string;
+  Cci: string | null;
+  Moneda: string;
+  TitularCuenta: string | null;
+  EsPrincipal: boolean;
+}
+
 export interface Proveedor extends CamposAuditoria {
   Id: string;
   Ruc: string | null;
   Nombre: string;
   Contacto: string | null;
   Telefono: string | null;
+  // Cuentas bancarias embebidas (desde inv.V_Proveedor).
+  Cuentas: CuentaBancaria[];
 }
 
 export interface ProductoPrecioHistorico {

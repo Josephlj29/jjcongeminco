@@ -18,7 +18,7 @@ export async function GET() {
   const { data, error: dbError } = await supabase
     .schema("inv")
     .from("T_Proveedor")
-    .select("Id, Codigo, Nombre")
+    .select("Id, Nombre")
     .eq("Estado", true)
     .order("Nombre");
 

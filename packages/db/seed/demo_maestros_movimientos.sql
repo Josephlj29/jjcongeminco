@@ -117,6 +117,19 @@ INSERT INTO "inv"."T_Proveedor" ("Ruc","Nombre","Contacto","Telefono") VALUES
 	,('20200200202','LUBRICANTES DEL SUR EIRL','Maria Gomez','054-300200')
 	,('20300300303','FILTROS Y RODAMIENTOS SRL','Carlos Ruiz','054-400300');
 
+/* Cuentas bancarias demo (1:N): soles, dolares, principal */
+INSERT INTO "inv"."T_ProveedorCuentaBancaria"
+	("IdProveedor","Banco","TipoCuenta","NumeroCuenta","Cci","Moneda","EsPrincipal")
+SELECT P."Id", C."Banco", C."Tipo", C."Num", NULLIF(C."Cci",''), C."Mon", C."Prin"
+FROM (VALUES
+	('20100100101','BCP','corriente','191-9876543-0-11','00219100987654301122','PEN',true)
+	,('20100100101','Interbank','ahorros','200-3009988776','','PEN',false)
+	,('20200200202','BCP','corriente','193-1234567-0-89','00219300123456789012','PEN',true)
+	,('20200200202','BBVA','corriente','0011-0456-7890123456','','USD',false)
+	,('20300300303','Interbank','corriente','200-3001122334','00300320011223340055','PEN',true)
+) AS C("Ruc","Banco","Tipo","Num","Cci","Mon","Prin")
+INNER JOIN "inv"."T_Proveedor" P ON P."Ruc" = C."Ruc";
+
 INSERT INTO "inv"."T_Equipo" ("Codigo","Nombre","Descripcion","IdTipoEquipo")
 SELECT E."Codigo", E."Nombre", E."Desc", T."Id"
 FROM (VALUES

@@ -81,11 +81,30 @@ export const CrearDocumentoSchema = z
 export type CrearDocumento = z.infer<typeof CrearDocumentoSchema>;
 
 /* ─── Proveedor ─── */
+export const TIPO_CUENTA = ["corriente", "ahorros"] as const;
+export type TipoCuenta = (typeof TIPO_CUENTA)[number];
+export const MONEDA_CUENTA = ["PEN", "USD"] as const;
+export type MonedaCuenta = (typeof MONEDA_CUENTA)[number];
+
+/* Cuenta bancaria de un proveedor (1:N). Id presente = cuenta existente. */
+export const CuentaBancariaSchema = z.object({
+  Id: z.string().uuid().optional(),
+  Banco: z.string().trim().min(1, "Indicá el banco.").max(80),
+  TipoCuenta: z.enum(TIPO_CUENTA).default("corriente"),
+  NumeroCuenta: z.string().trim().min(1, "Indicá el número de cuenta.").max(40),
+  Cci: z.string().trim().max(25).optional(),
+  Moneda: z.enum(MONEDA_CUENTA).default("PEN"),
+  TitularCuenta: z.string().trim().max(150).optional(),
+  EsPrincipal: z.boolean().default(false),
+});
+export type CuentaBancariaForm = z.infer<typeof CuentaBancariaSchema>;
+
 export const CrearProveedorSchema = z.object({
   Ruc: z.string().max(15).optional(),
   Nombre: z.string().min(1).max(150),
   Contacto: z.string().max(120).optional(),
   Telefono: z.string().max(20).optional(),
+  Cuentas: z.array(CuentaBancariaSchema).default([]),
 });
 export type CrearProveedor = z.infer<typeof CrearProveedorSchema>;
 export const ActualizarProveedorSchema = CrearProveedorSchema.partial().extend({

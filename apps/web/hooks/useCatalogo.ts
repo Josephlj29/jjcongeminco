@@ -10,7 +10,6 @@ export interface UnidadMedida {
 
 export interface Proveedor {
   Id: string;
-  Codigo: string;
   Nombre: string;
 }
 

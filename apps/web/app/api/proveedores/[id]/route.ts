@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { ActualizarProveedorSchema, puede } from "@congeminco/shared";
+import { CrearProveedorSchema, puede } from "@congeminco/shared";
 
 export async function PATCH(
   request: NextRequest,
@@ -24,29 +24,32 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json().catch(() => null);
-  const parsed = ActualizarProveedorSchema.safeParse(body);
+  // Edición = guardado completo (proveedor + cuentas) vía FnGuardarProveedor.
+  const parsed = CrearProveedorSchema.safeParse(body);
 
   if (!parsed.success) {
     return respuestaError("Datos inválidos.", 400, parsed.error.flatten());
   }
 
-  if (Object.keys(parsed.data).length === 0) {
-    return respuestaError("No se enviaron campos para actualizar.", 400);
+  const supabase = await crearClienteServidor();
+  const { error: rpcError } = await supabase
+    .schema("inv")
+    .rpc("FnGuardarProveedor", { PProveedor: { ...parsed.data, Id: id } });
+
+  if (rpcError) {
+    return NextResponse.json({ error: rpcError.message }, { status: 500 });
   }
 
-  const supabase = await crearClienteServidor();
-  const { data, error: dbError } = await supabase
+  const { data, error: selError } = await supabase
     .schema("inv")
-    .from("T_Proveedor")
-    .update(parsed.data)
+    .from("V_Proveedor")
+    .select("Id, Ruc, Nombre, Contacto, Telefono, Estado, Cuentas")
     .eq("Id", id)
-    .select()
     .single();
 
-  if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+  if (selError) {
+    return NextResponse.json({ error: selError.message }, { status: 500 });
   }
-
   if (!data) {
     return respuestaError("Proveedor no encontrado.", 404);
   }

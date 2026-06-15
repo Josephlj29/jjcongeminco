@@ -1,8 +1,9 @@
 /**
  * app/api/proveedores/route.ts
  *
- * GET  /api/proveedores — lista de proveedores activos (inv.T_Proveedor)
- * POST /api/proveedores — crea proveedor (rol: productoEscritura = admin, almacenero)
+ * GET  /api/proveedores — proveedores activos con sus cuentas (inv.V_Proveedor)
+ * POST /api/proveedores — crea proveedor + cuentas vía inv.FnGuardarProveedor
+ *                         (rol: productoEscritura = admin, almacenero)
  */
 export const runtime = "nodejs";
 
@@ -11,6 +12,8 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearProveedorSchema, puede } from "@congeminco/shared";
 
+const COLUMNAS = "Id, Ruc, Nombre, Contacto, Telefono, Estado, Cuentas";
+
 export async function GET() {
   const { error } = await autenticarRequest();
   if (error) return error;
@@ -18,9 +21,8 @@ export async function GET() {
   const supabase = await crearClienteServidor();
   const { data, error: dbError } = await supabase
     .schema("inv")
-    .from("T_Proveedor")
-    .select("Id, Ruc, Nombre, Contacto, Telefono, Estado")
-    .eq("Estado", true)
+    .from("V_Proveedor")
+    .select(COLUMNAS)
     .order("Nombre");
 
   if (dbError) {
@@ -45,20 +47,24 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await crearClienteServidor();
-  const { data, error: dbError } = await supabase
+  // FnGuardarProveedor crea el proveedor y reemplaza sus cuentas en una transacción.
+  const { data: nuevoId, error: rpcError } = await supabase
     .schema("inv")
-    .from("T_Proveedor")
-    .insert({
-      Ruc: parsed.data.Ruc ?? null,
-      Nombre: parsed.data.Nombre,
-      Contacto: parsed.data.Contacto ?? null,
-      Telefono: parsed.data.Telefono ?? null,
-    })
-    .select()
+    .rpc("FnGuardarProveedor", { PProveedor: parsed.data });
+
+  if (rpcError) {
+    return NextResponse.json({ error: rpcError.message }, { status: 500 });
+  }
+
+  const { data, error: selError } = await supabase
+    .schema("inv")
+    .from("V_Proveedor")
+    .select(COLUMNAS)
+    .eq("Id", nuevoId as string)
     .single();
 
-  if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+  if (selError) {
+    return NextResponse.json({ error: selError.message }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });

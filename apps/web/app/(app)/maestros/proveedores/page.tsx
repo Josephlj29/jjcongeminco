@@ -3,25 +3,22 @@
 /**
  * app/(app)/maestros/proveedores/page.tsx — ABM de proveedores
  *
- * Funcionalidades:
- * - Lista de proveedores activos
- * - Dialog para crear nuevo proveedor (valida con CrearProveedorSchema)
- * - Acción editar por fila (mismo dialog en modo edición con ActualizarProveedorSchema)
+ * - Lista de proveedores activos con sus cuentas bancarias (inv.V_Proveedor)
+ * - Dialog crear/editar: datos del proveedor + sub-grilla de cuentas (1:N)
+ * - Guardado atómico vía inv.FnGuardarProveedor (proveedor + cuentas)
  * - Acciones restringidas por rol (productoEscritura = admin, almacenero)
  */
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Paginacion } from "@/components/Paginacion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { toast } from "sonner";
 import {
   CrearProveedorSchema,
-  ActualizarProveedorSchema,
   type CrearProveedor,
-  type ActualizarProveedor,
   type Proveedor,
   puede,
 } from "@congeminco/shared";
@@ -29,6 +26,7 @@ import { useProveedores, useCrearProveedor, useActualizarProveedor, useEliminarP
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -46,6 +44,20 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
+
+/* Clase para los <select> nativos (estilo consistente con Input). */
+const SELECT_CLASS =
+  "flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring";
+
+const CUENTA_VACIA = {
+  Banco: "",
+  TipoCuenta: "corriente" as const,
+  NumeroCuenta: "",
+  Cci: "",
+  Moneda: "PEN" as const,
+  TitularCuenta: "",
+  EsPrincipal: false,
+};
 
 /* ─── Hook: rol del usuario actual ─── */
 function useRolActual() {
@@ -76,28 +88,41 @@ function DialogProveedor({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<CrearProveedor>({
-    resolver: zodResolver(modoEdicion ? ActualizarProveedorSchema : CrearProveedorSchema),
+    resolver: zodResolver(CrearProveedorSchema),
     defaultValues: proveedor
       ? {
           Nombre: proveedor.Nombre,
           Ruc: proveedor.Ruc ?? "",
           Contacto: proveedor.Contacto ?? "",
           Telefono: proveedor.Telefono ?? "",
+          Cuentas: (proveedor.Cuentas ?? []).map((c) => ({
+            Id: c.Id,
+            Banco: c.Banco,
+            TipoCuenta: c.TipoCuenta as "corriente" | "ahorros",
+            NumeroCuenta: c.NumeroCuenta,
+            Cci: c.Cci ?? "",
+            Moneda: c.Moneda as "PEN" | "USD",
+            TitularCuenta: c.TitularCuenta ?? "",
+            EsPrincipal: c.EsPrincipal,
+          })),
         }
-      : {},
+      : { Cuentas: [] },
   });
 
-  const onSubmit = async (data: CrearProveedor | ActualizarProveedor) => {
+  const { fields, append, remove } = useFieldArray({ control, name: "Cuentas" });
+
+  const onSubmit = async (data: CrearProveedor) => {
     try {
       if (modoEdicion) {
         await actualizar({ id: proveedor.Id, data });
         toast.success("Proveedor actualizado correctamente");
       } else {
-        await crear(data as CrearProveedor);
+        await crear(data);
         toast.success("Proveedor creado correctamente");
       }
       reset();
@@ -109,7 +134,7 @@ function DialogProveedor({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
         </DialogHeader>
@@ -139,6 +164,112 @@ function DialogProveedor({
           <div className="space-y-1">
             <Label htmlFor="Contacto">Contacto</Label>
             <Input id="Contacto" placeholder="Nombre del contacto" {...register("Contacto")} />
+          </div>
+
+          {/* ─── Cuentas bancarias ─── */}
+          <div className="space-y-2 rounded-md border p-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Cuentas bancarias</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ ...CUENTA_VACIA })}
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                Agregar cuenta
+              </Button>
+            </div>
+
+            {fields.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">
+                Sin cuentas. Agregá una si el proveedor tiene datos bancarios.
+              </p>
+            ) : (
+              fields.map((field, i) => (
+                <div key={field.id} className="rounded-md border p-3 space-y-2 relative">
+                  <button
+                    type="button"
+                    onClick={() => remove(i)}
+                    className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
+                    aria-label="Quitar cuenta"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Banco *</Label>
+                      <Input
+                        placeholder="BCP, BBVA, Interbank…"
+                        {...register(`Cuentas.${i}.Banco` as const)}
+                      />
+                      {errors.Cuentas?.[i]?.Banco && (
+                        <p className="text-xs text-destructive">
+                          {errors.Cuentas[i]?.Banco?.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Tipo</Label>
+                        <select className={SELECT_CLASS} {...register(`Cuentas.${i}.TipoCuenta` as const)}>
+                          <option value="corriente">Corriente</option>
+                          <option value="ahorros">Ahorros</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Moneda</Label>
+                        <select className={SELECT_CLASS} {...register(`Cuentas.${i}.Moneda` as const)}>
+                          <option value="PEN">Soles</option>
+                          <option value="USD">Dólares</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">N° de cuenta *</Label>
+                      <Input
+                        placeholder="193-1234567-0-89"
+                        {...register(`Cuentas.${i}.NumeroCuenta` as const)}
+                      />
+                      {errors.Cuentas?.[i]?.NumeroCuenta && (
+                        <p className="text-xs text-destructive">
+                          {errors.Cuentas[i]?.NumeroCuenta?.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">CCI</Label>
+                      <Input
+                        placeholder="002193001234567890"
+                        {...register(`Cuentas.${i}.Cci` as const)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 items-end">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Titular (si difiere)</Label>
+                      <Input
+                        placeholder="Razón social del titular"
+                        {...register(`Cuentas.${i}.TitularCuenta` as const)}
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-sm h-9">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        {...register(`Cuentas.${i}.EsPrincipal` as const)}
+                      />
+                      Cuenta principal
+                    </label>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <DialogFooter>
@@ -213,6 +344,7 @@ export default function ProveedoresPage() {
                 <TableHead>RUC</TableHead>
                 <TableHead>Contacto</TableHead>
                 <TableHead>Teléfono</TableHead>
+                <TableHead>Cuentas</TableHead>
                 {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
@@ -220,7 +352,7 @@ export default function ProveedoresPage() {
               {!paginacion.itemsPagina.length ? (
                 <TableRow>
                   <TableCell
-                    colSpan={puedeEscribir ? 5 : 4}
+                    colSpan={puedeEscribir ? 6 : 5}
                     className="text-center text-muted-foreground py-10"
                   >
                     No hay proveedores registrados.
@@ -236,6 +368,13 @@ export default function ProveedoresPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {p.Telefono ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {p.Cuentas?.length ? (
+                        <Badge variant="secondary">{p.Cuentas.length}</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     {puedeEscribir && (
                       <TableCell className="text-right space-x-1">
