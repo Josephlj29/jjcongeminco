@@ -86,8 +86,7 @@ function construirHtml(r: RequerimientoConDetalle): string {
 <body>
   <div class="head">
     <div>
-      <div class="empresa">JJ Congeminco</div>
-      <div class="sub">Gestión de Inventario</div>
+      <img src="${window.location.origin}/logo.svg" alt="JJ Congeminco" style="height:58px" />
     </div>
     <div style="text-align:right">
       <div style="font-weight:700">SOLICITUD DE REQUERIMIENTO</div>

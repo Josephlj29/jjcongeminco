@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/Logo";
 import {
   Tooltip,
   TooltipContent,
@@ -161,17 +162,14 @@ export function AppSidebarContent({
             collapsed && "justify-center px-0"
           )}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
-            JJ
-          </div>
-          {!collapsed && (
-            <span className="font-semibold text-sm leading-tight">
-              Congeminco
-              <br />
-              <span className="text-xs font-normal text-sidebar-foreground/60">
-                Inventario
-              </span>
-            </span>
+          {collapsed ? (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
+              JJ
+            </div>
+          ) : (
+            <div className="rounded-md bg-white px-2.5 py-2">
+              <Logo className="h-7 w-auto" />
+            </div>
           )}
         </div>
 

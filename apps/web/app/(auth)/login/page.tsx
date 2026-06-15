@@ -16,6 +16,7 @@ import { crearClienteNavegador } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/Logo";
 import {
   Card,
   CardContent,
@@ -66,11 +67,9 @@ export default function LoginPage() {
       )}
     >
       <div className="w-full max-w-sm">
-        {/* Logo flotante encima de la card */}
+        {/* Logo encima de la card */}
         <div className="flex justify-center mb-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-bold text-xl shadow-lg shadow-primary/30">
-            JJ
-          </div>
+          <Logo className="h-20 w-auto" />
         </div>
 
         <Card className="shadow-xl border-border/50">
