@@ -21,16 +21,13 @@ import {
   type CrearRequerimiento,
   type RoleCode,
 } from "@congeminco/shared";
-import { useCrearRequerimiento, useRequerimientos } from "@/hooks/useRequerimientos";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
+import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -47,19 +44,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
 const ORIGEN_LABEL: Record<string, string> = {
   planificado: "Planificado",
   presupuestado: "Presupuestado",
   desgaste_prematuro: "Desgaste prematuro",
-};
-
-const SITUACION_VARIANTE = {
-  pendiente: "default" as const,
-  atendido: "success" as const,
-  anulado: "destructive" as const,
 };
 
 /* Rol del usuario actual (para gating de acciones de escritura), igual que el
@@ -80,12 +70,9 @@ export default function RequerimientosPage() {
   const { data: productos } = useSaldos();
   const { data: equipos } = useEquipos();
   const { data: vehiculos } = useVehiculos();
-  const { data: requerimientos, isLoading: cargandoReqs } = useRequerimientos();
 
   const { data: yo } = useRolActual();
   const puedeCrear = puede(yo?.rol ?? null, "requerimientoCrear");
-
-  const paginacion = usePaginacion(requerimientos ?? [], 10);
 
   const {
     register,
@@ -335,68 +322,6 @@ export default function RequerimientosPage() {
       </Card>
       )}
 
-      {/* Lista reciente */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Requerimientos recientes</h2>
-        {cargandoReqs ? (
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12" />
-            ))}
-          </div>
-        ) : !requerimientos?.length ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed h-28 text-muted-foreground text-sm">
-            No hay requerimientos registrados aún.
-          </div>
-        ) : (
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>N° Req.</TableHead>
-                  <TableHead>Origen</TableHead>
-                  <TableHead>Situación</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginacion.itemsPagina.map((r) => (
-                  <TableRow key={r.Id}>
-                    <TableCell className="text-xs">
-                      {new Date(r.FechaRequerimiento).toLocaleDateString(
-                        "es-PE"
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {r.NumeroRequerimiento ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {ORIGEN_LABEL[r.Origen] ?? r.Origen}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          SITUACION_VARIANTE[r.Situacion] ?? "default"
-                        }
-                      >
-                        {r.Situacion}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <Paginacion
-              pagina={paginacion.pagina}
-              totalPaginas={paginacion.totalPaginas}
-              totalItems={paginacion.totalItems}
-              desde={paginacion.desde}
-              hasta={paginacion.hasta}
-              onPagina={paginacion.setPagina}
-            />
-          </div>
-        )}
-      </div>
     </div>
   );
 }

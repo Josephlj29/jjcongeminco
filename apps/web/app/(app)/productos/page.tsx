@@ -17,7 +17,23 @@
 import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Search, Image as ImageIcon, Trash2, Pencil, Tags } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Image as ImageIcon,
+  Trash2,
+  Pencil,
+  Tags,
+  MoreHorizontal,
+  History,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { usePaginacion } from "@/hooks/usePaginacion";
@@ -936,44 +952,47 @@ export default function ProductosPage() {
                           {p.BajoMinimo ? "Bajo mínimo" : "OK"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setProductoKardex(p)}
-                        >
-                          Kardex
-                        </Button>
-                        {puedeEscribir && (
-                          <>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              onClick={() => setEditando(p)}
-                              title="Editar producto"
+                              size="icon"
+                              className="h-8 w-8"
+                              aria-label="Acciones"
                             >
-                              <Pencil className="h-3.5 w-3.5 mr-1" />
-                              Editar
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setProductoImagenes(p)}
-                            >
-                              <ImageIcon className="h-3.5 w-3.5 mr-1" />
-                              Imágenes
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setProductoEliminar(p)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-1" />
-                              Eliminar
-                            </Button>
-                          </>
-                        )}
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem onClick={() => setProductoKardex(p)}>
+                              <History className="mr-2 h-4 w-4" />
+                              Ver kardex
+                            </DropdownMenuItem>
+                            {puedeEscribir && (
+                              <>
+                                <DropdownMenuItem onClick={() => setEditando(p)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setProductoImagenes(p)}
+                                >
+                                  <ImageIcon className="mr-2 h-4 w-4" />
+                                  Imágenes
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => setProductoEliminar(p)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Eliminar
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );

@@ -414,13 +414,19 @@ export default function MovimientosPage() {
               <div className="space-y-1">
                 <Label>Tipo de documento</Label>
                 <Select
-                  onValueChange={(v) =>
+                  value={tipoDocumento ?? ""}
+                  onValueChange={(v) => {
                     setValue(
                       "TipoDocumento",
                       v as CrearDocumento["TipoDocumento"],
                       { shouldValidate: true }
-                    )
-                  }
+                    );
+                    // Al cambiar el tipo, limpiar los campos que dependen de él
+                    // para no arrastrar valores del documento anterior.
+                    setValue("IdUbicacionOrigen", undefined);
+                    setValue("IdUbicacionDestino", undefined);
+                    setValue("IdVehiculo", undefined);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar..." />
@@ -482,7 +488,10 @@ export default function MovimientosPage() {
                   <div className="space-y-1">
                     <Label>Ubicación origen</Label>
                     <Select
-                      onValueChange={(v) => setValue("IdUbicacionOrigen", v)}
+                      value={watch("IdUbicacionOrigen") ?? ""}
+                      onValueChange={(v) =>
+                        setValue("IdUbicacionOrigen", v, { shouldValidate: true })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar..." />
@@ -501,7 +510,10 @@ export default function MovimientosPage() {
                   <div className="space-y-1">
                     <Label>Ubicación destino</Label>
                     <Select
-                      onValueChange={(v) => setValue("IdUbicacionDestino", v)}
+                      value={watch("IdUbicacionDestino") ?? ""}
+                      onValueChange={(v) =>
+                        setValue("IdUbicacionDestino", v, { shouldValidate: true })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar..." />
@@ -532,7 +544,10 @@ export default function MovimientosPage() {
                 <Label>
                   Placa <span className="text-destructive">*</span>
                 </Label>
-                <Select onValueChange={(v) => setValue("IdVehiculo", v, { shouldValidate: true })}>
+                <Select
+                  value={idVehiculo ?? ""}
+                  onValueChange={(v) => setValue("IdVehiculo", v, { shouldValidate: true })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar placa..." />
                   </SelectTrigger>
