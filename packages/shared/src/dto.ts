@@ -160,7 +160,8 @@ export const CrearPersonalSchema = z.object({
   Dni: z.string().max(15).optional(),
   Telefono: z.string().max(20).optional(),
   IdCargo: z.string().uuid({ message: "Elige un cargo." }),
-  IdUsuario: z.string().uuid().optional(),
+  // null = desvincular (en edición); undefined = no tocar; uuid = vincular.
+  IdUsuario: z.string().uuid().nullable().optional(),
 });
 export type CrearPersonal = z.infer<typeof CrearPersonalSchema>;
 export const ActualizarPersonalSchema = CrearPersonalSchema.partial().extend({

@@ -181,7 +181,7 @@ function DialogPersonal({
             <Select
               value={idUsuario ?? SIN_USUARIO}
               onValueChange={(v) =>
-                setValue("IdUsuario", v === SIN_USUARIO ? undefined : v)
+                setValue("IdUsuario", v === SIN_USUARIO ? null : v)
               }
             >
               <SelectTrigger>

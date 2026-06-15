@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { CrearPersonalSchema, puede, type PersonalConDetalle } from "@congeminco/shared";
 
 interface FilaPersonal {

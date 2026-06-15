@@ -32,18 +32,12 @@ export async function PATCH(
   }
 
   const supabase = await crearClienteServidor();
-  // IdUsuario opcional: "" o ausente → null (desvincular).
-  const payload = {
-    ...parsed.data,
-    ...(parsed.data.IdUsuario !== undefined
-      ? { IdUsuario: parsed.data.IdUsuario || null }
-      : {}),
-  };
-
+  // parsed.data trae IdUsuario:null al desvincular (viaja como null), uuid al
+  // vincular, o ausente si no se tocó. update() solo escribe las claves presentes.
   const { data, error: dbError } = await supabase
     .schema("inv")
     .from("T_Personal")
-    .update(payload)
+    .update(parsed.data)
     .eq("Id", id)
     .select()
     .single();

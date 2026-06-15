@@ -3262,7 +3262,7 @@ WITH (security_invoker = true) AS
 
 COMMENT ON VIEW "inv"."V_Recambio_Producto" IS 'Recambios por equipo/placa × producto con intervalo (días) desde el recambio anterior. Acelerado = desgaste_prematuro marcado o intervalo < 50% del promedio del par. Detecta prematuros sin configurar vida útil.';
 
-/* ===================== migrations/0027_personal_cargo.sql ===================== */
+/* ===================== migrations/0030_personal_cargo.sql ===================== */
 /*
 	Maestro de personal (solicitantes) + catálogo de cargos. El requerimiento
 	referencia al solicitante por FK (distinto de UsuarioCreacion). El rol de
@@ -3316,12 +3316,15 @@ CREATE TABLE "inv"."T_Personal"
 	CONSTRAINT "FK_T_Personal_Cargo_IdCargo"
 		FOREIGN KEY ("IdCargo") REFERENCES "inv"."T_Cargo" ("Id"),
 	CONSTRAINT "FK_T_Personal_Usuario_IdUsuario"
-		FOREIGN KEY ("IdUsuario") REFERENCES "seg"."T_Usuario" ("Id"),
-	CONSTRAINT "UQ_T_Personal_IdUsuario" UNIQUE ("IdUsuario")
+		FOREIGN KEY ("IdUsuario") REFERENCES "seg"."T_Usuario" ("Id")
 );
 COMMENT ON TABLE "inv"."T_Personal" IS 'Personal de la obra (solicitantes). Cargo por FK; usuario de login opcional (el rol de acceso vive en el usuario, no acá).';
 
 CREATE INDEX "IX_T_Personal_IdCargo" ON "inv"."T_Personal" ("IdCargo");
+-- Unicidad de login solo sobre personal ACTIVO: el soft-delete libera el usuario (0031).
+CREATE UNIQUE INDEX "UQ_T_Personal_IdUsuario"
+	ON "inv"."T_Personal" ("IdUsuario")
+	WHERE "Estado" = true;
 
 CREATE TRIGGER "TR_T_Personal_Auditoria"
 	BEFORE UPDATE ON "inv"."T_Personal"
