@@ -130,7 +130,7 @@ function ResultadoCard({ reporte }: { reporte: ReporteImportacion }) {
         <CardDescription>
           {ok
             ? "Todo se aplicó correctamente."
-            : "No se aplicó nada: es todo-o-nada. Corregí los errores y volvé a subir."}
+            : "No se aplicó nada: es todo-o-nada. Corrige los errores y vuelve a subir."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

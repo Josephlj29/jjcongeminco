@@ -198,7 +198,7 @@ function DialogPersonal({
               </SelectContent>
             </Select>
             <p className="text-[11px] leading-tight text-muted-foreground">
-              Vinculá solo si esta persona entra al sistema; su rol de acceso sale del usuario.
+              Vincula solo si esta persona entra al sistema; su rol de acceso sale del usuario.
             </p>
           </div>
 
