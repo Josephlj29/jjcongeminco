@@ -46,33 +46,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // NombreArchivo viaja dentro del PLote: la auditoría en T_Importacion la escribe
+  // ahora la RPC en la misma transacción (C4), no este endpoint.
+  const nombreArchivo =
+    typeof (body as { NombreArchivo?: unknown }).NombreArchivo === "string"
+      ? (body as { NombreArchivo: string }).NombreArchivo
+      : "importacion-saldos.xlsx";
+
   const supabase = await crearClienteServidor();
   const { data, error: rpcError } = await supabase
     .schema("inv")
-    .rpc("FnImportarSaldosIniciales", { PLote: parsed.data });
+    .rpc("FnImportarSaldosIniciales", {
+      PLote: { ...parsed.data, NombreArchivo: nombreArchivo },
+    });
 
   if (rpcError) {
     return respuestaError(`No se pudo importar: ${rpcError.message}`, 500);
   }
 
   const reporte = data as ReporteImportacion;
-
-  const nombreArchivo =
-    typeof (body as { NombreArchivo?: unknown }).NombreArchivo === "string"
-      ? (body as { NombreArchivo: string }).NombreArchivo
-      : "importacion-saldos.xlsx";
-
-  await supabase
-    .schema("inv")
-    .from("T_Importacion")
-    .insert({
-      NombreArchivo: nombreArchivo,
-      Objetivo: "saldos_iniciales",
-      CantidadFilas: reporte.cantidadFilas,
-      CantidadCorrectas: reporte.cantidadCorrectas,
-      LogErrores: reporte.errores,
-      Situacion: reporte.cantidadErrores === 0 ? "completado" : "fallido",
-    });
-
   return NextResponse.json(reporte);
 }

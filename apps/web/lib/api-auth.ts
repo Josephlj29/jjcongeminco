@@ -15,6 +15,7 @@ export interface UsuarioRequest {
   email: string | null;
   nombreCompleto: string | null;
   rol: RoleCode;
+  modulos: string[];
 }
 
 /**

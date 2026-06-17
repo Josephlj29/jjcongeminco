@@ -37,7 +37,15 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const situacion = searchParams.get("situacion");
-  const cantidad = parseInt(searchParams.get("limit") ?? "100", 10) || 100;
+  const SITUACIONES = ["abierta", "consumida", "cerrada", "anulada"];
+  if (situacion && !SITUACIONES.includes(situacion)) {
+    return respuestaError("Situación inválida.", 400);
+  }
+  // Tope de seguridad: evita ?limit gigante (DoS de memoria).
+  const cantidad = Math.min(
+    Math.max(parseInt(searchParams.get("limit") ?? "100", 10) || 100, 1),
+    500
+  );
 
   const supabase = await crearClienteServidor();
   let query = supabase

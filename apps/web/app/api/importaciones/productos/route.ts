@@ -47,36 +47,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // NombreArchivo viaja dentro del PLote: la auditoría en T_Importacion la escribe
+  // ahora la RPC en la misma transacción (C4), no este endpoint.
+  const nombreArchivo =
+    typeof (body as { NombreArchivo?: unknown }).NombreArchivo === "string"
+      ? (body as { NombreArchivo: string }).NombreArchivo
+      : "importacion-productos.xlsx";
+
   const supabase = await crearClienteServidor();
   const { data, error: rpcError } = await supabase
     .schema("inv")
-    .rpc("FnImportarProductos", { PLote: parsed.data });
+    .rpc("FnImportarProductos", {
+      PLote: { ...parsed.data, NombreArchivo: nombreArchivo },
+    });
 
   if (rpcError) {
     return respuestaError(`No se pudo importar: ${rpcError.message}`, 500);
   }
 
   const reporte = data as ReporteImportacion;
-
-  // Auditoría. Situacion alineada al CHECK de T_Importacion
-  // ('completado' | 'con_errores' | 'fallido'). Productos es todo-o-nada:
-  // o entra todo (completado) o no entra nada (fallido).
-  const nombreArchivo =
-    typeof (body as { NombreArchivo?: unknown }).NombreArchivo === "string"
-      ? (body as { NombreArchivo: string }).NombreArchivo
-      : "importacion-productos.xlsx";
-
-  await supabase
-    .schema("inv")
-    .from("T_Importacion")
-    .insert({
-      NombreArchivo: nombreArchivo,
-      Objetivo: "productos",
-      CantidadFilas: reporte.cantidadFilas,
-      CantidadCorrectas: reporte.cantidadCorrectas,
-      LogErrores: reporte.errores,
-      Situacion: reporte.cantidadErrores === 0 ? "completado" : "fallido",
-    });
-
   return NextResponse.json(reporte);
 }

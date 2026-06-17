@@ -68,10 +68,16 @@ export async function obtenerUsuario() {
     throw new Error("Usuario no encontrado o inactivo");
   }
 
+  // Módulos del rol: fuente de verdad en seg.T_RolModulo (RBAC configurable).
+  const { data: modulosData } = await supabase
+    .schema("seg")
+    .rpc("FnModulosUsuario");
+
   return {
     id: authData.user.id,
     email: authData.user.email ?? null,
     nombreCompleto: usuarioData.NombreCompleto as string | null,
     rol: (usuarioData.T_Rol as unknown as { Codigo: string }).Codigo as import("@congeminco/shared").RoleCode,
+    modulos: (modulosData as string[] | null) ?? [],
   };
 }

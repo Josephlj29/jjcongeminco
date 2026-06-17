@@ -10,8 +10,9 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { puedeVerModulo, MODULOS } from "@congeminco/shared";
 
 interface FilaRecambio {
   Cantidad: unknown;
@@ -21,8 +22,11 @@ interface FilaRecambio {
 }
 
 export async function GET(request: NextRequest) {
-  const { error } = await autenticarRequest();
+  const { usuario, error } = await autenticarRequest();
   if (error) return error;
+  if (!puedeVerModulo(usuario.modulos, MODULOS.REPORTES)) {
+    return respuestaError("No tienes permiso para ver reportes.", 403);
+  }
 
   const { searchParams } = new URL(request.url);
   const desde = searchParams.get("desde");
@@ -36,9 +40,10 @@ export async function GET(request: NextRequest) {
   if (hasta) query = query.lte("FechaRequerimiento", hasta);
   if (soloAcelerados) query = query.eq("Acelerado", true);
 
-  const { data, error: dbError } = await query.order("FechaRequerimiento", {
-    ascending: false,
-  });
+  // Red anti-OOM: tope de seguridad para históricos grandes.
+  const { data, error: dbError } = await query
+    .order("FechaRequerimiento", { ascending: false })
+    .limit(5000);
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });

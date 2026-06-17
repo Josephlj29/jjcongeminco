@@ -9,7 +9,13 @@ interface ColumnaDef {
 }
 
 function escaparCeldaCsv(valor: unknown): string {
-  const str = valor === null || valor === undefined ? "" : String(valor);
+  let str = valor === null || valor === undefined ? "" : String(valor);
+  // Anti CSV/formula injection: una celda que empieza con = + - @ TAB o CR se
+  // ejecuta como fórmula al abrir el CSV en Excel/LibreOffice. Le anteponemos
+  // una comilla simple para forzar que se trate como texto.
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
   if (str.includes(",") || str.includes('"') || str.includes("\n")) {
     return `"${str.replace(/"/g, '""')}"`;
   }

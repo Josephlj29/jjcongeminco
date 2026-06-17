@@ -47,13 +47,14 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { puede, type RoleCode } from "@congeminco/shared";
+import { puedeVerModulo, MODULOS, type ModuloCode, type RoleCode } from "@congeminco/shared";
 
 interface UsuarioProps {
   id: string;
   email: string | null;
   nombreCompleto: string | null;
   rol: RoleCode;
+  modulos: string[];
 }
 
 interface Props {
@@ -62,26 +63,35 @@ interface Props {
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/saldos", label: "Saldos", icon: Boxes, exact: false },
-  { href: "/productos", label: "Catálogo", icon: Package, exact: false },
-  { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight, exact: false },
-  { href: "/requerimientos", label: "Requerimientos", icon: ClipboardList, exact: false },
-  { href: "/mantenimiento", label: "Mantenimiento", icon: Hammer, exact: false },
-  { href: "/reportes", label: "Reportes", icon: BarChart2, exact: false },
-  { href: "/importar", label: "Importar", icon: Upload, exact: false },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact: boolean;
+  modulo: ModuloCode;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true, modulo: MODULOS.DASHBOARD },
+  { href: "/saldos", label: "Saldos", icon: Boxes, exact: false, modulo: MODULOS.SALDOS },
+  { href: "/productos", label: "Catálogo", icon: Package, exact: false, modulo: MODULOS.CATALOGO },
+  { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight, exact: false, modulo: MODULOS.MOVIMIENTOS },
+  { href: "/requerimientos", label: "Requerimientos", icon: ClipboardList, exact: false, modulo: MODULOS.REQUERIMIENTOS },
+  { href: "/aprobaciones", label: "Aprobaciones", icon: ClipboardCheck, exact: false, modulo: MODULOS.APROBACIONES },
+  { href: "/mantenimiento", label: "Mantenimiento", icon: Hammer, exact: false, modulo: MODULOS.MANTENIMIENTO },
+  { href: "/reportes", label: "Reportes", icon: BarChart2, exact: false, modulo: MODULOS.REPORTES },
+  { href: "/importar", label: "Importar", icon: Upload, exact: false, modulo: MODULOS.IMPORTAR },
 ];
 
-const MAESTROS_ITEMS = [
-  { href: "/maestros/categorias", label: "Categorías", icon: FolderTree, exact: false },
-  { href: "/maestros/personal", label: "Personal", icon: Users, exact: false },
-  { href: "/maestros/cargos", label: "Cargos", icon: BriefcaseBusiness, exact: false },
-  { href: "/maestros/proveedores", label: "Proveedores", icon: Truck, exact: false },
-  { href: "/maestros/almacenes", label: "Almacenes", icon: Warehouse, exact: false },
-  { href: "/maestros/equipos", label: "Equipos", icon: Wrench, exact: false },
-  { href: "/maestros/vehiculos", label: "Vehículos", icon: Car, exact: false },
-  { href: "/maestros/tipos-equipo", label: "Tipos de equipo", icon: Tags, exact: false },
+const MAESTROS_ITEMS: NavItem[] = [
+  { href: "/maestros/categorias", label: "Categorías", icon: FolderTree, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
+  { href: "/maestros/personal", label: "Personal", icon: Users, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
+  { href: "/maestros/cargos", label: "Cargos", icon: BriefcaseBusiness, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
+  { href: "/maestros/proveedores", label: "Proveedores", icon: Truck, exact: false, modulo: MODULOS.MAESTROS_PROVEEDORES },
+  { href: "/maestros/almacenes", label: "Almacenes", icon: Warehouse, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
+  { href: "/maestros/equipos", label: "Equipos", icon: Wrench, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
+  { href: "/maestros/vehiculos", label: "Vehículos", icon: Car, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
+  { href: "/maestros/tipos-equipo", label: "Tipos de equipo", icon: Tags, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
 ];
 
 /** Enlace de nav individual — soporta modo colapsado con tooltip */
@@ -140,19 +150,12 @@ export function AppSidebarContent({
   usuario: UsuarioProps;
   collapsed: boolean;
 }) {
-  // El panel de Aprobaciones solo lo ve quien puede aprobar requerimientos.
-  const navItems = puede(usuario.rol, "requerimientoAprobar")
-    ? [
-        ...NAV_ITEMS.slice(0, 5),
-        {
-          href: "/aprobaciones",
-          label: "Aprobaciones",
-          icon: ClipboardCheck,
-          exact: false,
-        },
-        ...NAV_ITEMS.slice(5),
-      ]
-    : NAV_ITEMS;
+  // Cada módulo se muestra según los módulos asignados al rol en la BD
+  // (seg.T_RolModulo). Defensa en profundidad sobre la RLS.
+  const navItems = NAV_ITEMS.filter((item) => puedeVerModulo(usuario.modulos, item.modulo));
+  const maestrosItems = MAESTROS_ITEMS.filter((item) =>
+    puedeVerModulo(usuario.modulos, item.modulo)
+  );
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -195,7 +198,8 @@ export function AppSidebarContent({
             />
           ))}
 
-          {/* Grupo Maestros */}
+          {/* Grupo Maestros — se oculta entero si el rol no ve ningún maestro */}
+          {maestrosItems.length > 0 && (
           <div className={cn("pt-4", collapsed && "w-full flex flex-col items-center")}>
             {!collapsed && (
               <div className="flex items-center gap-2 px-3 pb-1">
@@ -208,7 +212,7 @@ export function AppSidebarContent({
             {collapsed && (
               <Separator className="bg-sidebar-border mb-2 w-6" />
             )}
-            {MAESTROS_ITEMS.map(({ href, label, icon, exact }) => (
+            {maestrosItems.map(({ href, label, icon, exact }) => (
               <NavLink
                 key={href}
                 href={href}
@@ -219,6 +223,7 @@ export function AppSidebarContent({
               />
             ))}
           </div>
+          )}
         </nav>
       </div>
     </TooltipProvider>

@@ -103,6 +103,7 @@ interface AppTopbarProps {
     email: string | null;
     nombreCompleto: string | null;
     rol: RoleCode;
+    modulos: string[];
   };
 }
 

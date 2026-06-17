@@ -190,32 +190,18 @@ export async function DELETE(
   const { id } = await params;
   const supabase = await crearClienteServidor();
 
-  const { data: deps, error: depsError } = await supabase
-    .schema("inv")
-    .rpc("FnContarDependencias", { PEntidad: "ordenMantenimiento", PId: id });
-
-  if (depsError) {
-    return NextResponse.json({ error: depsError.message }, { status: 500 });
-  }
-  const depData = deps as { puedeEliminar: boolean } | null;
-  if (depData && depData.puedeEliminar === false) {
-    return NextResponse.json(
-      {
-        error: "No se puede eliminar: la orden ya consumió repuestos. Recházala para revertir.",
-        dependencias: deps,
-      },
-      { status: 409 }
-    );
-  }
-
+  // Soft-delete atómico (FOR UPDATE + check de estado en una transacción): cierra
+  // el TOCTOU del antiguo DELETE crudo. La RPC rechaza OTs ya consumidas.
   const { error: dbError } = await supabase
     .schema("inv")
-    .from("T_OrdenMantenimiento")
-    .update({ Estado: false })
-    .eq("Id", id);
+    .rpc("FnEliminarOrdenMantenimiento", { PIdOrden: id });
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    const reglaNegocio = /no existe|ya consumio|permiso/i.test(dbError.message);
+    return NextResponse.json(
+      { error: dbError.message },
+      { status: reglaNegocio ? 409 : 500 }
+    );
   }
   return new NextResponse(null, { status: 204 });
 }

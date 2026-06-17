@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
       query = query.eq("IdProducto", idProducto);
     }
 
-    const { data, error: dbError } = await query;
+    // Red anti-OOM: sin idProducto esto trae todos los pares producto×ubicación.
+    const { data, error: dbError } = await query.limit(5000);
 
     if (dbError) {
       return NextResponse.json({ error: dbError.message }, { status: 500 });
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
     query = query.eq("BajoMinimo", true);
   }
 
-  const { data, error: dbError } = await query.order("NombreProducto");
+  const { data, error: dbError } = await query.order("NombreProducto").limit(5000);
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
