@@ -4,6 +4,8 @@ export const ROLES = {
   GERENCIA: "gerencia",
   SUPERVISION: "supervision",
   ALMACENERO: "almacenero",
+  // Solo visualización (stock/movimientos/reportes). No escribe: no figura en PERMISOS.
+  LOGISTICA: "logistica",
 } as const;
 
 export type RoleCode = (typeof ROLES)[keyof typeof ROLES];
