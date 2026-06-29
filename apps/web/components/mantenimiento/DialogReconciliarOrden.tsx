@@ -12,6 +12,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 import { useReconciliarOrden, useOrdenMantenimientoDetalle } from "@/hooks/useOrdenesMantenimiento";
+import { useEvidenciasMantenimiento } from "@/hooks/useEvidenciasMantenimiento";
+import {
+  EvidenciaMantenimiento,
+  evidenciaCompleta,
+} from "@/components/mantenimiento/EvidenciaMantenimiento";
 import {
   Dialog,
   DialogContent,
@@ -47,9 +52,11 @@ export function DialogReconciliarOrden({
   onClose: () => void;
 }) {
   const { data: orden, isLoading } = useOrdenMantenimientoDetalle(idOrden);
+  const { data: evidencias } = useEvidenciasMantenimiento(idOrden);
   const { mutateAsync, isPending } = useReconciliarOrden();
   const [rechazando, setRechazando] = useState(false);
   const [motivo, setMotivo] = useState("");
+  const completa = evidenciaCompleta(evidencias);
 
   const total =
     orden?.Repuestos.reduce((acc, r) => acc + r.Cantidad * r.CostoUnitario, 0) ?? 0;
@@ -97,8 +104,10 @@ export function DialogReconciliarOrden({
                 {orden.TipoMantenimiento === "correctivo" ? "Correctivo" : "Preventivo"}
               </div>
               <div>
-                <span className="text-muted-foreground">Mecánico: </span>
-                {orden.NombreMecanico ?? "—"}
+                <span className="text-muted-foreground">Personal: </span>
+                {orden.Personales.length
+                  ? orden.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
+                  : "—"}
               </div>
               <div>
                 <span className="text-muted-foreground">Turno: </span>
@@ -144,6 +153,17 @@ export function DialogReconciliarOrden({
               Total consumido: <strong>{moneda(total)}</strong>
             </div>
 
+            {!rechazando && (
+              <div className="space-y-2 rounded-md border p-3">
+                <p className="text-sm font-medium">Evidencia fotográfica</p>
+                <p className="text-xs text-muted-foreground">
+                  Para aprobar y cerrar la orden, sube al menos una foto del estado actual
+                  y una de post-mantenimiento.
+                </p>
+                <EvidenciaMantenimiento idOrden={idOrden} editable />
+              </div>
+            )}
+
             {rechazando && (
               <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 p-3">
                 <div className="flex items-start gap-2 text-destructive">
@@ -173,7 +193,11 @@ export function DialogReconciliarOrden({
                   <Button variant="outline" onClick={() => setRechazando(true)} disabled={isPending}>
                     Rechazar
                   </Button>
-                  <Button onClick={() => reconciliar(true)} disabled={isPending}>
+                  <Button
+                    onClick={() => reconciliar(true)}
+                    disabled={isPending || !completa}
+                    title={!completa ? "Sube al menos una foto de cada tipo para aprobar." : undefined}
+                  >
                     {isPending ? "Procesando..." : "Aprobar"}
                   </Button>
                 </>

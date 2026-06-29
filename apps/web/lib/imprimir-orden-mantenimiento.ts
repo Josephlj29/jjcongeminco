@@ -81,7 +81,9 @@ function construirHtml(o: OrdenMantenimientoConDetalle): string {
 </head>
 <body>
   <div class="head">
-    <div style="font-size:18px;font-weight:700">JJ CONGEMINCO</div>
+    <div>
+      <img src="${window.location.origin}/logo.svg" alt="JJ Congeminco" style="height:58px" />
+    </div>
     <div style="text-align:right">
       <div style="font-weight:700">ORDEN DE MANTENIMIENTO</div>
       <div class="mono">N° ${esc(o.NumeroOrden ?? o.Id.slice(0, 8))}</div>
@@ -127,8 +129,12 @@ function construirHtml(o: OrdenMantenimientoConDetalle): string {
     <tbody>${repuestos}</tbody>
   </table>
 
-  <div class="firma">MECÁNICO RESPONSABLE${
-    o.NombreMecanico ? `<br/><span style="color:#111">${esc(o.NombreMecanico)}</span>` : ""
+  <div class="firma">PERSONAL RESPONSABLE${
+    o.Personales.length
+      ? `<br/><span style="color:#111">${esc(
+          o.Personales.map((p) => p.NombreCompleto ?? "").filter(Boolean).join(", ")
+        )}</span>`
+      : ""
   }</div>
 
   <div class="pie">

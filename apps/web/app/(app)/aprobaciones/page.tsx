@@ -228,7 +228,7 @@ export default function AprobacionesPage() {
                     <TableHead>N° OT</TableHead>
                     <TableHead>Placa</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Mecánico</TableHead>
+                    <TableHead>Personal</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -249,7 +249,11 @@ export default function AprobacionesPage() {
                       <TableCell className="text-xs">
                         {o.TipoMantenimiento === "correctivo" ? "Correctivo" : "Preventivo"}
                       </TableCell>
-                      <TableCell className="text-xs">{o.NombreMecanico ?? "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {o.Personales.length
+                          ? o.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
+                          : "—"}
+                      </TableCell>
                       <TableCell>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </TableCell>

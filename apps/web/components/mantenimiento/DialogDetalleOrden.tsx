@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EvidenciaMantenimiento } from "@/components/mantenimiento/EvidenciaMantenimiento";
 
 const TURNO_LABEL: Record<string, string> = { dia: "Día", tarde: "Tarde", noche: "Noche" };
 const SIT_LABEL: Record<string, string> = {
@@ -91,10 +92,13 @@ export function DialogDetalleOrden({
                 <span className="text-muted-foreground">Kilometraje: </span>
                 {o.Kilometraje !== null ? o.Kilometraje : "—"}
               </div>
-              <div>
-                <span className="text-muted-foreground">Mecánico: </span>
-                {o.NombreMecanico ?? "—"}
-                {o.CargoMecanico ? ` · ${o.CargoMecanico}` : ""}
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Personal: </span>
+                {o.Personales.length
+                  ? o.Personales
+                      .map((p) => `${p.NombreCompleto ?? "—"}${p.Cargo ? ` · ${p.Cargo}` : ""}`)
+                      .join(", ")
+                  : "—"}
               </div>
             </div>
 
@@ -156,6 +160,13 @@ export function DialogDetalleOrden({
                 </Table>
               </div>
             </div>
+
+            {o.Evidencias.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-1">Evidencia fotográfica</h3>
+                <EvidenciaMantenimiento idOrden={idOrden} editable={false} />
+              </div>
+            )}
 
             {o.Situacion === "anulada" && o.MotivoReconciliacion && (
               <p className="text-sm text-destructive">

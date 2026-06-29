@@ -32,6 +32,7 @@ import {
 import { DialogOrdenMantenimiento } from "@/components/mantenimiento/DialogOrdenMantenimiento";
 import { DialogConsumirRepuestos } from "@/components/mantenimiento/DialogConsumirRepuestos";
 import { DialogDetalleOrden } from "@/components/mantenimiento/DialogDetalleOrden";
+import { DialogCulminarOrden } from "@/components/mantenimiento/DialogCulminarOrden";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { EmptyState } from "@/components/EmptyState";
 import { imprimirOrdenMantenimiento } from "@/lib/imprimir-orden-mantenimiento";
@@ -100,6 +101,7 @@ export default function MantenimientoPage() {
   const [editarId, setEditarId] = useState<string | null>(null);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [consumir, setConsumir] = useState<{ id: string; numero: string | null } | null>(null);
+  const [culminar, setCulminar] = useState<{ id: string; numero: string | null } | null>(null);
   const [eliminar, setEliminar] = useState<{ id: string; nombre: string } | null>(null);
 
   const { data: detalleEditar } = useOrdenMantenimientoDetalle(editarId);
@@ -171,7 +173,7 @@ export default function MantenimientoPage() {
                     <TableHead>Placa</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Turno</TableHead>
-                    <TableHead>Mecánico</TableHead>
+                    <TableHead>Personal</TableHead>
                     <TableHead>Situación</TableHead>
                     <TableHead className="w-10 text-right">Acciones</TableHead>
                   </TableRow>
@@ -188,7 +190,11 @@ export default function MantenimientoPage() {
                       <TableCell className="text-sm font-medium">{o.Placa ?? "—"}</TableCell>
                       <TableCell className="text-xs">{TIPO_LABEL[o.TipoMantenimiento]}</TableCell>
                       <TableCell className="text-xs">{TURNO_LABEL[o.Turno] ?? o.Turno}</TableCell>
-                      <TableCell className="text-xs">{o.NombreMecanico ?? "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {o.Personales.length
+                          ? o.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
+                          : "—"}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={SIT_VARIANTE[o.Situacion]}>{SIT_LABEL[o.Situacion]}</Badge>
                       </TableCell>
@@ -224,9 +230,11 @@ export default function MantenimientoPage() {
                                   <Pencil className="mr-2 h-4 w-4" />
                                   Editar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => void finalizarOrden(o.Id, false)}>
+                                <DropdownMenuItem
+                                  onClick={() => setCulminar({ id: o.Id, numero: o.NumeroOrden })}
+                                >
                                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                                  Cerrar (sin repuestos)
+                                  Culminar (sin repuestos)
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
@@ -282,6 +290,14 @@ export default function MantenimientoPage() {
           idOrden={consumir.id}
           numeroOrden={consumir.numero}
           onClose={() => setConsumir(null)}
+        />
+      )}
+
+      {culminar && (
+        <DialogCulminarOrden
+          idOrden={culminar.id}
+          numeroOrden={culminar.numero}
+          onClose={() => setCulminar(null)}
         />
       )}
 

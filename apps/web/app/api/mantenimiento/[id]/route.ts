@@ -18,6 +18,13 @@ import {
   type OrdenMantenimientoConDetalle,
 } from "@congeminco/shared";
 
+interface FilaPersonal {
+  Id: string;
+  IdPersonal: string;
+  Orden: number;
+  T_Personal: { NombreCompleto: string; T_Cargo: { Nombre: string } | null } | null;
+}
+
 interface FilaHeader {
   Id: string;
   NumeroOrden: string | null;
@@ -26,7 +33,6 @@ interface FilaHeader {
   Turno: "dia" | "tarde" | "noche";
   Kilometraje: number | null;
   IdVehiculo: string;
-  IdMecanicoResponsable: string;
   Observaciones: string | null;
   Situacion: OrdenMantenimientoConDetalle["Situacion"];
   IdRequerimiento: string | null;
@@ -34,7 +40,7 @@ interface FilaHeader {
   MotivoReconciliacion: string | null;
   FechaReconciliacion: string | null;
   T_Vehiculo: { Placa: string } | null;
-  T_Personal: { NombreCompleto: string; T_Cargo: { Nombre: string } | null } | null;
+  T_OrdenMantenimientoPersonal: FilaPersonal[] | null;
 }
 
 interface FilaMovimiento {
@@ -62,7 +68,7 @@ export async function GET(
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, IdVehiculo, IdMecanicoResponsable, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, T_Vehiculo(Placa), T_Personal(NombreCompleto, T_Cargo(Nombre))"
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, IdVehiculo, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
     )
     .eq("Id", id)
     .eq("Estado", true)
@@ -118,6 +124,31 @@ export async function GET(
     }
   }
 
+  // Evidencia fotográfica (estado_actual / post_mantenimiento) ordenada por tipo+orden.
+  const { data: evidencias, error: evidenciasError } = await supabase
+    .schema("inv")
+    .from("T_OrdenMantenimientoEvidencia")
+    .select("Id, Tipo, Url, Orden")
+    .eq("IdOrdenMantenimiento", id)
+    .eq("Estado", true)
+    .order("Tipo")
+    .order("Orden");
+
+  if (evidenciasError) {
+    return NextResponse.json({ error: evidenciasError.message }, { status: 500 });
+  }
+
+  const personales = (h.T_OrdenMantenimientoPersonal ?? [])
+    .slice()
+    .sort((a, b) => a.Orden - b.Orden)
+    .map((p) => ({
+      Id: p.Id,
+      IdPersonal: p.IdPersonal,
+      NombreCompleto: p.T_Personal?.NombreCompleto ?? null,
+      Cargo: p.T_Personal?.T_Cargo?.Nombre ?? null,
+      Orden: Number(p.Orden),
+    }));
+
   const resultado: OrdenMantenimientoConDetalle = {
     Id: h.Id,
     NumeroOrden: h.NumeroOrden,
@@ -127,9 +158,7 @@ export async function GET(
     Kilometraje: h.Kilometraje === null ? null : Number(h.Kilometraje),
     IdVehiculo: h.IdVehiculo,
     Placa: h.T_Vehiculo?.Placa ?? null,
-    IdMecanicoResponsable: h.IdMecanicoResponsable,
-    NombreMecanico: h.T_Personal?.NombreCompleto ?? null,
-    CargoMecanico: h.T_Personal?.T_Cargo?.Nombre ?? null,
+    Personales: personales,
     Situacion: h.Situacion,
     Observaciones: h.Observaciones,
     IdRequerimiento: h.IdRequerimiento,
@@ -140,6 +169,12 @@ export async function GET(
       (t) => ({ Id: t.Id, Secuencia: Number(t.Secuencia), Descripcion: t.Descripcion })
     ),
     Repuestos: repuestos,
+    Evidencias: ((evidencias as OrdenMantenimientoConDetalle["Evidencias"]) ?? []).map((e) => ({
+      Id: e.Id,
+      Tipo: e.Tipo,
+      Url: e.Url,
+      Orden: Number(e.Orden),
+    })),
   };
 
   return NextResponse.json(resultado);

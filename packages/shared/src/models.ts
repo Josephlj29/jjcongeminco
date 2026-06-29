@@ -169,6 +169,23 @@ export interface RepuestoConsumido {
   CostoUnitario: number;
 }
 
+/* Personal asignado a una orden de mantenimiento (puente N:M). */
+export interface OrdenMantenimientoPersonal {
+  Id: string;
+  IdPersonal: string;
+  NombreCompleto: string | null;
+  Cargo: string | null;
+  Orden: number;
+}
+
+/* Evidencia fotográfica de una orden de mantenimiento. */
+export interface OrdenMantenimientoEvidencia {
+  Id: string;
+  Tipo: "estado_actual" | "post_mantenimiento";
+  Url: string;
+  Orden: number;
+}
+
 /* Fila de la lista de órdenes de mantenimiento. */
 export interface OrdenMantenimientoResumen {
   Id: string;
@@ -179,14 +196,12 @@ export interface OrdenMantenimientoResumen {
   Kilometraje: number | null;
   IdVehiculo: string;
   Placa: string | null;
-  IdMecanicoResponsable: string;
-  NombreMecanico: string | null;
+  Personales: OrdenMantenimientoPersonal[];
   Situacion: SituacionOrden;
 }
 
 /* OT con trabajos y repuestos resueltos (vista de detalle + PDF). */
 export interface OrdenMantenimientoConDetalle extends OrdenMantenimientoResumen {
-  CargoMecanico: string | null;
   Observaciones: string | null;
   IdRequerimiento: string | null;
   IdDocumentoInventarioReversa: string | null;
@@ -194,6 +209,7 @@ export interface OrdenMantenimientoConDetalle extends OrdenMantenimientoResumen 
   FechaReconciliacion: string | null;
   Trabajos: TrabajoMantenimiento[];
   Repuestos: RepuestoConsumido[];
+  Evidencias: OrdenMantenimientoEvidencia[];
 }
 
 export interface ProductoImagen extends CamposAuditoria {

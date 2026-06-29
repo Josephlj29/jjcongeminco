@@ -17,6 +17,13 @@ import {
   type OrdenMantenimientoResumen,
 } from "@congeminco/shared";
 
+interface FilaPersonal {
+  Id: string;
+  IdPersonal: string;
+  Orden: number;
+  T_Personal: { NombreCompleto: string; T_Cargo: { Nombre: string } | null } | null;
+}
+
 interface FilaOrden {
   Id: string;
   NumeroOrden: string | null;
@@ -25,10 +32,25 @@ interface FilaOrden {
   Turno: "dia" | "tarde" | "noche";
   Kilometraje: number | null;
   IdVehiculo: string;
-  IdMecanicoResponsable: string;
   Situacion: OrdenMantenimientoResumen["Situacion"];
   T_Vehiculo: { Placa: string } | null;
-  T_Personal: { NombreCompleto: string } | null;
+  T_OrdenMantenimientoPersonal: FilaPersonal[] | null;
+}
+
+/** Normaliza el embed de personales a OrdenMantenimientoResumen["Personales"]. */
+function mapearPersonales(
+  filas: FilaPersonal[] | null
+): OrdenMantenimientoResumen["Personales"] {
+  return (filas ?? [])
+    .slice()
+    .sort((a, b) => a.Orden - b.Orden)
+    .map((p) => ({
+      Id: p.Id,
+      IdPersonal: p.IdPersonal,
+      NombreCompleto: p.T_Personal?.NombreCompleto ?? null,
+      Cargo: p.T_Personal?.T_Cargo?.Nombre ?? null,
+      Orden: Number(p.Orden),
+    }));
 }
 
 export async function GET(request: NextRequest) {
@@ -52,7 +74,7 @@ export async function GET(request: NextRequest) {
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, IdVehiculo, IdMecanicoResponsable, Situacion, T_Vehiculo(Placa), T_Personal(NombreCompleto)"
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, IdVehiculo, Situacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
     )
     .eq("Estado", true);
 
@@ -76,8 +98,7 @@ export async function GET(request: NextRequest) {
     Kilometraje: o.Kilometraje === null ? null : Number(o.Kilometraje),
     IdVehiculo: o.IdVehiculo,
     Placa: o.T_Vehiculo?.Placa ?? null,
-    IdMecanicoResponsable: o.IdMecanicoResponsable,
-    NombreMecanico: o.T_Personal?.NombreCompleto ?? null,
+    Personales: mapearPersonales(o.T_OrdenMantenimientoPersonal),
     Situacion: o.Situacion,
   }));
 

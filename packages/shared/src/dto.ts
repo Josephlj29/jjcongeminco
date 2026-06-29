@@ -304,7 +304,11 @@ export const CrearOrdenMantenimientoSchema = z.object({
   Turno: z.enum(TURNO),
   Kilometraje: z.number().nonnegative().optional(),
   IdVehiculo: z.string().uuid({ message: "Elige una placa." }),
-  IdMecanicoResponsable: z.string().uuid({ message: "Elige un mecánico responsable." }),
+  // Personales asignados a la orden (todos por igual). El primero del arreglo
+  // es el solicitante del requerimiento que genera el consumo de repuestos.
+  IdsPersonal: z
+    .array(z.string().uuid())
+    .min(1, { message: "Asigna al menos un personal." }),
   Observaciones: z.string().max(500).optional(),
   Trabajos: z.array(TrabajoMantenimientoSchema).default([]),
 });
@@ -312,6 +316,22 @@ export type CrearOrdenMantenimiento = z.infer<typeof CrearOrdenMantenimientoSche
 
 export const ActualizarOrdenMantenimientoSchema = CrearOrdenMantenimientoSchema.partial();
 export type ActualizarOrdenMantenimiento = z.infer<typeof ActualizarOrdenMantenimientoSchema>;
+
+/* ─── Evidencia fotográfica de mantenimiento ───
+   Se sube al culminar la orden: 'estado_actual' (antes) y 'post_mantenimiento'
+   (después). Mín. 1 de cada tipo (lo exige la BD al cerrar); máx. 10 por tipo
+   (lo valida el endpoint por conteo, igual que las imágenes de producto). */
+export const MAX_EVIDENCIA_MANTENIMIENTO = 10;
+
+export const TIPO_EVIDENCIA = ["estado_actual", "post_mantenimiento"] as const;
+export type TipoEvidencia = (typeof TIPO_EVIDENCIA)[number];
+
+export const CrearEvidenciaMantenimientoSchema = z.object({
+  Tipo: z.enum(TIPO_EVIDENCIA),
+  Url: z.string().url().max(500),
+  Orden: z.number().int().positive().max(MAX_EVIDENCIA_MANTENIMIENTO).default(1),
+});
+export type CrearEvidenciaMantenimiento = z.infer<typeof CrearEvidenciaMantenimientoSchema>;
 
 /* Consumo de repuestos: genera la salida de inmediato (Model 2). Modo 'stock'
    sale del almacén; 'compra' = compra directa (entrada+salida) con proveedor +

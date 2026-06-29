@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearOrdenMantenimientoSchema,
@@ -39,9 +39,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const TIPO_LABEL: Record<string, string> = {
   preventivo: "Preventivo",
@@ -52,6 +61,24 @@ const TURNO_LABEL: Record<string, string> = {
   tarde: "Tarde",
   noche: "Noche",
 };
+
+/**
+ * Preview del N° de orden (sin correlativo): PREFIJO-DDMMYYYY-PLACA.
+ * El servidor es la fuente de verdad y le agrega el correlativo del día (-NN)
+ * al crear; esto es solo para que el usuario vea qué número se va a asignar.
+ */
+function previewNumeroOrden(
+  tipo: string | undefined,
+  fecha: string | undefined,
+  placa: string | null | undefined
+): string | null {
+  if (!tipo || !fecha || !placa) return null;
+  const [y, m, d] = fecha.split("-");
+  if (!y || !m || !d) return null;
+  const prefijo = tipo === "correctivo" ? "CORR" : "PREV";
+  const placaLimpia = placa.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  return `${prefijo}-${d}${m}${y}-${placaLimpia}`;
+}
 
 export function DialogOrdenMantenimiento({
   orden,
@@ -87,15 +114,30 @@ export function DialogOrdenMantenimiento({
           Turno: orden.Turno,
           Kilometraje: orden.Kilometraje ?? undefined,
           IdVehiculo: orden.IdVehiculo,
-          IdMecanicoResponsable: orden.IdMecanicoResponsable,
+          IdsPersonal: orden.Personales.map((p) => p.IdPersonal),
           Observaciones: orden.Observaciones ?? undefined,
           Trabajos: [],
         }
       : {
           FechaOrden: new Date().toISOString().split("T")[0],
+          IdsPersonal: [],
           Trabajos: [],
         },
   });
+
+  const idsPersonal = watch("IdsPersonal") ?? [];
+  const placaSeleccionada = vehiculos?.find((v) => v.Id === watch("IdVehiculo"))?.Placa;
+  const numeroPreview = previewNumeroOrden(
+    watch("TipoMantenimiento"),
+    watch("FechaOrden"),
+    placaSeleccionada
+  );
+  const togglePersonal = (id: string) => {
+    const next = idsPersonal.includes(id)
+      ? idsPersonal.filter((x) => x !== id)
+      : [...idsPersonal, id];
+    setValue("IdsPersonal", next, { shouldValidate: true });
+  };
 
   const onSubmit = async (data: CrearOrdenMantenimiento) => {
     const trabajosLimpios = trabajos
@@ -179,7 +221,7 @@ export function DialogOrdenMantenimiento({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Placa *</Label>
               <Select
@@ -204,31 +246,6 @@ export function DialogOrdenMantenimiento({
             </div>
 
             <div className="space-y-1">
-              <Label>Mecánico responsable *</Label>
-              <Select
-                value={watch("IdMecanicoResponsable") ?? ""}
-                onValueChange={(v) =>
-                  setValue("IdMecanicoResponsable", v, { shouldValidate: true })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {personal?.map((p) => (
-                    <SelectItem key={p.Id} value={p.Id}>
-                      {p.NombreCompleto}
-                      {p.NombreCargo ? ` · ${p.NombreCargo}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.IdMecanicoResponsable && (
-                <p className="text-xs text-destructive">{errors.IdMecanicoResponsable.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
               <Label htmlFor="Kilometraje">Kilometraje</Label>
               <Input
                 id="Kilometraje"
@@ -243,9 +260,72 @@ export function DialogOrdenMantenimiento({
             </div>
           </div>
 
+          {/* Personal asignado (varios; todos por igual) */}
           <div className="space-y-1">
-            <Label htmlFor="NumeroOrden">N° Orden (opcional)</Label>
-            <Input id="NumeroOrden" placeholder="OT-0001" {...register("NumeroOrden")} />
+            <Label>
+              Personal asignado * {idsPersonal.length > 0 && (
+                <span className="text-muted-foreground font-normal">
+                  ({idsPersonal.length} seleccionado{idsPersonal.length === 1 ? "" : "s"})
+                </span>
+              )}
+            </Label>
+            <Command className="rounded-lg border">
+              <CommandInput placeholder="Buscar personal..." />
+              <CommandList className="max-h-44">
+                <CommandEmpty>No se encontró personal.</CommandEmpty>
+                <CommandGroup>
+                  {personal?.map((p) => {
+                    const activo = idsPersonal.includes(p.Id);
+                    return (
+                      <CommandItem
+                        key={p.Id}
+                        value={p.NombreCompleto}
+                        onSelect={() => togglePersonal(p.Id)}
+                        className="gap-2"
+                      >
+                        <span
+                          className={cn(
+                            "flex h-4 w-4 items-center justify-center rounded border",
+                            activo ? "bg-primary border-primary text-primary-foreground" : "border-input"
+                          )}
+                        >
+                          {activo && <Check className="h-3 w-3" />}
+                        </span>
+                        <span className="flex-1">{p.NombreCompleto}</span>
+                        {p.NombreCargo && (
+                          <span className="text-xs text-muted-foreground">{p.NombreCargo}</span>
+                        )}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+            {errors.IdsPersonal && (
+              <p className="text-xs text-destructive">{errors.IdsPersonal.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label>N° Orden</Label>
+            {modoEdicion ? (
+              <Input readOnly className="bg-muted font-mono" {...register("NumeroOrden")} />
+            ) : (
+              <div className="rounded-md border bg-muted px-3 py-2 text-sm">
+                {numeroPreview ? (
+                  <>
+                    <span className="font-mono">{numeroPreview}-NN</span>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Se genera automáticamente al guardar (NN = correlativo del día).
+                    </p>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">
+                    Elegí tipo, fecha y placa para previsualizar el número.
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Trabajos realizados */}
