@@ -18,7 +18,7 @@
  * filtra el combobox a los productos asociados al tipo de equipo de la placa
  * (vía vehículo -> equipo -> tipo) MÁS los productos generales (sin asociaciones).
  */
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useForm,
   useFieldArray,
@@ -88,13 +88,35 @@ const TIPO_LABEL: Record<string, string> = {
   ajuste: "Ajuste",
 };
 
+/**
+ * Próximo N° de documento (preview): correlativo global con relleno (0001, 0002…).
+ * Espeja al servidor (inv.FnRegistrarDocumentoInventario): MAX del correlativo
+ * numérico + 1, primer libre. El servidor es la fuente de verdad y lo reconfirma
+ * al guardar; esto es solo previsualización.
+ */
+function siguienteNumeroDocumento(numerosExistentes: (string | null)[]): string {
+  const ocupados = new Set(numerosExistentes.filter((n): n is string => !!n));
+  let corr = 0;
+  for (const n of ocupados) {
+    if (/^\d+$/.test(n)) corr = Math.max(corr, Number(n));
+  }
+  corr += 1;
+  let candidato = String(corr).padStart(4, "0");
+  while (ocupados.has(candidato)) {
+    corr += 1;
+    candidato = String(corr).padStart(4, "0");
+  }
+  return candidato;
+}
+
 /* ── Línea de detalle (subcomponente para aislar el watch por fila) ── */
 interface LineaDetalleProps {
   index: number;
   control: Control<CrearDocumento>;
   register: UseFormRegister<CrearDocumento>;
   setValue: UseFormSetValue<CrearDocumento>;
-  productos: ProductoStockConsolidado[];
+  placas: { Id: string; label: string }[];
+  productosParaPlaca: (idVehiculo: string | undefined) => ProductoStockConsolidado[];
   esSalida: boolean;
   puedeBorrar: boolean;
   onBorrar: () => void;
@@ -108,7 +130,8 @@ function LineaDetalle({
   control,
   register,
   setValue,
-  productos,
+  placas,
+  productosParaPlaca,
   esSalida,
   puedeBorrar,
   onBorrar,
@@ -121,6 +144,11 @@ function LineaDetalle({
     control,
     name: `Detalle.${index}.CostoUnitario`,
   });
+  const idVehiculoLinea = useWatch({ control, name: `Detalle.${index}.IdVehiculo` });
+  const productos = useMemo(
+    () => productosParaPlaca(idVehiculoLinea ?? undefined),
+    [productosParaPlaca, idVehiculoLinea]
+  );
 
   const producto = useMemo(
     () => productos.find((p) => p.IdProducto === idProducto) ?? null,
@@ -271,6 +299,27 @@ function LineaDetalle({
           />
         )}
       </TableCell>
+      {esSalida && (
+        <TableCell className="align-top">
+          <Select
+            value={idVehiculoLinea ?? ""}
+            onValueChange={(v) =>
+              setValue(`Detalle.${index}.IdVehiculo`, v, { shouldValidate: true })
+            }
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Placa..." />
+            </SelectTrigger>
+            <SelectContent>
+              {placas.map((p) => (
+                <SelectItem key={p.Id} value={p.Id}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </TableCell>
+      )}
       <TableCell className="align-top">
         <Button
           type="button"
@@ -331,6 +380,13 @@ export default function MovimientosPage() {
   });
   const tipoDocumento = watch("TipoDocumento");
   const idVehiculo = watch("IdVehiculo");
+  const numeroDocPreview = siguienteNumeroDocumento(
+    (documentos ?? []).map((d) => d.NumeroDocumento)
+  );
+  // El refine de Detalle (path:["Detalle"]) puede quedar en .message o en .root.message.
+  const detalleErrorMsg =
+    errors.Detalle?.message ??
+    (errors.Detalle as { root?: { message?: string } } | undefined)?.root?.message;
 
   const esTransferencia = tipoDocumento === "transferencia";
   const esEntrada =
@@ -339,51 +395,58 @@ export default function MovimientosPage() {
 
   const todosProductos = useMemo(() => productos ?? [], [productos]);
 
-  /* Tipo de equipo de la placa seleccionada (vehículo -> equipo -> tipo). */
-  const idTipoEquipoPlaca = useMemo(() => {
-    if (!idVehiculo) return null;
-    const vehiculo = vehiculos?.find((v) => v.Id === idVehiculo);
-    if (!vehiculo?.IdEquipo) return null;
-    const equipo = equipos?.find((e) => e.Id === vehiculo.IdEquipo);
-    return equipo?.IdTipoEquipo ?? null;
-  }, [idVehiculo, vehiculos, equipos]);
+  /* Opciones de placa para los selects de cada línea. */
+  const placas = useMemo(
+    () =>
+      (vehiculos ?? []).map((v) => ({
+        Id: v.Id,
+        label: v.Placa + (v.Modelo ? ` — ${v.Modelo}` : ""),
+      })),
+    [vehiculos]
+  );
 
-  /* IdProducto compatibles con ese tipo de equipo (asociaciones de ese tipo). */
-  const productosDelTipo = useMemo(() => {
-    if (!idTipoEquipoPlaca) return new Set<string>();
-    const s = new Set<string>();
-    (asociaciones ?? [])
-      .filter((a) => a.IdTipoEquipo === idTipoEquipoPlaca)
-      .forEach((a) => s.add(a.IdProducto));
-    return s;
-  }, [asociaciones, idTipoEquipoPlaca]);
-
-  /* Productos a mostrar en el combobox según el toggle. */
-  const productosVisibles = useMemo(() => {
-    const filtroActivo =
-      esSalida && !!idVehiculo && !!idTipoEquipoPlaca && soloCompatibles;
-    if (!filtroActivo) return todosProductos;
-    // Compatibles = del tipo de la placa, o productos generales (EsGeneral).
-    return todosProductos.filter(
-      (p) => productosDelTipo.has(p.IdProducto) || p.EsGeneral
-    );
-  }, [
-    esSalida,
-    idVehiculo,
-    idTipoEquipoPlaca,
-    soloCompatibles,
-    todosProductos,
-    productosDelTipo,
-  ]);
-
-  const mostrarToggleCompatibles = esSalida && !!idVehiculo && !!idTipoEquipoPlaca;
+  /* Productos compatibles con la placa de UNA línea (vehículo -> equipo -> tipo).
+     Con el toggle activo, filtra a los del tipo de esa placa + los generales. */
+  const productosParaPlaca = useCallback(
+    (idVeh: string | undefined) => {
+      if (!esSalida || !soloCompatibles || !idVeh) return todosProductos;
+      const veh = vehiculos?.find((v) => v.Id === idVeh);
+      const equipo = veh?.IdEquipo
+        ? equipos?.find((e) => e.Id === veh.IdEquipo)
+        : undefined;
+      const idTipo = equipo?.IdTipoEquipo ?? null;
+      if (!idTipo) return todosProductos;
+      const compat = new Set<string>();
+      (asociaciones ?? [])
+        .filter((a) => a.IdTipoEquipo === idTipo)
+        .forEach((a) => compat.add(a.IdProducto));
+      return todosProductos.filter(
+        (p) => compat.has(p.IdProducto) || p.EsGeneral
+      );
+    },
+    [esSalida, soloCompatibles, vehiculos, equipos, asociaciones, todosProductos]
+  );
 
   const onSubmit = async (data: CrearDocumento) => {
     /* En salidas sin override (CostoUnitario undefined) no se manda el costo:
        la BD congela el promedio móvil automáticamente. zodResolver ya deja el
        campo en undefined cuando el input está en solo lectura. */
+    // La placa por línea solo aplica a salidas. Para otros tipos la descartamos
+    // para no arrastrar placas pegadas si se cambió el tipo después de elegirlas.
+    const payload =
+      data.TipoDocumento === "salida"
+        ? data
+        : {
+            ...data,
+            Detalle: data.Detalle.map((l) => ({
+              IdProducto: l.IdProducto,
+              Cantidad: l.Cantidad,
+              CostoUnitario: l.CostoUnitario,
+              Notas: l.Notas,
+            })),
+          };
     try {
-      await mutateAsync(data);
+      await mutateAsync(payload);
       toast.success("Documento registrado correctamente");
       reset({
         FechaDocumento: new Date().toISOString().split("T")[0],
@@ -456,12 +519,16 @@ export default function MovimientosPage() {
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="NumeroDocumento">N° Documento (opcional)</Label>
+                <Label htmlFor="NumeroDocumento">N° Documento</Label>
                 <Input
                   id="NumeroDocumento"
-                  placeholder="REM-0001"
-                  {...register("NumeroDocumento")}
+                  readOnly
+                  value={numeroDocPreview}
+                  className="bg-muted font-mono"
                 />
+                <p className="text-[11px] leading-tight text-muted-foreground">
+                  Se asigna automáticamente al guardar.
+                </p>
               </div>
 
               <div className="space-y-1">
@@ -533,51 +600,61 @@ export default function MovimientosPage() {
           </Card>
         )}
 
-        {/* ── Sección: Destino del consumo (placa) — solo salida ── */}
+        {/* ── Sección: Destino del consumo (placa por línea) — solo salida ── */}
         {esSalida && (
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Destino del consumo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="space-y-1 max-w-sm">
-                <Label>
-                  Placa <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={idVehiculo ?? ""}
-                  onValueChange={(v) => setValue("IdVehiculo", v, { shouldValidate: true })}
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="space-y-1 flex-1 min-w-56 max-w-sm">
+                  <Label>Placa por defecto (opcional)</Label>
+                  <Select
+                    value={idVehiculo ?? ""}
+                    onValueChange={(v) => setValue("IdVehiculo", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar placa..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {placas.map((p) => (
+                        <SelectItem key={p.Id} value={p.Id}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!idVehiculo}
+                  onClick={() =>
+                    fields.forEach((_, i) =>
+                      setValue(`Detalle.${i}.IdVehiculo`, idVehiculo, {
+                        shouldValidate: true,
+                      })
+                    )
+                  }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar placa..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vehiculos?.map((v) => (
-                      <SelectItem key={v.Id} value={v.Id}>
-                        {v.Placa}
-                        {v.Modelo ? ` — ${v.Modelo}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.IdVehiculo && (
-                  <p className="text-xs text-destructive">
-                    {errors.IdVehiculo.message}
-                  </p>
-                )}
+                  Aplicar placa a todas las líneas
+                </Button>
               </div>
 
-              {mostrarToggleCompatibles && (
-                <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
-                  <input
-                    type="checkbox"
-                    checked={soloCompatibles}
-                    onChange={(e) => setSoloCompatibles(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  Solo productos compatibles con esta placa
-                </label>
-              )}
+              <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
+                <input
+                  type="checkbox"
+                  checked={soloCompatibles}
+                  onChange={(e) => setSoloCompatibles(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                Solo productos compatibles con la placa de cada línea
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Cada línea lleva su placa destino. Elegí una por defecto y aplicala
+                a todas, o asigná una distinta por producto.
+              </p>
             </CardContent>
           </Card>
         )}
@@ -590,7 +667,9 @@ export default function MovimientosPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => append({ IdProducto: "", Cantidad: 1 })}
+              onClick={() =>
+                append({ IdProducto: "", Cantidad: 1, IdVehiculo: idVehiculo })
+              }
             >
               <Plus className="mr-1 h-3 w-3" />
               Agregar línea
@@ -607,6 +686,7 @@ export default function MovimientosPage() {
                     <TableHead className="w-56">
                       {esSalida ? "Costo (valorización)" : "Costo unit. (opt.)"}
                     </TableHead>
+                    {esSalida && <TableHead className="w-44">Placa</TableHead>}
                     <TableHead className="w-12" />
                   </TableRow>
                 </TableHeader>
@@ -618,7 +698,8 @@ export default function MovimientosPage() {
                       control={control}
                       register={register}
                       setValue={setValue}
-                      productos={productosVisibles}
+                      placas={placas}
+                      productosParaPlaca={productosParaPlaca}
                       esSalida={esSalida}
                       puedeBorrar={fields.length > 1}
                       onBorrar={() => fields.length > 1 && remove(idx)}
@@ -634,6 +715,10 @@ export default function MovimientosPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {detalleErrorMsg && (
+              <p className="text-xs text-destructive mt-2">{detalleErrorMsg}</p>
+            )}
 
             <div className="flex justify-end mt-6">
               <Button type="submit" disabled={isPending}>

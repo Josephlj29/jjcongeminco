@@ -98,6 +98,11 @@ export default function RequerimientosPage() {
   });
 
   const origenSeleccionado = watch("Origen");
+  const placaDefault = watch("IdVehiculo");
+  // El refine de Detalle (path:["Detalle"]) puede quedar en .message o en .root.message.
+  const detalleErrorMsg =
+    errors.Detalle?.message ??
+    (errors.Detalle as { root?: { message?: string } } | undefined)?.root?.message;
 
   const onSubmit = async (data: CrearRequerimiento) => {
     try {
@@ -227,12 +232,10 @@ export default function RequerimientosPage() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Vehículo (placa)</Label>
+                <Label>Placa por defecto (opcional)</Label>
                 <Select
-                  value={watch("IdVehiculo") ?? ""}
-                  onValueChange={(v) =>
-                    setValue("IdVehiculo", v, { shouldValidate: true })
-                  }
+                  value={placaDefault ?? ""}
+                  onValueChange={(v) => setValue("IdVehiculo", v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar placa..." />
@@ -248,10 +251,27 @@ export default function RequerimientosPage() {
                 </Select>
               </div>
             </div>
-            {/* Error de validación del refine (equipo o placa requerido) */}
-            {errors.root && (
-              <p className="text-xs text-destructive">{errors.root.message}</p>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!placaDefault}
+                onClick={() =>
+                  fields.forEach((_, i) =>
+                    setValue(`Detalle.${i}.IdVehiculo`, placaDefault, {
+                      shouldValidate: true,
+                    })
+                  )
+                }
+              >
+                Aplicar placa a todas las líneas
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Cada línea puede llevar su propia placa destino, o elegí un equipo
+                como destino general.
+              </p>
+            </div>
 
             <Separator />
 
@@ -263,7 +283,9 @@ export default function RequerimientosPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append({ IdProducto: "", Cantidad: 1 })}
+                  onClick={() =>
+                    append({ IdProducto: "", Cantidad: 1, IdVehiculo: placaDefault })
+                  }
                 >
                   <Plus className="mr-1 h-3 w-3" />
                   Agregar línea
@@ -275,6 +297,7 @@ export default function RequerimientosPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Producto</TableHead>
+                      <TableHead className="w-44">Placa</TableHead>
                       <TableHead className="w-28">Cantidad</TableHead>
                       <TableHead className="w-48">Notas (opt.)</TableHead>
                       <TableHead className="w-12"></TableHead>
@@ -293,6 +316,27 @@ export default function RequerimientosPage() {
                               })
                             }
                           />
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Select
+                            value={watch(`Detalle.${idx}.IdVehiculo`) ?? ""}
+                            onValueChange={(v) =>
+                              setValue(`Detalle.${idx}.IdVehiculo`, v, {
+                                shouldValidate: true,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Placa..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {vehiculos?.map((v) => (
+                                <SelectItem key={v.Id} value={v.Id}>
+                                  {v.Placa}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="align-top">
                           <Input
@@ -328,6 +372,9 @@ export default function RequerimientosPage() {
                   </TableBody>
                 </Table>
               </div>
+              {detalleErrorMsg && (
+                <p className="text-xs text-destructive">{detalleErrorMsg}</p>
+              )}
             </div>
 
             <div className="space-y-1">

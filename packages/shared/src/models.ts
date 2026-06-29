@@ -128,6 +128,8 @@ export interface RequerimientoDetalleLinea {
   Cantidad: number;
   CantidadAtendida: number;
   CostoPromedio: number;
+  IdVehiculo: string | null;
+  Placa: string | null;
   Notas: string | null;
 }
 

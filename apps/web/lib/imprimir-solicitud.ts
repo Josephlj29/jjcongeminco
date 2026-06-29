@@ -44,6 +44,7 @@ function construirHtml(r: RequerimientoConDetalle): string {
         <td class="c">${i + 1}</td>
         <td class="mono">${esc(l.Sku)}</td>
         <td>${esc(l.NombreProducto)}</td>
+        <td>${esc(l.Placa ?? r.Placa ?? "—")}</td>
         <td class="c">${esc(l.Cantidad)}</td>
         <td class="c">${esc(l.CantidadAtendida)}</td>
         <td>${esc(l.Notas ?? "")}</td>
@@ -121,12 +122,13 @@ function construirHtml(r: RequerimientoConDetalle): string {
         <th class="c">#</th>
         <th>SKU</th>
         <th>Producto</th>
+        <th>Placa</th>
         <th class="c">Cant. solicitada</th>
         <th class="c">Cant. atendida</th>
         <th>Notas</th>
       </tr>
     </thead>
-    <tbody>${filas || '<tr><td colspan="6" class="c">Sin líneas</td></tr>'}</tbody>
+    <tbody>${filas || '<tr><td colspan="7" class="c">Sin líneas</td></tr>'}</tbody>
   </table>
 
   ${r.Notas ? `<div class="notas"><strong>Observaciones:</strong> ${esc(r.Notas)}</div>` : ""}

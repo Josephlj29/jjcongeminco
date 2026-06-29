@@ -33,7 +33,9 @@ interface FilaDetalle {
   Cantidad: number;
   CantidadAtendida: number;
   Notas: string | null;
+  IdVehiculo: string | null;
   T_Producto: { Nombre: string; Sku: string; CostoPromedio: number } | null;
+  T_Vehiculo: { Placa: string } | null;
 }
 
 export async function GET(
@@ -67,7 +69,7 @@ export async function GET(
     .schema("inv")
     .from("T_RequerimientoDetalle")
     .select(
-      "Id, IdProducto, Cantidad, CantidadAtendida, Notas, T_Producto(Nombre, Sku, CostoPromedio)"
+      "Id, IdProducto, Cantidad, CantidadAtendida, Notas, IdVehiculo, T_Producto(Nombre, Sku, CostoPromedio), T_Vehiculo(Placa)"
     )
     .eq("IdRequerimiento", id)
     .eq("Estado", true);
@@ -102,6 +104,8 @@ export async function GET(
       Cantidad: Number(l.Cantidad),
       CantidadAtendida: Number(l.CantidadAtendida),
       CostoPromedio: Number(l.T_Producto?.CostoPromedio ?? 0),
+      IdVehiculo: l.IdVehiculo,
+      Placa: l.T_Vehiculo?.Placa ?? null,
       Notas: l.Notas,
     })),
   };

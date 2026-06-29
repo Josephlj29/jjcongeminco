@@ -51,6 +51,7 @@ export const DetalleDocumentoSchema = z.object({
   IdProducto: z.string().uuid(),
   Cantidad: z.number().positive(),
   CostoUnitario: z.number().nonnegative().optional(),
+  IdVehiculo: z.string().uuid().optional(),
   Notas: z.string().max(300).optional(),
 });
 
@@ -75,9 +76,13 @@ export const CrearDocumentoSchema = z
         : true,
     { message: "Una transferencia requiere origen y destino distintos." },
   )
-  .refine((d) => (d.TipoDocumento === "salida" ? !!d.IdVehiculo : true), {
-    message: "Una salida debe registrarse contra una placa exacta (IdVehiculo).",
-  });
+  .refine(
+    (d) => (d.TipoDocumento === "salida" ? d.Detalle.every((l) => !!l.IdVehiculo) : true),
+    {
+      message: "En una salida, cada línea debe tener su placa destino.",
+      path: ["Detalle"],
+    },
+  );
 export type CrearDocumento = z.infer<typeof CrearDocumentoSchema>;
 
 /* ─── Proveedor ─── */
@@ -223,6 +228,7 @@ export type OrigenRequerimiento = (typeof ORIGEN_REQUERIMIENTO)[number];
 export const DetalleRequerimientoSchema = z.object({
   IdProducto: z.string().uuid(),
   Cantidad: z.number().positive(),
+  IdVehiculo: z.string().uuid().optional(),
   Notas: z.string().max(300).optional(),
 });
 
@@ -237,9 +243,14 @@ export const CrearRequerimientoSchema = z
     Notas: z.string().max(500).optional(),
     Detalle: z.array(DetalleRequerimientoSchema).min(1),
   })
-  .refine((r) => !!r.IdEquipo || !!r.IdVehiculo, {
-    message: "El requerimiento debe apuntar a un equipo o a una placa.",
-  });
+  .refine(
+    (r) => r.Detalle.every((l) => !!l.IdVehiculo) || !!r.IdEquipo || !!r.IdVehiculo,
+    {
+      message:
+        "Asigná una placa por línea, o elegí un equipo/placa de cabecera como destino.",
+      path: ["Detalle"],
+    },
+  );
 export type CrearRequerimiento = z.infer<typeof CrearRequerimientoSchema>;
 
 /* Aprobar un requerimiento: entrega por línea desde el almacén origen.
