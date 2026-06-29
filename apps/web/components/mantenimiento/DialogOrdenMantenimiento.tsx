@@ -20,6 +20,7 @@ import {
   type OrdenMantenimientoConDetalle,
 } from "@congeminco/shared";
 import {
+  useOrdenesMantenimiento,
   useCrearOrdenMantenimiento,
   useActualizarOrdenMantenimiento,
 } from "@/hooks/useOrdenesMantenimiento";
@@ -63,21 +64,35 @@ const TURNO_LABEL: Record<string, string> = {
 };
 
 /**
- * Preview del N° de orden (sin correlativo): PREFIJO-DDMMYYYY-PLACA.
- * El servidor es la fuente de verdad y le agrega el correlativo del día (-NN)
- * al crear; esto es solo para que el usuario vea qué número se va a asignar.
+ * Arma el N° de orden completo: PREFIJO-DDMMYYYY-PLACA-NN.
+ * Espeja la lógica del servidor (inv.FnRegistrarOrdenMantenimiento): busca el
+ * primer correlativo libre para esa base entre los números ya existentes. El
+ * servidor sigue siendo la fuente de verdad y reconfirma el NN al guardar;
+ * esto es solo la previsualización del número que se va a asignar.
  */
-function previewNumeroOrden(
+function armarNumeroOrden(
   tipo: string | undefined,
   fecha: string | undefined,
-  placa: string | null | undefined
+  placa: string | null | undefined,
+  numerosExistentes: string[]
 ): string | null {
   if (!tipo || !fecha || !placa) return null;
   const [y, m, d] = fecha.split("-");
   if (!y || !m || !d) return null;
   const prefijo = tipo === "correctivo" ? "CORR" : "PREV";
   const placaLimpia = placa.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-  return `${prefijo}-${d}${m}${y}-${placaLimpia}`;
+  const base = `${prefijo}-${d}${m}${y}-${placaLimpia}`;
+
+  const ocupados = new Set<number>();
+  for (const numero of numerosExistentes) {
+    if (!numero.startsWith(`${base}-`)) continue;
+    const sufijo = Number(numero.slice(base.length + 1));
+    if (Number.isInteger(sufijo) && sufijo > 0) ocupados.add(sufijo);
+  }
+  let correlativo = 1;
+  while (ocupados.has(correlativo)) correlativo += 1;
+
+  return `${base}-${String(correlativo).padStart(2, "0")}`;
 }
 
 export function DialogOrdenMantenimiento({
@@ -125,12 +140,17 @@ export function DialogOrdenMantenimiento({
         },
   });
 
+  const { data: ordenes } = useOrdenesMantenimiento();
   const idsPersonal = watch("IdsPersonal") ?? [];
   const placaSeleccionada = vehiculos?.find((v) => v.Id === watch("IdVehiculo"))?.Placa;
-  const numeroPreview = previewNumeroOrden(
+  const numerosExistentes = (ordenes ?? [])
+    .map((o) => o.NumeroOrden)
+    .filter((n): n is string => !!n);
+  const numeroArmado = armarNumeroOrden(
     watch("TipoMantenimiento"),
     watch("FechaOrden"),
-    placaSeleccionada
+    placaSeleccionada,
+    numerosExistentes
   );
   const togglePersonal = (id: string) => {
     const next = idsPersonal.includes(id)
@@ -312,16 +332,16 @@ export function DialogOrdenMantenimiento({
               <Input readOnly className="bg-muted font-mono" {...register("NumeroOrden")} />
             ) : (
               <div className="rounded-md border bg-muted px-3 py-2 text-sm">
-                {numeroPreview ? (
+                {numeroArmado ? (
                   <>
-                    <span className="font-mono">{numeroPreview}-NN</span>
+                    <span className="font-mono font-medium">{numeroArmado}</span>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Se genera automáticamente al guardar (NN = correlativo del día).
+                      Se asigna automáticamente al guardar.
                     </p>
                   </>
                 ) : (
                   <span className="text-muted-foreground">
-                    Elegí tipo, fecha y placa para previsualizar el número.
+                    Elegí tipo, fecha y placa para ver el número.
                   </span>
                 )}
               </div>
