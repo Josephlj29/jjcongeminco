@@ -247,7 +247,7 @@ export const CrearRequerimientoSchema = z
     (r) => r.Detalle.every((l) => !!l.IdVehiculo) || !!r.IdEquipo || !!r.IdVehiculo,
     {
       message:
-        "Asigná una placa por línea, o elegí un equipo/placa de cabecera como destino.",
+        "Asigna una placa por línea, o elige un equipo/placa de cabecera como destino.",
       path: ["Detalle"],
     },
   );

@@ -341,7 +341,7 @@ export function DialogOrdenMantenimiento({
                   </>
                 ) : (
                   <span className="text-muted-foreground">
-                    Elegí tipo, fecha y placa para ver el número.
+                    Elige tipo, fecha y placa para ver el número.
                   </span>
                 )}
               </div>

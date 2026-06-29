@@ -268,7 +268,7 @@ export default function RequerimientosPage() {
                 Aplicar placa a todas las líneas
               </Button>
               <p className="text-xs text-muted-foreground">
-                Cada línea puede llevar su propia placa destino, o elegí un equipo
+                Cada línea puede llevar su propia placa destino, o elige un equipo
                 como destino general.
               </p>
             </div>

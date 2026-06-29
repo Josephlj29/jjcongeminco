@@ -652,8 +652,8 @@ export default function MovimientosPage() {
                 Solo productos compatibles con la placa de cada línea
               </label>
               <p className="text-xs text-muted-foreground">
-                Cada línea lleva su placa destino. Elegí una por defecto y aplicala
-                a todas, o asigná una distinta por producto.
+                Cada línea lleva su placa destino. Elige una por defecto y aplícala
+                a todas, o asigna una distinta por producto.
               </p>
             </CardContent>
           </Card>
