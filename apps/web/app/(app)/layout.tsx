@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { obtenerUsuario } from "@/lib/supabase/server";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
+import { AppBottomNav } from "@/components/layout/AppBottomNav";
 
 export default async function AppLayout({
   children,
@@ -35,9 +36,13 @@ export default async function AppLayout({
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar usuario={usuario} />
         <main className="flex-1 overflow-y-auto bg-background">
-          <div className="container mx-auto px-6 py-8 max-w-7xl">{children}</div>
+          {/* pb extra en móvil para que el bottom-nav fijo no tape el contenido */}
+          <div className="container mx-auto max-w-7xl px-4 pt-6 pb-24 sm:px-6 md:py-8">
+            {children}
+          </div>
         </main>
       </div>
+      <AppBottomNav usuario={usuario} />
     </div>
   );
 }

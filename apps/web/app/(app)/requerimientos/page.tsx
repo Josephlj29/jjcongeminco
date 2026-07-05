@@ -6,9 +6,11 @@
  * Funcionalidades:
  * - Formulario para crear requerimiento (origen: planificado/presupuestado/desgaste_prematuro)
  * - Debe apuntar a equipo O vehículo (placa)
- * - Lista de requerimientos recientes
+ *
+ * Responsive: el formulario colapsa a 1 columna en móvil; el detalle de
+ * materiales se presenta como una tarjeta por línea en móvil (`md:hidden`) y
+ * como tabla en desktop (`hidden md:block`). Ambas escriben el mismo fieldArray.
  */
-import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -25,6 +27,7 @@ import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +79,14 @@ export default function RequerimientosPage() {
   const { data: yo } = useRolActual();
   const puedeCrear = puede(yo?.rol ?? null, "requerimientoCrear");
 
+  // Renderizamos UNA sola presentación de las líneas (cards en móvil, tabla en
+  // desktop). No con CSS `hidden`: eso dejaría montados dos <input> por campo con
+  // el mismo name de RHF, y reset()/setValue solo sincroniza el último ref (el
+  // oculto), dejando valores obsoletos en la vista visible. El form está detrás
+  // de `puedeCrear` (query cliente que resuelve tras el mount), así que para
+  // cuando aparece, isMobile ya refleja el viewport real: sin flash.
+  const isMobile = useIsMobile();
+
   const {
     register,
     handleSubmit,
@@ -117,6 +128,29 @@ export default function RequerimientosPage() {
     }
   };
 
+  /* Selector de placa por línea — reutilizado en tarjeta (móvil) y fila (desktop).
+     Función de render (no componente anidado) para no remontar el Select en cada
+     render del formulario. */
+  const renderSelectPlaca = (idx: number) => (
+    <Select
+      value={watch(`Detalle.${idx}.IdVehiculo`) ?? ""}
+      onValueChange={(v) =>
+        setValue(`Detalle.${idx}.IdVehiculo`, v, { shouldValidate: true })
+      }
+    >
+      <SelectTrigger className="h-9">
+        <SelectValue placeholder="Placa..." />
+      </SelectTrigger>
+      <SelectContent>
+        {vehiculos?.map((v) => (
+          <SelectItem key={v.Id} value={v.Id}>
+            {v.Placa}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <div className="space-y-8">
       <div>
@@ -134,7 +168,7 @@ export default function RequerimientosPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <Label>Origen</Label>
                 <Select
@@ -185,7 +219,7 @@ export default function RequerimientosPage() {
             </div>
 
             {/* Solicitante (personal) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Solicitante</Label>
                 <Select
@@ -210,7 +244,7 @@ export default function RequerimientosPage() {
             </div>
 
             {/* Equipo / Vehículo — al menos uno */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Equipo</Label>
                 <Select
@@ -251,12 +285,13 @@ export default function RequerimientosPage() {
                 </Select>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 disabled={!placaDefault}
+                className="w-full sm:w-auto"
                 onClick={() =>
                   fields.forEach((_, i) =>
                     setValue(`Detalle.${i}.IdVehiculo`, placaDefault, {
@@ -292,6 +327,70 @@ export default function RequerimientosPage() {
                 </Button>
               </div>
 
+              {/* Una sola presentación montada a la vez (ver nota de isMobile). */}
+              {isMobile ? (
+              /* Móvil: una tarjeta por línea */
+              <div className="space-y-3">
+                {fields.map((field, idx) => (
+                  <Card key={field.id} className="space-y-3 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Línea {idx + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 text-muted-foreground hover:text-destructive"
+                        onClick={() => fields.length > 1 && remove(idx)}
+                        disabled={fields.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Producto</Label>
+                      <ProductoCombobox
+                        productos={productos ?? []}
+                        value={watch(`Detalle.${idx}.IdProducto`) || null}
+                        onChange={(v) =>
+                          setValue(`Detalle.${idx}.IdProducto`, v ?? "", {
+                            shouldValidate: true,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Placa</Label>
+                        {renderSelectPlaca(idx)}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Cantidad</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          inputMode="numeric"
+                          className="h-9"
+                          {...register(`Detalle.${idx}.Cantidad`, {
+                            valueAsNumber: true,
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Notas (opcional)</Label>
+                      <Input
+                        className="h-9"
+                        placeholder="Observaciones..."
+                        {...register(`Detalle.${idx}.Notas`)}
+                      />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              ) : (
+              /* Desktop: tabla */
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -318,25 +417,7 @@ export default function RequerimientosPage() {
                           />
                         </TableCell>
                         <TableCell className="align-top">
-                          <Select
-                            value={watch(`Detalle.${idx}.IdVehiculo`) ?? ""}
-                            onValueChange={(v) =>
-                              setValue(`Detalle.${idx}.IdVehiculo`, v, {
-                                shouldValidate: true,
-                              })
-                            }
-                          >
-                            <SelectTrigger className="h-9">
-                              <SelectValue placeholder="Placa..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {vehiculos?.map((v) => (
-                                <SelectItem key={v.Id} value={v.Id}>
-                                  {v.Placa}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {renderSelectPlaca(idx)}
                         </TableCell>
                         <TableCell className="align-top">
                           <Input
@@ -372,6 +453,7 @@ export default function RequerimientosPage() {
                   </TableBody>
                 </Table>
               </div>
+              )}
               {detalleErrorMsg && (
                 <p className="text-xs text-destructive">{detalleErrorMsg}</p>
               )}
@@ -387,7 +469,7 @@ export default function RequerimientosPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
                 {isPending ? "Creando..." : "Crear requerimiento"}
               </Button>
             </div>

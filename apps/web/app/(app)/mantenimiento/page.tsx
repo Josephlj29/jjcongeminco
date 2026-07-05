@@ -6,6 +6,10 @@
  * Flujo consumir→reconciliar (Model 2): se crea la OT, se registran los repuestos
  * usados (descuenta stock al instante), y el admin reconcilia en Aprobaciones.
  * Pestañas por situación. Acciones por fila en menú kebab.
+ *
+ * Responsive: el mismo dato se presenta como tarjetas apiladas en móvil
+ * (`md:hidden`) y como tabla densa en desktop (`hidden md:block`). El menú de
+ * acciones (`AccionesOrden`) se comparte entre ambas presentaciones.
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +26,12 @@ import {
   Trash2,
   Hammer,
 } from "lucide-react";
-import { puede, type RoleCode, type SituacionOrden } from "@congeminco/shared";
+import {
+  puede,
+  type OrdenMantenimientoResumen,
+  type RoleCode,
+  type SituacionOrden,
+} from "@congeminco/shared";
 import {
   useOrdenesMantenimiento,
   useOrdenMantenimientoDetalle,
@@ -38,6 +47,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { imprimirOrdenMantenimiento } from "@/lib/imprimir-orden-mantenimiento";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -90,6 +100,140 @@ async function pdf(id: string) {
   }
 }
 
+function nombreOrden(o: OrdenMantenimientoResumen): string {
+  return o.NumeroOrden ?? o.Id.slice(0, 8);
+}
+
+function personalTexto(o: OrdenMantenimientoResumen): string {
+  return o.Personales.length
+    ? o.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
+    : "—";
+}
+
+/* ── Handlers compartidos por tarjeta (móvil) y fila (desktop) ── */
+interface AccionesHandlers {
+  puedeEscribir: boolean;
+  onDetalle: (id: string) => void;
+  onConsumir: (v: { id: string; numero: string | null }) => void;
+  onEditar: (id: string) => void;
+  onCulminar: (v: { id: string; numero: string | null }) => void;
+  onCancelar: (id: string) => void;
+  onEliminar: (v: { id: string; nombre: string }) => void;
+}
+
+/* Menú kebab de acciones — idéntico en móvil y desktop. */
+function AccionesOrden({
+  orden: o,
+  handlers,
+}: {
+  orden: OrdenMantenimientoResumen;
+  handlers: AccionesHandlers;
+}) {
+  const { puedeEscribir } = handlers;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-11 w-11 md:h-9 md:w-9">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem onClick={() => handlers.onDetalle(o.Id)}>
+          <Eye className="mr-2 h-4 w-4" />
+          Ver detalle
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => void pdf(o.Id)}>
+          <FileText className="mr-2 h-4 w-4" />
+          Imprimir PDF
+        </DropdownMenuItem>
+
+        {puedeEscribir && o.Situacion === "abierta" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => handlers.onConsumir({ id: o.Id, numero: o.NumeroOrden })}
+            >
+              <PackageMinus className="mr-2 h-4 w-4" />
+              Consumir repuestos
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handlers.onEditar(o.Id)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handlers.onCulminar({ id: o.Id, numero: o.NumeroOrden })}
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Culminar (sin repuestos)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => handlers.onCancelar(o.Id)}
+            >
+              <Ban className="mr-2 h-4 w-4" />
+              Cancelar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => handlers.onEliminar({ id: o.Id, nombre: nombreOrden(o) })}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar
+            </DropdownMenuItem>
+          </>
+        )}
+        {o.Situacion === "consumida" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled>Reconciliar en Aprobaciones</DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/* ── Tarjeta (móvil) ──
+   Tap en el cuerpo → detalle. El kebab (esquina) maneja el resto de acciones y
+   detiene la propagación para no disparar el detalle. */
+function TarjetaOrden({
+  orden: o,
+  handlers,
+}: {
+  orden: OrdenMantenimientoResumen;
+  handlers: AccionesHandlers;
+}) {
+  return (
+    <Card className="relative flex flex-col gap-2 p-3">
+      <button
+        type="button"
+        onClick={() => handlers.onDetalle(o.Id)}
+        className="flex flex-col gap-2 pr-12 text-left"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-sm font-semibold">{nombreOrden(o)}</span>
+          <Badge variant={SIT_VARIANTE[o.Situacion]} className="shrink-0">
+            {SIT_LABEL[o.Situacion]}
+          </Badge>
+        </div>
+        <p className="text-lg font-bold leading-none">{o.Placa ?? "—"}</p>
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+          <span>{new Date(o.FechaOrden).toLocaleDateString("es-PE")}</span>
+          <span>· {TIPO_LABEL[o.TipoMantenimiento]}</span>
+          <span>· {TURNO_LABEL[o.Turno] ?? o.Turno}</span>
+        </div>
+        <p className="truncate text-xs text-muted-foreground">
+          👷 {personalTexto(o)}
+        </p>
+      </button>
+      <div className="absolute right-1.5 top-1.5">
+        <AccionesOrden orden={o} handlers={handlers} />
+      </div>
+    </Card>
+  );
+}
+
 export default function MantenimientoPage() {
   const { data: yo } = useRolActual();
   const puedeEscribir = puede(yo?.rol ?? null, "requerimientoCrear");
@@ -117,17 +261,27 @@ export default function MantenimientoPage() {
     }
   };
 
+  const handlers: AccionesHandlers = {
+    puedeEscribir,
+    onDetalle: setDetalleId,
+    onConsumir: setConsumir,
+    onEditar: setEditarId,
+    onCulminar: setCulminar,
+    onCancelar: (id) => void finalizarOrden(id, true),
+    onEliminar: setEliminar,
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Mantenimiento</h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Órdenes de trabajo por placa. Los repuestos se consumen del inventario y el admin los ratifica.
           </p>
         </div>
         {puedeEscribir && (
-          <Button onClick={() => setCrear(true)}>
+          <Button onClick={() => setCrear(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Nueva orden
           </Button>
@@ -135,7 +289,7 @@ export default function MantenimientoPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as SituacionOrden)} className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
           <TabsTrigger value="abierta">Abiertas</TabsTrigger>
           <TabsTrigger value="consumida">Por aprobar</TabsTrigger>
           <TabsTrigger value="cerrada">Cerradas</TabsTrigger>
@@ -146,7 +300,7 @@ export default function MantenimientoPage() {
           {isLoading ? (
             <div className="space-y-2">
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12" />
+                <Skeleton key={i} className="h-20 md:h-12" />
               ))}
             </div>
           ) : !ordenes?.length ? (
@@ -164,113 +318,52 @@ export default function MantenimientoPage() {
               }
             />
           ) : (
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>N° OT</TableHead>
-                    <TableHead>Placa</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Turno</TableHead>
-                    <TableHead>Personal</TableHead>
-                    <TableHead>Situación</TableHead>
-                    <TableHead className="w-10 text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ordenes.map((o) => (
-                    <TableRow key={o.Id}>
-                      <TableCell className="text-xs">
-                        {new Date(o.FechaOrden).toLocaleDateString("es-PE")}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {o.NumeroOrden ?? o.Id.slice(0, 8)}
-                      </TableCell>
-                      <TableCell className="text-sm font-medium">{o.Placa ?? "—"}</TableCell>
-                      <TableCell className="text-xs">{TIPO_LABEL[o.TipoMantenimiento]}</TableCell>
-                      <TableCell className="text-xs">{TURNO_LABEL[o.Turno] ?? o.Turno}</TableCell>
-                      <TableCell className="text-xs">
-                        {o.Personales.length
-                          ? o.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={SIT_VARIANTE[o.Situacion]}>{SIT_LABEL[o.Situacion]}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem onClick={() => setDetalleId(o.Id)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Ver detalle
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => void pdf(o.Id)}>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Imprimir PDF
-                            </DropdownMenuItem>
+            <>
+              {/* Móvil: tarjetas apiladas */}
+              <div className="space-y-3 md:hidden">
+                {ordenes.map((o) => (
+                  <TarjetaOrden key={o.Id} orden={o} handlers={handlers} />
+                ))}
+              </div>
 
-                            {puedeEscribir && o.Situacion === "abierta" && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    setConsumir({ id: o.Id, numero: o.NumeroOrden })
-                                  }
-                                >
-                                  <PackageMinus className="mr-2 h-4 w-4" />
-                                  Consumir repuestos
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setEditarId(o.Id)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => setCulminar({ id: o.Id, numero: o.NumeroOrden })}
-                                >
-                                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                                  Culminar (sin repuestos)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => void finalizarOrden(o.Id, true)}
-                                >
-                                  <Ban className="mr-2 h-4 w-4" />
-                                  Cancelar
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() =>
-                                    setEliminar({ id: o.Id, nombre: o.NumeroOrden ?? o.Id.slice(0, 8) })
-                                  }
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Eliminar
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {o.Situacion === "consumida" && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem disabled>
-                                  Reconciliar en Aprobaciones
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              {/* Desktop: tabla densa */}
+              <div className="hidden rounded-lg border md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>N° OT</TableHead>
+                      <TableHead>Placa</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Turno</TableHead>
+                      <TableHead>Personal</TableHead>
+                      <TableHead>Situación</TableHead>
+                      <TableHead className="w-10 text-right">Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {ordenes.map((o) => (
+                      <TableRow key={o.Id}>
+                        <TableCell className="text-xs">
+                          {new Date(o.FechaOrden).toLocaleDateString("es-PE")}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{nombreOrden(o)}</TableCell>
+                        <TableCell className="text-sm font-medium">{o.Placa ?? "—"}</TableCell>
+                        <TableCell className="text-xs">{TIPO_LABEL[o.TipoMantenimiento]}</TableCell>
+                        <TableCell className="text-xs">{TURNO_LABEL[o.Turno] ?? o.Turno}</TableCell>
+                        <TableCell className="text-xs">{personalTexto(o)}</TableCell>
+                        <TableCell>
+                          <Badge variant={SIT_VARIANTE[o.Situacion]}>{SIT_LABEL[o.Situacion]}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <AccionesOrden orden={o} handlers={handlers} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </TabsContent>
       </Tabs>
