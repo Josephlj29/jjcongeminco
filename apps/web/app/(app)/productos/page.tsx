@@ -26,6 +26,8 @@ import {
   Tags,
   MoreHorizontal,
   History,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -94,6 +96,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
@@ -168,6 +175,8 @@ function DialogProducto({
   const idsTipo = watch("IdsTipoEquipo") ?? [];
   const idCategoria = watch("IdCategoria");
   const idUnidad = watch("IdUnidadMedida");
+  const [unidadOpen, setUnidadOpen] = useState(false);
+  const unidadSel = unidades?.find((u) => u.Id === idUnidad);
 
   // Prellenar al abrir (edición) o limpiar (alta).
   useEffect(() => {
@@ -307,21 +316,65 @@ function DialogProducto({
             </div>
             <div className="space-y-1">
               <Label>Unidad de medida</Label>
-              <Select
-                value={idUnidad ?? ""}
-                onValueChange={(v) => setValue("IdUnidadMedida", v, { shouldValidate: true })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {unidades?.map((u) => (
-                    <SelectItem key={u.Id} value={u.Id}>
-                      {u.Nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={unidadOpen} onOpenChange={setUnidadOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={unidadOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {unidadSel ? (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {unidadSel.Codigo}
+                        </span>
+                        <span className="truncate">{unidadSel.Nombre}</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Seleccionar...</span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                >
+                  <Command>
+                    <CommandInput placeholder="Buscar por código o nombre..." />
+                    <CommandList>
+                      <CommandEmpty>No se encontraron unidades.</CommandEmpty>
+                      <CommandGroup>
+                        {unidades?.map((u) => (
+                          <CommandItem
+                            key={u.Id}
+                            value={`${u.Codigo} ${u.Nombre}`}
+                            onSelect={() => {
+                              setValue("IdUnidadMedida", u.Id, {
+                                shouldValidate: true,
+                              });
+                              setUnidadOpen(false);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Check
+                              className={`h-4 w-4 shrink-0 ${
+                                idUnidad === u.Id ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            <span className="w-12 shrink-0 font-mono text-xs text-muted-foreground">
+                              {u.Codigo}
+                            </span>
+                            <span className="flex-1">{u.Nombre}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               {errors.IdUnidadMedida && (
                 <p className="text-xs text-destructive">{errors.IdUnidadMedida.message}</p>
               )}
