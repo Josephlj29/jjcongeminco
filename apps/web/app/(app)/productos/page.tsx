@@ -26,8 +26,6 @@ import {
   Tags,
   MoreHorizontal,
   History,
-  Check,
-  ChevronsUpDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -96,11 +94,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { ComboboxBuscable } from "@/components/ComboboxBuscable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
@@ -175,8 +169,6 @@ function DialogProducto({
   const idsTipo = watch("IdsTipoEquipo") ?? [];
   const idCategoria = watch("IdCategoria");
   const idUnidad = watch("IdUnidadMedida");
-  const [unidadOpen, setUnidadOpen] = useState(false);
-  const unidadSel = unidades?.find((u) => u.Id === idUnidad);
 
   // Prellenar al abrir (edición) o limpiar (alta).
   useEffect(() => {
@@ -295,86 +287,37 @@ function DialogProducto({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Categoría</Label>
-              <Select
+              <ComboboxBuscable
+                opciones={(categorias ?? []).map((c) => ({
+                  value: c.Id,
+                  label: c.Nombre,
+                }))}
                 value={idCategoria ?? ""}
-                onValueChange={(v) => setValue("IdCategoria", v, { shouldValidate: true })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {categorias?.map((c) => (
-                    <SelectItem key={c.Id} value={c.Id}>
-                      {c.Nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(v) =>
+                  setValue("IdCategoria", v, { shouldValidate: true })
+                }
+                buscarPlaceholder="Buscar categoría..."
+                vacioTexto="No se encontraron categorías."
+              />
               {errors.IdCategoria && (
                 <p className="text-xs text-destructive">{errors.IdCategoria.message}</p>
               )}
             </div>
             <div className="space-y-1">
               <Label>Unidad de medida</Label>
-              <Popover open={unidadOpen} onOpenChange={setUnidadOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={unidadOpen}
-                    className="w-full justify-between font-normal"
-                  >
-                    {unidadSel ? (
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {unidadSel.Codigo}
-                        </span>
-                        <span className="truncate">{unidadSel.Nombre}</span>
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Seleccionar...</span>
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  align="start"
-                  className="w-[var(--radix-popover-trigger-width)] p-0"
-                >
-                  <Command>
-                    <CommandInput placeholder="Buscar por código o nombre..." />
-                    <CommandList>
-                      <CommandEmpty>No se encontraron unidades.</CommandEmpty>
-                      <CommandGroup>
-                        {unidades?.map((u) => (
-                          <CommandItem
-                            key={u.Id}
-                            value={`${u.Codigo} ${u.Nombre}`}
-                            onSelect={() => {
-                              setValue("IdUnidadMedida", u.Id, {
-                                shouldValidate: true,
-                              });
-                              setUnidadOpen(false);
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <Check
-                              className={`h-4 w-4 shrink-0 ${
-                                idUnidad === u.Id ? "opacity-100" : "opacity-0"
-                              }`}
-                            />
-                            <span className="w-12 shrink-0 font-mono text-xs text-muted-foreground">
-                              {u.Codigo}
-                            </span>
-                            <span className="flex-1">{u.Nombre}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <ComboboxBuscable
+                opciones={(unidades ?? []).map((u) => ({
+                  value: u.Id,
+                  label: u.Nombre,
+                  codigo: u.Codigo,
+                }))}
+                value={idUnidad ?? ""}
+                onChange={(v) =>
+                  setValue("IdUnidadMedida", v, { shouldValidate: true })
+                }
+                buscarPlaceholder="Buscar por código o nombre..."
+                vacioTexto="No se encontraron unidades."
+              />
               {errors.IdUnidadMedida && (
                 <p className="text-xs text-destructive">{errors.IdUnidadMedida.message}</p>
               )}
@@ -753,21 +696,17 @@ function DialogAsociarCategoria({
         <div className="space-y-4">
           <div className="space-y-1">
             <Label>Categoría</Label>
-            <Select
+            <ComboboxBuscable
+              opciones={(categorias ?? []).map((c) => ({
+                value: c.Id,
+                label: c.Nombre,
+              }))}
               value={idCategoriaSeleccionada}
-              onValueChange={setIdCategoriaSeleccionada}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar categoría..." />
-              </SelectTrigger>
-              <SelectContent>
-                {categorias?.map((c) => (
-                  <SelectItem key={c.Id} value={c.Id}>
-                    {c.Nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={setIdCategoriaSeleccionada}
+              placeholder="Seleccionar categoría..."
+              buscarPlaceholder="Buscar categoría..."
+              vacioTexto="No se encontraron categorías."
+            />
           </div>
 
           {idCategoriaSeleccionada && (
@@ -904,19 +843,18 @@ export default function ProductosPage() {
           />
         </div>
 
-        <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
-          <SelectTrigger className="w-52">
-            <SelectValue placeholder="Todas las categorías" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__todas__">Todas las categorías</SelectItem>
-            {categorias.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ComboboxBuscable
+          className="w-52"
+          opciones={[
+            { value: "__todas__", label: "Todas las categorías" },
+            ...categorias.map((cat) => ({ value: cat, label: cat })),
+          ]}
+          value={categoriaFiltro}
+          onChange={setCategoriaFiltro}
+          placeholder="Todas las categorías"
+          buscarPlaceholder="Buscar categoría..."
+          vacioTexto="No se encontraron categorías."
+        />
 
         {puedeEscribir && (
           <Button
