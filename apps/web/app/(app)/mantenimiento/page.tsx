@@ -25,6 +25,7 @@ import {
   Ban,
   Trash2,
   Hammer,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   puede,
@@ -42,6 +43,7 @@ import { DialogOrdenMantenimiento } from "@/components/mantenimiento/DialogOrden
 import { DialogConsumirRepuestos } from "@/components/mantenimiento/DialogConsumirRepuestos";
 import { DialogDetalleOrden } from "@/components/mantenimiento/DialogDetalleOrden";
 import { DialogCulminarOrden } from "@/components/mantenimiento/DialogCulminarOrden";
+import { DialogReconciliarOrden } from "@/components/mantenimiento/DialogReconciliarOrden";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { EmptyState } from "@/components/EmptyState";
 import { imprimirOrdenMantenimiento } from "@/lib/imprimir-orden-mantenimiento";
@@ -113,11 +115,13 @@ function personalTexto(o: OrdenMantenimientoResumen): string {
 /* ── Handlers compartidos por tarjeta (móvil) y fila (desktop) ── */
 interface AccionesHandlers {
   puedeEscribir: boolean;
+  puedeAprobar: boolean;
   onDetalle: (id: string) => void;
   onConsumir: (v: { id: string; numero: string | null }) => void;
   onEditar: (id: string) => void;
   onCulminar: (v: { id: string; numero: string | null }) => void;
   onCancelar: (id: string) => void;
+  onReconciliar: (id: string) => void;
   onEliminar: (v: { id: string; nombre: string }) => void;
 }
 
@@ -129,7 +133,7 @@ function AccionesOrden({
   orden: OrdenMantenimientoResumen;
   handlers: AccionesHandlers;
 }) {
-  const { puedeEscribir } = handlers;
+  const { puedeEscribir, puedeAprobar } = handlers;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -186,7 +190,14 @@ function AccionesOrden({
         {o.Situacion === "consumida" && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>Reconciliar en Aprobaciones</DropdownMenuItem>
+            {puedeAprobar ? (
+              <DropdownMenuItem onClick={() => handlers.onReconciliar(o.Id)}>
+                <ClipboardCheck className="mr-2 h-4 w-4" />
+                Revisar y aprobar
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem disabled>Pendiente de aprobación</DropdownMenuItem>
+            )}
           </>
         )}
       </DropdownMenuContent>
@@ -237,6 +248,7 @@ function TarjetaOrden({
 export default function MantenimientoPage() {
   const { data: yo } = useRolActual();
   const puedeEscribir = puede(yo?.rol ?? null, "requerimientoCrear");
+  const puedeAprobar = puede(yo?.rol ?? null, "requerimientoAprobar");
 
   const [tab, setTab] = useState<SituacionOrden>("abierta");
   const { data: ordenes, isLoading } = useOrdenesMantenimiento({ situacion: tab });
@@ -246,6 +258,7 @@ export default function MantenimientoPage() {
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [consumir, setConsumir] = useState<{ id: string; numero: string | null } | null>(null);
   const [culminar, setCulminar] = useState<{ id: string; numero: string | null } | null>(null);
+  const [reconciliar, setReconciliar] = useState<string | null>(null);
   const [eliminar, setEliminar] = useState<{ id: string; nombre: string } | null>(null);
 
   const { data: detalleEditar } = useOrdenMantenimientoDetalle(editarId);
@@ -263,11 +276,13 @@ export default function MantenimientoPage() {
 
   const handlers: AccionesHandlers = {
     puedeEscribir,
+    puedeAprobar,
     onDetalle: setDetalleId,
     onConsumir: setConsumir,
     onEditar: setEditarId,
     onCulminar: setCulminar,
     onCancelar: (id) => void finalizarOrden(id, true),
+    onReconciliar: setReconciliar,
     onEliminar: setEliminar,
   };
 
@@ -391,6 +406,13 @@ export default function MantenimientoPage() {
           idOrden={culminar.id}
           numeroOrden={culminar.numero}
           onClose={() => setCulminar(null)}
+        />
+      )}
+
+      {reconciliar && (
+        <DialogReconciliarOrden
+          idOrden={reconciliar}
+          onClose={() => setReconciliar(null)}
         />
       )}
 
