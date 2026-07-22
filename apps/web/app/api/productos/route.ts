@@ -11,7 +11,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearProductoSchema, puede } from "@congeminco/shared";
 
@@ -68,6 +68,9 @@ export async function POST(request: NextRequest) {
     .rpc("FnGuardarProducto", { PProducto: parsed.data });
 
   if (dbError) {
+    if (dbError.code === "23505") {
+      return respuestaErrorBD(dbError, "El SKU ya está en uso por un producto activo.");
+    }
     // Las violaciones de invariante son errores de validación (400), no de infra.
     const reglaNegocio = /general no lleva|al menos un tipo|no existe/i.test(
       dbError.message

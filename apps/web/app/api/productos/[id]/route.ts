@@ -9,7 +9,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
   ActualizarProductoSchema,
@@ -84,6 +84,9 @@ export async function PUT(
     .rpc("FnGuardarProducto", { PProducto: { ...parsed.data, Id: id } });
 
   if (dbError) {
+    if (dbError.code === "23505") {
+      return respuestaErrorBD(dbError, "El SKU ya está en uso por un producto activo.");
+    }
     const reglaNegocio = /general no lleva|al menos un tipo|no existe/i.test(
       dbError.message
     );
@@ -129,7 +132,7 @@ export async function PATCH(
     .single();
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    return respuestaErrorBD(dbError, "El SKU ya está en uso por un producto activo.");
   }
 
   if (!data) {

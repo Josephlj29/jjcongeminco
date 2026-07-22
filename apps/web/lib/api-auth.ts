@@ -43,3 +43,15 @@ export async function autenticarRequest(): Promise<
 export function respuestaError(mensaje: string, status = 400, detalles?: unknown) {
   return NextResponse.json({ error: mensaje, detalles }, { status });
 }
+
+/**
+ * Mapea un error de Postgres a una respuesta HTTP.
+ * unique_violation (23505) -> 409 con mensaje amigable (p. ej. código duplicado
+ * entre registros activos); cualquier otro código -> 500 con el mensaje crudo.
+ */
+export function respuestaErrorBD(error: { code?: string; message: string }, mensajeDuplicado: string) {
+  if (error.code === "23505") {
+    return respuestaError(mensajeDuplicado, 409);
+  }
+  return NextResponse.json({ error: error.message }, { status: 500 });
+}

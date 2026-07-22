@@ -35,7 +35,7 @@ VALUES
 	,('FAM-ESL','Eslingas y Grilletes',NULL)
 	,('FAM-SUS','Sistema de Suspension',NULL)
 	,('FAM-SUM','Suministros de Rotacion',NULL)
-ON CONFLICT ("Codigo") DO NOTHING;
+ON CONFLICT ("Codigo") WHERE "Estado" = true DO NOTHING;
 
 /* Categorias hijas (columna CATEGORIA del Excel) colgadas de su familia */
 INSERT INTO "inv"."T_Categoria" ("Codigo","Nombre","IdCategoriaPadre")
@@ -54,11 +54,11 @@ FROM
 			,('CAT-SUMINISTRO','SUMINISTRO','FAM-SUM')
 	) AS V("Codigo","Nombre","CodigoPadre")
 INNER JOIN "inv"."T_Categoria" C ON C."Codigo" = V."CodigoPadre"
-ON CONFLICT ("Codigo") DO NOTHING;
+ON CONFLICT ("Codigo") WHERE "Estado" = true DO NOTHING;
 
 /* Ubicaciones (de las guias de remision analizadas) */
 INSERT INTO "inv"."T_Ubicacion" ("Codigo","Nombre","Tipo","Direccion")
 VALUES
 	('ALM-AQP','Almacen Central - Arequipa','almacen_central','Sol Oeste 107 - Cerro Colorado - Arequipa')
 	,('PROY-TAM','Proyecto Tambomayo','proyecto','Tapay - Caylloma - Arequipa')
-ON CONFLICT ("Codigo") DO NOTHING;
+ON CONFLICT ("Codigo") WHERE "Estado" = true DO NOTHING;

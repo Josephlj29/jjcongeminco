@@ -245,4 +245,4 @@ FROM
 	"Datos" D
 INNER JOIN "inv"."T_Categoria" C ON C."Codigo" = D."CodigoCategoria"
 CROSS JOIN (SELECT "Id" FROM "inv"."T_UnidadMedida" WHERE "Codigo" = 'UND') U
-ON CONFLICT ("Sku") DO NOTHING;
+ON CONFLICT ("Sku") WHERE "Estado" = true DO NOTHING;

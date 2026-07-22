@@ -7,7 +7,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearUbicacionSchema, puede } from "@congeminco/shared";
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    return respuestaErrorBD(dbError, "El código ya está en uso por una ubicación activa.");
   }
 
   return NextResponse.json(data, { status: 201 });

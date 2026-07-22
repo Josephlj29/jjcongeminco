@@ -8,7 +8,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearProveedorSchema, puede } from "@congeminco/shared";
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     .rpc("FnGuardarProveedor", { PProveedor: parsed.data });
 
   if (rpcError) {
-    return NextResponse.json({ error: rpcError.message }, { status: 500 });
+    return respuestaErrorBD(rpcError, "El RUC ya está en uso por un proveedor activo.");
   }
 
   const { data, error: selError } = await supabase

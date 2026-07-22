@@ -112,7 +112,7 @@ async function main() {
           ("Sku","Nombre","IdCategoria","IdUnidadMedida","UsuarioCreacion","UsuarioModificacion","IdMigracion")
         VALUES
           (${sku}, ${name}, ${categoryId}, ${unit.Id}, 'ETL', 'ETL', gen_random_uuid())
-        ON CONFLICT ("Sku") DO NOTHING
+        ON CONFLICT ("Sku") WHERE "Estado" = true DO NOTHING
         RETURNING "Id"
       `;
       if (ins) {
