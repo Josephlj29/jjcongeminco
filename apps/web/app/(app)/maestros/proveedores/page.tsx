@@ -73,11 +73,9 @@ function useRolActual() {
 
 /* ─── Dialog: Crear / Editar proveedor ─── */
 function DialogProveedor({
-  open,
   proveedor,
   onClose,
 }: {
-  open: boolean;
   proveedor: Proveedor | null;
   onClose: () => void;
 }) {
@@ -133,7 +131,7 @@ function DialogProveedor({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
@@ -408,11 +406,9 @@ export default function ProveedoresPage() {
         </div>
       )}
 
-      <DialogProveedor
-        open={mostrarDialog}
-        proveedor={proveedorEditar}
-        onClose={cerrarDialog}
-      />
+      {mostrarDialog && (
+        <DialogProveedor proveedor={proveedorEditar} onClose={cerrarDialog} />
+      )}
 
       <DialogEliminar
         entidad="proveedor"

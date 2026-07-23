@@ -76,11 +76,9 @@ function useRolActual() {
 
 /* ─── Dialog: Crear / Editar ubicación ─── */
 function DialogUbicacion({
-  open,
   ubicacion,
   onClose,
 }: {
-  open: boolean;
   ubicacion: Ubicacion | null;
   onClose: () => void;
 }) {
@@ -124,7 +122,7 @@ function DialogUbicacion({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar ubicación" : "Nueva ubicación"}</DialogTitle>
@@ -304,11 +302,9 @@ export default function AlmacenesPage() {
         </div>
       )}
 
-      <DialogUbicacion
-        open={mostrarDialog}
-        ubicacion={ubicacionEditar}
-        onClose={cerrarDialog}
-      />
+      {mostrarDialog && (
+        <DialogUbicacion ubicacion={ubicacionEditar} onClose={cerrarDialog} />
+      )}
 
       <DialogEliminar
         entidad="ubicacion"

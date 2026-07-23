@@ -75,11 +75,9 @@ function useRolActual() {
 
 /* ─── Dialog: Crear / Editar vehículo ─── */
 function DialogVehiculo({
-  open,
   vehiculo,
   onClose,
 }: {
-  open: boolean;
   vehiculo: Vehiculo | null;
   onClose: () => void;
 }) {
@@ -123,7 +121,7 @@ function DialogVehiculo({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar vehículo" : "Nuevo vehículo"}</DialogTitle>
@@ -147,12 +145,15 @@ function DialogVehiculo({
             <Label>Equipo</Label>
             <Select
               defaultValue={vehiculo?.IdEquipo ?? undefined}
-              onValueChange={(v) => setValue("IdEquipo", v)}
+              onValueChange={(v) =>
+                setValue("IdEquipo", v === "__ninguno__" ? null : v)
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sin equipo asignado" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__ninguno__">Sin equipo</SelectItem>
                 {equipos?.map((eq) => (
                   <SelectItem key={eq.Id} value={eq.Id}>
                     {eq.Codigo} — {eq.Nombre}
@@ -295,11 +296,9 @@ export default function VehiculosPage() {
         </div>
       )}
 
-      <DialogVehiculo
-        open={mostrarDialog}
-        vehiculo={vehiculoEditar}
-        onClose={cerrarDialog}
-      />
+      {mostrarDialog && (
+        <DialogVehiculo vehiculo={vehiculoEditar} onClose={cerrarDialog} />
+      )}
 
       <DialogEliminar
         entidad="vehiculo"

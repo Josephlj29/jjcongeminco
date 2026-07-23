@@ -153,7 +153,7 @@ function DialogCategoria({
             <Select
               value={idPadre ?? SIN_PADRE}
               onValueChange={(v) =>
-                setValue("IdCategoriaPadre", v === SIN_PADRE ? undefined : v)
+                setValue("IdCategoriaPadre", v === SIN_PADRE ? null : v)
               }
             >
               <SelectTrigger>

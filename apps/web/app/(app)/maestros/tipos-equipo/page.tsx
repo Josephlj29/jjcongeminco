@@ -68,11 +68,9 @@ function useRolActual() {
 
 /* ─── Dialog: Crear / Editar tipo de equipo ─── */
 function DialogTipoEquipo({
-  open,
   tipoEquipo,
   onClose,
 }: {
-  open: boolean;
   tipoEquipo: TipoEquipo | null;
   onClose: () => void;
 }) {
@@ -114,7 +112,7 @@ function DialogTipoEquipo({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
@@ -289,11 +287,9 @@ export default function TiposEquipoPage() {
         </div>
       )}
 
-      <DialogTipoEquipo
-        open={mostrarDialog}
-        tipoEquipo={tipoEditar}
-        onClose={cerrarDialog}
-      />
+      {mostrarDialog && (
+        <DialogTipoEquipo tipoEquipo={tipoEditar} onClose={cerrarDialog} />
+      )}
 
       <DialogEliminar
         entidad="tipoEquipo"

@@ -138,8 +138,8 @@ export const CrearCategoriaSchema = z.object({
   Codigo: z.string().min(1).max(20),
   Nombre: z.string().min(1).max(80),
   Descripcion: z.string().max(200).optional(),
-  // Padre opcional: sin padre = familia raíz. Referencia por Id (FK).
-  IdCategoriaPadre: z.string().uuid().optional(),
+  // null = sin padre/quitar padre (en edición); undefined = no tocar; uuid = asignar.
+  IdCategoriaPadre: z.string().uuid().nullable().optional(),
 });
 export type CrearCategoria = z.infer<typeof CrearCategoriaSchema>;
 export const ActualizarCategoriaSchema = CrearCategoriaSchema.partial().extend({
@@ -197,7 +197,8 @@ export const CrearEquipoSchema = z.object({
   Codigo: z.string().min(1).max(20),
   Nombre: z.string().min(1).max(120),
   Descripcion: z.string().max(200).optional(),
-  IdTipoEquipo: z.string().uuid().optional(),
+  // null = sin tipo/quitar tipo (en edición); undefined = no tocar; uuid = asignar.
+  IdTipoEquipo: z.string().uuid().nullable().optional(),
 });
 export type CrearEquipo = z.infer<typeof CrearEquipoSchema>;
 export const ActualizarEquipoSchema = CrearEquipoSchema.partial().extend({
@@ -209,7 +210,8 @@ export type ActualizarEquipo = z.infer<typeof ActualizarEquipoSchema>;
 export const CrearVehiculoSchema = z.object({
   Placa: z.string().min(1).max(15),
   Modelo: z.string().max(80).optional(),
-  IdEquipo: z.string().uuid().optional(),
+  // null = sin equipo/desasignar (en edición); undefined = no tocar; uuid = asignar.
+  IdEquipo: z.string().uuid().nullable().optional(),
 });
 export type CrearVehiculo = z.infer<typeof CrearVehiculoSchema>;
 export const ActualizarVehiculoSchema = CrearVehiculoSchema.partial().extend({

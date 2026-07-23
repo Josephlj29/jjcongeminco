@@ -75,11 +75,9 @@ function useRolActual() {
 
 /* ─── Dialog: Crear / Editar equipo ─── */
 function DialogEquipo({
-  open,
   equipo,
   onClose,
 }: {
-  open: boolean;
   equipo: Equipo | null;
   onClose: () => void;
 }) {
@@ -124,7 +122,7 @@ function DialogEquipo({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar equipo" : "Nuevo equipo"}</DialogTitle>
@@ -152,7 +150,7 @@ function DialogEquipo({
             <Select
               defaultValue={equipo?.IdTipoEquipo ?? undefined}
               onValueChange={(v) =>
-                setValue("IdTipoEquipo", v === "__ninguno__" ? undefined : v)
+                setValue("IdTipoEquipo", v === "__ninguno__" ? null : v)
               }
             >
               <SelectTrigger>
@@ -309,11 +307,9 @@ export default function EquiposPage() {
         </div>
       )}
 
-      <DialogEquipo
-        open={mostrarDialog}
-        equipo={equipoEditar}
-        onClose={cerrarDialog}
-      />
+      {mostrarDialog && (
+        <DialogEquipo equipo={equipoEditar} onClose={cerrarDialog} />
+      )}
 
       <DialogEliminar
         entidad="equipo"
