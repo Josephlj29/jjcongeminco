@@ -32,6 +32,7 @@ interface FilaHeader {
   TipoMantenimiento: "preventivo" | "correctivo";
   Turno: "dia" | "tarde" | "noche";
   Kilometraje: number | null;
+  Horometro: number | null;
   IdVehiculo: string;
   Observaciones: string | null;
   Situacion: OrdenMantenimientoConDetalle["Situacion"];
@@ -68,7 +69,7 @@ export async function GET(
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, IdVehiculo, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
     )
     .eq("Id", id)
     .eq("Estado", true)
@@ -156,6 +157,7 @@ export async function GET(
     TipoMantenimiento: h.TipoMantenimiento,
     Turno: h.Turno,
     Kilometraje: h.Kilometraje === null ? null : Number(h.Kilometraje),
+    Horometro: h.Horometro === null ? null : Number(h.Horometro),
     IdVehiculo: h.IdVehiculo,
     Placa: h.T_Vehiculo?.Placa ?? null,
     Personales: personales,

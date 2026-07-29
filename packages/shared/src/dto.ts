@@ -316,6 +316,7 @@ export const CrearOrdenMantenimientoSchema = z.object({
   FechaOrden: z.string().date(),
   Turno: z.enum(TURNO),
   Kilometraje: z.number().nonnegative().optional(),
+  Horometro: z.number().nonnegative().optional(),
   IdVehiculo: z.string().uuid({ message: "Elige una placa." }),
   // Personales asignados a la orden (todos por igual). El primero del arreglo
   // es el solicitante del requerimiento que genera el consumo de repuestos.

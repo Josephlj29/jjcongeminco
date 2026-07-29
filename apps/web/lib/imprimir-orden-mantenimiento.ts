@@ -105,6 +105,10 @@ function construirHtml(o: OrdenMantenimientoConDetalle): string {
       <td class="k">TURNO</td><td>${esc(TURNO[o.Turno] ?? o.Turno)}</td>
       <td class="k">PLACA</td><td>${esc(o.Placa ?? "—")}</td>
     </tr>
+    <tr>
+      <td class="k">HORÓMETRO</td><td>${o.Horometro !== null ? esc(o.Horometro) : ""}</td>
+      <td class="k"></td><td></td>
+    </tr>
   </table>
 
   <h2>TRABAJOS REALIZADOS</h2>

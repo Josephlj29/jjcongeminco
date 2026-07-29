@@ -92,6 +92,10 @@ export function DialogDetalleOrden({
                 <span className="text-muted-foreground">Kilometraje: </span>
                 {o.Kilometraje !== null ? o.Kilometraje : "—"}
               </div>
+              <div>
+                <span className="text-muted-foreground">Horómetro: </span>
+                {o.Horometro !== null ? o.Horometro : "—"}
+              </div>
               <div className="col-span-2">
                 <span className="text-muted-foreground">Personal: </span>
                 {o.Personales.length

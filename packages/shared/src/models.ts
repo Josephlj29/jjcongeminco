@@ -196,6 +196,7 @@ export interface OrdenMantenimientoResumen {
   TipoMantenimiento: "preventivo" | "correctivo";
   Turno: "dia" | "tarde" | "noche";
   Kilometraje: number | null;
+  Horometro: number | null;
   IdVehiculo: string;
   Placa: string | null;
   Personales: OrdenMantenimientoPersonal[];

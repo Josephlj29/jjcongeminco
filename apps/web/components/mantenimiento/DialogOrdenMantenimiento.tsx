@@ -128,6 +128,7 @@ export function DialogOrdenMantenimiento({
           FechaOrden: orden.FechaOrden.slice(0, 10),
           Turno: orden.Turno,
           Kilometraje: orden.Kilometraje ?? undefined,
+          Horometro: orden.Horometro ?? undefined,
           IdVehiculo: orden.IdVehiculo,
           IdsPersonal: orden.Personales.map((p) => p.IdPersonal),
           Observaciones: orden.Observaciones ?? undefined,
@@ -241,8 +242,8 @@ export function DialogOrdenMantenimiento({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="space-y-1 col-span-2 md:col-span-1">
               <Label>Placa *</Label>
               <Select
                 value={watch("IdVehiculo") ?? ""}
@@ -274,6 +275,20 @@ export function DialogOrdenMantenimiento({
                 step="0.01"
                 placeholder="Opcional"
                 {...register("Kilometraje", {
+                  setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)),
+                })}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="Horometro">Horómetro</Label>
+              <Input
+                id="Horometro"
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Opcional"
+                {...register("Horometro", {
                   setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)),
                 })}
               />

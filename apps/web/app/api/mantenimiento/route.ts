@@ -31,6 +31,7 @@ interface FilaOrden {
   TipoMantenimiento: "preventivo" | "correctivo";
   Turno: "dia" | "tarde" | "noche";
   Kilometraje: number | null;
+  Horometro: number | null;
   IdVehiculo: string;
   Situacion: OrdenMantenimientoResumen["Situacion"];
   T_Vehiculo: { Placa: string } | null;
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, IdVehiculo, Situacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Situacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
     )
     .eq("Estado", true);
 
@@ -96,6 +97,7 @@ export async function GET(request: NextRequest) {
     TipoMantenimiento: o.TipoMantenimiento,
     Turno: o.Turno,
     Kilometraje: o.Kilometraje === null ? null : Number(o.Kilometraje),
+    Horometro: o.Horometro === null ? null : Number(o.Horometro),
     IdVehiculo: o.IdVehiculo,
     Placa: o.T_Vehiculo?.Placa ?? null,
     Personales: mapearPersonales(o.T_OrdenMantenimientoPersonal),
