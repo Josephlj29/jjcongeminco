@@ -10,6 +10,9 @@ export const TIPO_DOCUMENTO = [
 ] as const;
 export type TipoDocumento = (typeof TIPO_DOCUMENTO)[number];
 
+/* Situaciones de un requerimiento (coinciden con CHK_T_Requerimiento_Situacion_Permitida). */
+export const SITUACION_REQUERIMIENTO = ["pendiente", "parcial", "atendido", "anulado"] as const;
+
 /* Máximo de imágenes por producto (regla de aplicación, no de BD). */
 export const MAX_IMAGENES_PRODUCTO = 3;
 

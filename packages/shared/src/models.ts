@@ -107,6 +107,9 @@ export interface PrecioHistoricoConProveedor extends ProductoPrecioHistorico {
   TieneStock: boolean;
 }
 
+/* Situacion de un requerimiento. 'parcial' = entregado en parte, admite re-atencion. */
+export type SituacionRequerimiento = "pendiente" | "parcial" | "atendido" | "anulado";
+
 export interface Requerimiento extends CamposAuditoria {
   Id: string;
   NumeroRequerimiento: string | null;
@@ -114,7 +117,7 @@ export interface Requerimiento extends CamposAuditoria {
   Origen: "planificado" | "presupuestado" | "desgaste_prematuro";
   IdEquipo: string | null;
   IdVehiculo: string | null;
-  Situacion: "pendiente" | "atendido" | "anulado";
+  Situacion: SituacionRequerimiento;
   Notas: string | null;
   IdDocumentoInventario: string | null;
 }
@@ -139,7 +142,7 @@ export interface RequerimientoConDetalle {
   NumeroRequerimiento: string | null;
   FechaRequerimiento: string;
   Origen: "planificado" | "presupuestado" | "desgaste_prematuro";
-  Situacion: "pendiente" | "atendido" | "anulado";
+  Situacion: SituacionRequerimiento;
   IdEquipo: string | null;
   NombreEquipo: string | null;
   IdVehiculo: string | null;
