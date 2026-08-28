@@ -98,7 +98,7 @@ import { ComboboxBuscable } from "@/components/ComboboxBuscable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 /* ─── Tipo para producto de la vista consolidada ─── */
 interface ProductoConsolidado {
@@ -139,6 +139,7 @@ function DialogProducto({
   onClose: () => void;
 }) {
   const esEdicion = !!producto;
+  const qc = useQueryClient();
   const { mutateAsync: crear, isPending: creando } = useCrearProducto();
   const { mutateAsync: editar, isPending: editandoProd } = useEditarProducto();
   const { data: categorias } = useCategorias();
@@ -147,6 +148,36 @@ function DialogProducto({
   const { data: detalle, isLoading: cargandoDetalle } = useProductoDetalle(
     producto?.IdProducto ?? null
   );
+
+  // Imágenes seleccionadas en el ALTA (se suben recién al crear el producto,
+  // porque el Id no existe antes). En edición se sigue usando la acción "Imágenes".
+  const [archivos, setArchivos] = useState<{ file: File; url: string }[]>([]);
+  const [subiendoImagenes, setSubiendoImagenes] = useState(false);
+
+  const agregarArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nuevos = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!nuevos.length) return;
+    setArchivos((prev) => {
+      const disponibles = MAX_IMAGENES_PRODUCTO - prev.length;
+      if (nuevos.length > disponibles) {
+        toast.error(`Máximo ${MAX_IMAGENES_PRODUCTO} imágenes por producto.`);
+      }
+      return [
+        ...prev,
+        ...nuevos
+          .slice(0, disponibles)
+          .map((file) => ({ file, url: URL.createObjectURL(file) })),
+      ];
+    });
+  };
+
+  const quitarArchivo = (idx: number) => {
+    setArchivos((prev) => {
+      URL.revokeObjectURL(prev[idx].url);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
 
   const {
     register,
@@ -200,6 +231,11 @@ function DialogProducto({
         IdsTipoEquipo: [],
       });
     }
+    // Al (re)abrir, descartar las imágenes seleccionadas de la sesión anterior.
+    setArchivos((prev) => {
+      prev.forEach((a) => URL.revokeObjectURL(a.url));
+      return [];
+    });
   }, [open, esEdicion, detalle, reset]);
 
   const toggleTipo = (id: string) => {
@@ -225,16 +261,73 @@ function DialogProducto({
         await editar({ id: producto.IdProducto, data: payload });
         toast.success("Producto actualizado");
       } else {
-        await crear(payload);
-        toast.success("Producto creado correctamente");
+        const { Id } = await crear(payload);
+
+        // Subir las imágenes seleccionadas (el producto YA quedó creado; si
+        // alguna falla, se puede reintentar desde la acción "Imágenes").
+        let fallidas = 0;
+        if (archivos.length) {
+          setSubiendoImagenes(true);
+          const supabase = crearClienteNavegador();
+          let orden = 0;
+          for (const a of archivos) {
+            try {
+              const ruta = `${Id}/${Date.now()}-${a.file.name}`;
+              const { data: storageData, error: storageError } =
+                await supabase.storage.from("productos").upload(ruta, a.file, {
+                  upsert: false,
+                });
+              if (storageError) throw new Error(storageError.message);
+
+              const { data: urlData } = supabase.storage
+                .from("productos")
+                .getPublicUrl(storageData.path);
+
+              orden += 1;
+              const res = await fetch(`/api/productos/${Id}/imagenes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  Url: urlData.publicUrl,
+                  Orden: orden,
+                  EsPrincipal: orden === 1,
+                }),
+              });
+              if (!res.ok) {
+                orden -= 1;
+                throw new Error(`Error ${res.status}`);
+              }
+            } catch {
+              fallidas += 1;
+            }
+          }
+          setSubiendoImagenes(false);
+          archivos.forEach((a) => URL.revokeObjectURL(a.url));
+          setArchivos([]);
+          void qc.invalidateQueries({ queryKey: ["imagenes", Id] });
+          void qc.invalidateQueries({ queryKey: ["productos"] });
+        }
+
+        if (fallidas > 0) {
+          toast.warning(
+            `Producto creado, pero ${fallidas} imagen(es) no se subieron. Reintenta desde la acción "Imágenes".`
+          );
+        } else {
+          toast.success(
+            archivos.length
+              ? `Producto creado con ${archivos.length} imagen(es)`
+              : "Producto creado correctamente"
+          );
+        }
       }
       onClose();
     } catch (e) {
+      setSubiendoImagenes(false);
       toast.error((e as Error).message);
     }
   };
 
-  const guardando = creando || editandoProd;
+  const guardando = creando || editandoProd || subiendoImagenes;
   // En edición, no renderizamos el form hasta tener el detalle: evita mostrar
   // (y peor, guardar) los datos del producto editado anteriormente.
   const cargandoEdicion = esEdicion && (cargandoDetalle || !detalle);
@@ -409,21 +502,77 @@ function DialogProducto({
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Las imágenes (hasta {MAX_IMAGENES_PRODUCTO}) se cargan desde la
-            acción &quot;Imágenes&quot; del producto, una vez creado.
-          </p>
+          {esEdicion ? (
+            <p className="text-xs text-muted-foreground">
+              Las imágenes (hasta {MAX_IMAGENES_PRODUCTO}) se gestionan desde la
+              acción &quot;Imágenes&quot; del producto.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <Label>
+                Imágenes{" "}
+                <span className="font-normal text-muted-foreground">
+                  (opcional, hasta {MAX_IMAGENES_PRODUCTO})
+                </span>
+              </Label>
+              {archivos.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {archivos.map((a, i) => (
+                    <div key={a.url} className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={a.url}
+                        alt={`Imagen ${i + 1}`}
+                        className="h-16 w-16 rounded-md border object-cover"
+                      />
+                      {i === 0 && (
+                        <Badge className="absolute -bottom-1 left-0 scale-75" variant="default">
+                          Principal
+                        </Badge>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => quitarArchivo(i)}
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive"
+                        aria-label="Quitar imagen"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {archivos.length < MAX_IMAGENES_PRODUCTO && (
+                <label className="flex cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 p-3 text-sm text-muted-foreground hover:border-muted-foreground/50 transition-colors">
+                  Agregar imágenes
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={agregarArchivos}
+                  />
+                </label>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Se suben al crear el producto. También puedes gestionarlas
+                después desde la acción &quot;Imágenes&quot;.
+              </p>
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={guardando}>
-              {guardando
-                ? "Guardando..."
-                : esEdicion
-                  ? "Guardar cambios"
-                  : "Crear producto"}
+              {subiendoImagenes
+                ? "Subiendo imágenes..."
+                : guardando
+                  ? "Guardando..."
+                  : esEdicion
+                    ? "Guardar cambios"
+                    : "Crear producto"}
             </Button>
           </DialogFooter>
         </form>
