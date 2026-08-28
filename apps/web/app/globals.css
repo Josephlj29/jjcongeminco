@@ -36,6 +36,12 @@
     --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;
 
+    /* Estados semanticos. "danger" == destructive (convencion shadcn): no duplicar. */
+    --success: 152 55% 32%;
+    --success-foreground: 0 0% 100%;
+    --warning: 32 95% 40%;
+    --warning-foreground: 0 0% 100%;
+
     --border: 220 16% 90%;
     --input: 220 16% 90%;
     --ring: 22 90% 46%;
@@ -82,6 +88,11 @@
 
     --destructive: 0 62% 44%;
     --destructive-foreground: 0 0% 100%;
+
+    --success: 152 50% 45%;
+    --success-foreground: 220 24% 9%;
+    --warning: 38 92% 54%;
+    --warning-foreground: 220 24% 9%;
 
     --border: 220 16% 22%;
     --input: 220 16% 22%;
