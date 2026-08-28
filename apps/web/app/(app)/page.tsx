@@ -1,21 +1,23 @@
 "use client";
 
 /**
- * app/(app)/page.tsx — Dashboard con gráficos
+ * app/(app)/page.tsx — Dashboard (grid bento)
  *
- * Client Component (TanStack Query + ECharts).
- * - 4 KPI cards: total productos, valor total inventario, bajo mínimo,
- *   movimientos del período.
- * - Select de rango (7/30/90 días) que define desde/hasta.
- * - Gráficos: tendencia entradas/salidas por día, donut de valor por categoría,
- *   top 5 productos por cantidad movida. Los datos de los gráficos se agregan en
- *   memoria a partir de /api/reportes/movimientos y /api/reportes/valorizado.
+ * Consume un único endpoint agregado (/api/dashboard, gate módulo DASHBOARD),
+ * que reemplaza el fan-out anterior a /api/reportes/* (que daba 403 a los roles
+ * sin el módulo REPORTES) + /api/saldos. Tiles de tamaños variados: KPI hero con
+ * delta y sparkline, KPIs con delta, accesos rápidos, gráficos y lista de bajo
+ * mínimo. Cada tile maneja su propio estado de carga/error.
  */
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { Package, AlertTriangle, Wallet, ArrowLeftRight } from "lucide-react";
-import type { ReporteMovimiento, ProductoValorizado } from "@congeminco/shared";
-import { useSaldos, useSaldosBajoMinimo } from "@/hooks/useSaldos";
+import { useDashboard } from "@/hooks/useDashboard";
+import { moneda, fechaISO, fechaCorta } from "@/lib/format";
+import { PageHeader } from "@/components/PageHeader";
+import { ErrorState } from "@/components/ErrorState";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { AccesosRapidos } from "@/components/dashboard/AccesosRapidos";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -24,14 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GraficoTendencia } from "@/components/charts/GraficoTendencia";
@@ -44,68 +39,52 @@ const RANGOS = [
   { value: "90", label: "Últimos 90 días" },
 ] as const;
 
-function fechaISO(d: Date): string {
-  return d.toISOString().split("T")[0];
+/** Delta relativo del período actual vs el anterior (0..1, con signo). */
+function deltaRelativo(actual: number, anterior: number): number {
+  if (anterior === 0) return actual > 0 ? 1 : 0;
+  return (actual - anterior) / anterior;
 }
 
-function moneda(n: number): string {
-  return `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function KpiCard({
+/** Envuelve un tile de gráfico con su propio manejo de carga/error/vacío. */
+function TileGrafico({
   titulo,
-  valor,
-  icono: Icono,
-  descripcion,
-  variante = "default",
+  cargando,
+  error,
+  onReintentar,
+  vacio,
+  hayDatos,
+  children,
+  className,
 }: {
   titulo: string;
-  valor: number | string;
-  icono: React.ElementType;
-  descripcion?: string;
-  variante?: "default" | "warning";
+  cargando: boolean;
+  error: boolean;
+  onReintentar: () => void;
+  vacio: string;
+  hayDatos: boolean;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{titulo}</CardTitle>
-        <Icono
-          className={`h-4 w-4 ${
-            variante === "warning" ? "text-amber-500" : "text-muted-foreground"
-          }`}
-        />
+    <Card className={className}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">{titulo}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${variante === "warning" ? "text-amber-600" : ""}`}>
-          {valor}
-        </div>
-        {descripcion && <p className="text-xs text-muted-foreground">{descripcion}</p>}
+        {cargando ? (
+          <Skeleton className="h-[280px]" />
+        ) : error ? (
+          <ErrorState compacto onReintentar={onReintentar} />
+        ) : !hayDatos ? (
+          <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+            {vacio}
+          </div>
+        ) : (
+          children
+        )}
       </CardContent>
     </Card>
   );
-}
-
-function useReporteMovimientos(desde: string, hasta: string) {
-  return useQuery({
-    queryKey: ["reportes", "movimientos", "dashboard", desde, hasta],
-    queryFn: async () => {
-      const params = new URLSearchParams({ desde, hasta });
-      const res = await fetch(`/api/reportes/movimientos?${params.toString()}`);
-      if (!res.ok) throw new Error("Error al cargar movimientos");
-      return res.json() as Promise<ReporteMovimiento[]>;
-    },
-  });
-}
-
-function useReporteValorizado() {
-  return useQuery({
-    queryKey: ["reportes", "valorizado", "dashboard"],
-    queryFn: async () => {
-      const res = await fetch("/api/reportes/valorizado");
-      if (!res.ok) throw new Error("Error al cargar valorizado");
-      return res.json() as Promise<ProductoValorizado[]>;
-    },
-  });
 }
 
 export default function DashboardPage() {
@@ -118,228 +97,186 @@ export default function DashboardPage() {
     return { desde: fechaISO(inicio), hasta: fechaISO(fin) };
   }, [rango]);
 
-  const { data: saldos, isLoading: cargandoSaldos } = useSaldos();
-  const { data: bajoMinimo, isLoading: cargandoBM } = useSaldosBajoMinimo();
-  const { data: movimientos, isLoading: cargandoMov } = useReporteMovimientos(desde, hasta);
-  const { data: valorizado, isLoading: cargandoVal } = useReporteValorizado();
+  const { data, isLoading: cargando, isError: error, refetch } = useDashboard(desde, hasta);
+  const reintentar = () => void refetch();
 
-  const totalProductos = saldos?.length ?? 0;
-  const totalBajoMinimo = bajoMinimo?.length ?? 0;
-  const valorInventario = useMemo(
-    () => (valorizado ?? []).reduce((sum, v) => sum + v.ValorTotal, 0),
-    [valorizado],
-  );
-  const totalMovimientos = movimientos?.length ?? 0;
+  const rangoLabel = RANGOS.find((r) => r.value === rango)?.label;
+  const kpis = data?.kpis;
 
-  /* Tendencia: entradas vs salidas por día (Direccion 1 = entrada, -1 = salida). */
-  const datosTendencia = useMemo(() => {
-    const mapa = new Map<string, { entradas: number; salidas: number }>();
-    (movimientos ?? []).forEach((m) => {
-      const fecha = m.FechaMovimiento.split("T")[0];
-      const acc = mapa.get(fecha) ?? { entradas: 0, salidas: 0 };
-      if (m.Direccion === 1) acc.entradas += m.Cantidad;
-      else acc.salidas += m.Cantidad;
-      mapa.set(fecha, acc);
-    });
-    return [...mapa.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([fecha, v]) => ({
-        fecha: new Date(fecha).toLocaleDateString("es-PE", {
-          day: "2-digit",
-          month: "2-digit",
-        }),
-        entradas: v.entradas,
-        salidas: v.salidas,
-      }));
-  }, [movimientos]);
-
-  /* Donut: valor por categoría (suma ValorTotal del valorizado). */
-  const datosDonut = useMemo(() => {
-    const mapa = new Map<string, number>();
-    (valorizado ?? []).forEach((v) => {
-      mapa.set(v.NombreCategoria, (mapa.get(v.NombreCategoria) ?? 0) + v.ValorTotal);
-    });
-    return [...mapa.entries()]
-      .map(([nombre, valor]) => ({ nombre, valor }))
-      .sort((a, b) => b.valor - a.valor);
-  }, [valorizado]);
-
-  /* Top 5 productos por cantidad movida en el período. */
-  const datosTop = useMemo(() => {
-    const mapa = new Map<string, number>();
-    (movimientos ?? []).forEach((m) => {
-      mapa.set(m.NombreProducto, (mapa.get(m.NombreProducto) ?? 0) + m.Cantidad);
-    });
-    return [...mapa.entries()]
-      .map(([nombre, cantidad]) => ({ nombre, cantidad }))
-      .sort((a, b) => b.cantidad - a.cantidad)
-      .slice(0, 5)
-      .reverse(); // barras horizontales: mayor arriba
-  }, [movimientos]);
+  const deltaValorMovido = kpis
+    ? deltaRelativo(kpis.anterior.valorMovidoActual, kpis.anterior.valorMovido)
+    : 0;
+  const deltaMovimientos = kpis
+    ? deltaRelativo(kpis.movimientosPeriodo, kpis.anterior.movimientosPeriodo)
+    : 0;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Resumen del inventario — JJ Congeminco</p>
-        </div>
-        <div className="w-full sm:w-48">
-          <Select value={rango} onValueChange={setRango}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RANGOS.map((r) => (
-                <SelectItem key={r.value} value={r.value}>
-                  {r.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        titulo="Dashboard"
+        descripcion="Resumen del inventario — JJ Congeminco"
+        acciones={
+          <div className="w-full sm:w-48">
+            <Select value={rango} onValueChange={setRango}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RANGOS.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      />
 
-      {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cargandoSaldos ? (
-          <>
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-          </>
-        ) : (
-          <>
+      {error && !cargando ? (
+        <ErrorState
+          titulo="No se pudo cargar el dashboard"
+          descripcion="Ocurrió un error al obtener el resumen del inventario."
+          onReintentar={reintentar}
+        />
+      ) : (
+        <>
+          {/* Grid bento */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12">
+            {/* KPI hero: valor de inventario + sparkline de valor movido */}
             <KpiCard
-              titulo="Total de productos"
-              valor={totalProductos}
-              icono={Package}
-              descripcion="Productos activos en catálogo"
-            />
-            <KpiCard
-              titulo="Valor total inventario"
-              valor={cargandoVal ? "…" : moneda(valorInventario)}
+              className="md:col-span-6 lg:col-span-6 lg:row-span-2"
+              hero
+              titulo="Valor total del inventario"
+              valor={cargando ? "…" : moneda(kpis?.valorInventario ?? 0)}
               icono={Wallet}
               descripcion="Stock valorizado a costo promedio"
+              delta={{ porcentaje: deltaValorMovido }}
+              sparkline={data?.sparklineValor}
+              cargando={cargando}
+            />
+
+            <KpiCard
+              className="md:col-span-3 lg:col-span-3"
+              titulo="Productos activos"
+              valor={cargando ? "…" : (kpis?.totalProductos ?? 0)}
+              icono={Package}
+              descripcion="En catálogo"
+              cargando={cargando}
             />
             <KpiCard
+              className="md:col-span-3 lg:col-span-3"
               titulo="Bajo mínimo"
-              valor={totalBajoMinimo}
+              valor={cargando ? "…" : (kpis?.bajoMinimo ?? 0)}
               icono={AlertTriangle}
               descripcion="Requieren reabastecimiento"
-              variante={totalBajoMinimo > 0 ? "warning" : "default"}
+              tono={(kpis?.bajoMinimo ?? 0) > 0 ? "warning" : "default"}
+              cargando={cargando}
             />
             <KpiCard
+              className="md:col-span-3 lg:col-span-3"
               titulo="Movimientos del período"
-              valor={cargandoMov ? "…" : totalMovimientos}
+              valor={cargando ? "…" : (kpis?.movimientosPeriodo ?? 0)}
               icono={ArrowLeftRight}
-              descripcion={RANGOS.find((r) => r.value === rango)?.label}
+              descripcion={rangoLabel}
+              delta={{ porcentaje: deltaMovimientos }}
+              cargando={cargando}
             />
-          </>
-        )}
-      </div>
+            <AccesosRapidos className="md:col-span-3 lg:col-span-3" />
+          </div>
 
-      {/* Gráficos */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Entradas vs salidas por día</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {cargandoMov ? (
-              <Skeleton className="h-[300px]" />
-            ) : datosTendencia.length === 0 ? (
-              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-                Sin movimientos en el período.
-              </div>
-            ) : (
-              <GraficoTendencia datos={datosTendencia} />
-            )}
-          </CardContent>
-        </Card>
+          {/* Gráficos */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            <TileGrafico
+              className="lg:col-span-8"
+              titulo="Entradas vs salidas por día"
+              cargando={cargando}
+              error={error}
+              onReintentar={reintentar}
+              vacio="Sin movimientos en el período."
+              hayDatos={(data?.tendencia.length ?? 0) > 0}
+            >
+              <GraficoTendencia datos={data?.tendencia ?? []} height={280} />
+            </TileGrafico>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Valor por categoría</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {cargandoVal ? (
-              <Skeleton className="h-[300px]" />
-            ) : datosDonut.length === 0 ? (
-              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-                Sin datos valorizados.
-              </div>
-            ) : (
-              <GraficoDonutCategorias datos={datosDonut} />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            <TileGrafico
+              className="lg:col-span-4"
+              titulo="Valor por categoría"
+              cargando={cargando}
+              error={error}
+              onReintentar={reintentar}
+              vacio="Sin datos valorizados."
+              hayDatos={(data?.valorPorCategoria.length ?? 0) > 0}
+            >
+              <GraficoDonutCategorias datos={data?.valorPorCategoria ?? []} height={280} />
+            </TileGrafico>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Top productos movidos (período)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {cargandoMov ? (
-            <Skeleton className="h-[300px]" />
-          ) : datosTop.length === 0 ? (
-            <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-              Sin movimientos en el período.
-            </div>
-          ) : (
-            <GraficoTopProductos datos={datosTop} />
+            <TileGrafico
+              className="lg:col-span-6"
+              titulo="Top productos movidos"
+              cargando={cargando}
+              error={error}
+              onReintentar={reintentar}
+              vacio="Sin movimientos en el período."
+              hayDatos={(data?.topProductos.length ?? 0) > 0}
+            >
+              <GraficoTopProductos datos={data?.topProductos ?? []} height={280} />
+            </TileGrafico>
+
+            {/* Lista de bajo mínimo */}
+            <Card className="lg:col-span-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base">Productos bajo mínimo</CardTitle>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/saldos">Ver todos</Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {cargando ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-10" />
+                    ))}
+                  </div>
+                ) : error ? (
+                  <ErrorState compacto onReintentar={reintentar} />
+                ) : !data?.bajoMinimo.length ? (
+                  <div className="flex h-[220px] items-center justify-center text-center text-sm text-muted-foreground">
+                    No hay productos bajo mínimo. ¡Todo en orden!
+                  </div>
+                ) : (
+                  <ul className="divide-y">
+                    {data.bajoMinimo.map((p) => (
+                      <li
+                        key={p.IdProducto}
+                        className="flex items-center justify-between gap-2 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{p.NombreProducto}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {p.Sku} · {p.NombreCategoria}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="text-sm font-semibold text-warning">{p.StockTotal}</span>
+                          <span className="text-xs text-muted-foreground">/ {p.StockMinimo}</span>
+                          <Badge variant="warning">Bajo</Badge>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {data && !cargando && (
+            <p className="text-xs text-muted-foreground">
+              Datos del {fechaCorta(desde)} al {fechaCorta(hasta)}.
+            </p>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Tabla de productos bajo mínimo */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold">Productos bajo mínimo</h2>
-        {cargandoBM ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-12" />
-            ))}
-          </div>
-        ) : !bajoMinimo?.length ? (
-          <div className="flex h-32 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-            No hay productos bajo mínimo. ¡Todo en orden!
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead className="text-right">Stock mínimo</TableHead>
-                  <TableHead className="text-right">Stock actual</TableHead>
-                  <TableHead>Estado</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bajoMinimo.map((p) => (
-                  <TableRow key={p.IdProducto}>
-                    <TableCell className="font-mono text-xs">{p.Sku}</TableCell>
-                    <TableCell className="font-medium">{p.NombreProducto}</TableCell>
-                    <TableCell>{p.NombreCategoria}</TableCell>
-                    <TableCell className="text-right">{p.StockMinimo}</TableCell>
-                    <TableCell className="text-right font-semibold text-amber-600">
-                      {p.StockTotal}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="warning">Bajo mínimo</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }
