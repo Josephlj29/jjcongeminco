@@ -21,5 +21,6 @@ export async function GET() {
     email: usuario.email,
     rol: usuario.rol,
     nombreCompleto: usuario.nombreCompleto,
+    modulos: usuario.modulos,
   });
 }
