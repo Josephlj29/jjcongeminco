@@ -26,5 +26,5 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck, lint y build
-        run: pnpm turbo typecheck lint build
+      - name: Typecheck, lint, test y build
+        run: pnpm turbo typecheck lint test build
