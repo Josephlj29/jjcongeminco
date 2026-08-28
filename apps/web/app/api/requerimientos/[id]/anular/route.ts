@@ -8,7 +8,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { AnularRequerimientoSchema, puede } from "@congeminco/shared";
 
@@ -34,9 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (dbError) {
-    // Regla de negocio → 409. Stems robustos ante reformulaciones del mensaje SQL.
-    const reglaNegocio = /pendiente|no existe/i.test(dbError.message);
-    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
+    return mapearErrorNegocio(dbError);
   }
 
   return NextResponse.json({ ok: true });

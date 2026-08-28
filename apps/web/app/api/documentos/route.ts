@@ -12,7 +12,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearDocumentoSchema, puede } from "@congeminco/shared";
 
@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
     });
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    // Stock insuficiente y demás reglas de negocio del ledger → 409 (no 500).
+    return mapearErrorNegocio(dbError);
   }
 
   return NextResponse.json({ Id: data }, { status: 201 });

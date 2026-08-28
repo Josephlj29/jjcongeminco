@@ -9,7 +9,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ReconciliarOrdenSchema, puede } from "@congeminco/shared";
 
@@ -35,10 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (dbError) {
-    const reglaNegocio = /consumida|no existe|permiso|registraste|revertir|egreso/i.test(
-      dbError.message,
-    );
-    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
+    return mapearErrorNegocio(dbError);
   }
 
   return NextResponse.json({ ok: true });

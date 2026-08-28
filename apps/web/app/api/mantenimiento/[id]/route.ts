@@ -10,7 +10,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
   CrearOrdenMantenimientoSchema,
@@ -199,8 +199,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .rpc("FnActualizarOrdenMantenimiento", { PIdOrden: id, POrden: parsed.data });
 
   if (dbError) {
-    const reglaNegocio = /abierta|no existe|edita/i.test(dbError.message);
-    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
+    return mapearErrorNegocio(dbError);
   }
   return NextResponse.json({ ok: true });
 }
@@ -225,8 +224,7 @@ export async function DELETE(
     .rpc("FnEliminarOrdenMantenimiento", { PIdOrden: id });
 
   if (dbError) {
-    const reglaNegocio = /no existe|ya consumio|permiso/i.test(dbError.message);
-    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
+    return mapearErrorNegocio(dbError);
   }
   return new NextResponse(null, { status: 204 });
 }

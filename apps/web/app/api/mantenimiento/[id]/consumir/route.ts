@@ -8,7 +8,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ConsumirRepuestosSchema, puede } from "@congeminco/shared";
 
@@ -35,12 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
 
   if (dbError) {
-    const reglaNegocio =
-      dbError.code === "23514" ||
-      /stock insuficiente|abierta|no existe|proveedor|comprobante|costo|permiso|inactiv|repuesto/i.test(
-        dbError.message,
-      );
-    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
+    return mapearErrorNegocio(dbError);
   }
 
   return NextResponse.json({ IdDocumentoInventario: data as string }, { status: 201 });

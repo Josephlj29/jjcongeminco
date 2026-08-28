@@ -12,7 +12,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { AtenderRequerimientoSchema, puede } from "@congeminco/shared";
 
@@ -38,14 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (dbError) {
-    // Regla de negocio (no error de infraestructura) → 409. Stems robustos ante
-    // reformulaciones del mensaje SQL; el guard del ledger usa ERRCODE 23514.
-    const reglaNegocio =
-      dbError.code === "23514" ||
-      /stock insuficiente|pendiente|no existe|no entregar|solicitado|proveedor|comprobante|costo|creaste|almac[eé]n/i.test(
-        dbError.message,
-      );
-    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
+    return mapearErrorNegocio(dbError);
   }
 
   return NextResponse.json({ IdDocumentoInventario: data as string }, { status: 201 });
