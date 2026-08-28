@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    env:
+      # Dummies: el build de Next no llama a Supabase, solo exige que existan.
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-dummy.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-dummy-anon-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        # Lee la versión de "packageManager" del package.json raíz.
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck, lint y build
+        run: pnpm turbo typecheck lint build
