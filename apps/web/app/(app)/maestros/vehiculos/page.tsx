@@ -12,10 +12,8 @@
  */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Truck } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { toast } from "sonner";
 import {
@@ -24,7 +22,6 @@ import {
   type CrearVehiculo,
   type ActualizarVehiculo,
   type Vehiculo,
-  puede,
 } from "@congeminco/shared";
 import {
   useVehiculos,
@@ -33,17 +30,12 @@ import {
   useEquipos,
   useEliminarVehiculo,
 } from "@/hooks/useEquipos";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -58,20 +50,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-
-/* ─── Hook: rol del usuario actual ─── */
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: import("@congeminco/shared").RoleCode }>;
-    },
-  });
-}
 
 /* ─── Dialog: Crear / Editar vehículo ─── */
 function DialogVehiculo({ vehiculo, onClose }: { vehiculo: Vehiculo | null; onClose: () => void }) {
@@ -173,13 +151,10 @@ export default function VehiculosPage() {
   const [vehiculoEditar, setVehiculoEditar] = useState<Vehiculo | null>(null);
   const [vehiculoEliminar, setVehiculoEliminar] = useState<Vehiculo | null>(null);
 
-  const { data: vehiculos, isLoading } = useVehiculos();
+  const { data: vehiculos, isLoading: cargando, isError: error, refetch } = useVehiculos();
   const { data: equipos } = useEquipos();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "productoEscritura");
+  const puedeEscribir = usePermiso("productoEscritura");
   const { mutateAsync: eliminarVehiculo } = useEliminarVehiculo();
-
-  const paginacion = usePaginacion(vehiculos ?? [], 10);
 
   const equipoNombre = (idEquipo: string | null) => {
     if (!idEquipo) return "—";
@@ -187,13 +162,30 @@ export default function VehiculosPage() {
     return eq ? `${eq.Codigo} — ${eq.Nombre}` : idEquipo;
   };
 
+  const columnas: ColumnaDataTable<Vehiculo>[] = [
+    {
+      id: "placa",
+      titulo: "Placa",
+      celda: (v) => v.Placa,
+      className: "font-mono font-medium",
+    },
+    {
+      id: "modelo",
+      titulo: "Modelo",
+      celda: (v) => v.Modelo ?? "—",
+      className: "text-sm text-muted-foreground",
+      ocultarEnMovil: true,
+    },
+    {
+      id: "equipo",
+      titulo: "Equipo",
+      celda: (v) => equipoNombre(v.IdEquipo),
+      className: "text-sm text-muted-foreground",
+    },
+  ];
+
   const abrirNuevo = () => {
     setVehiculoEditar(null);
-    setMostrarDialog(true);
-  };
-
-  const abrirEditar = (v: Vehiculo) => {
-    setVehiculoEditar(v);
     setMostrarDialog(true);
   };
 
@@ -204,87 +196,52 @@ export default function VehiculosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vehículos</h1>
-          <p className="text-muted-foreground">Administra las placas y su equipo asignado</p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={abrirNuevo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo vehículo
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Vehículos"
+        descripcion="Administra las placas y su equipo asignado"
+        breadcrumbs={[{ label: "Maestros" }, { label: "Vehículos" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo vehículo
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Placa</TableHead>
-                <TableHead>Modelo</TableHead>
-                <TableHead>Equipo</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={puedeEscribir ? 4 : 3}
-                    className="py-10 text-center text-muted-foreground"
-                  >
-                    No hay vehículos registrados.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((v) => (
-                  <TableRow key={v.Id}>
-                    <TableCell className="font-mono font-medium">{v.Placa}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {v.Modelo ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {equipoNombre(v.IdEquipo)}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="space-x-1 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEditar(v)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setVehiculoEliminar(v)}
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          <Paginacion
-            pagina={paginacion.pagina}
-            totalPaginas={paginacion.totalPaginas}
-            totalItems={paginacion.totalItems}
-            desde={paginacion.desde}
-            hasta={paginacion.hasta}
-            onPagina={paginacion.setPagina}
-          />
-        </div>
-      )}
+      <DataTable
+        columnas={columnas}
+        datos={vehiculos}
+        obtenerId={(v) => v.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: Truck,
+          titulo: "No hay vehículos registrados",
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (v) => {
+                    setVehiculoEditar(v);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (v) => setVehiculoEliminar(v),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && <DialogVehiculo vehiculo={vehiculoEditar} onClose={cerrarDialog} />}
 
