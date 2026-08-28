@@ -24,27 +24,15 @@ import {
   Trash2,
   Pencil,
   Tags,
-  MoreHorizontal,
   History,
+  Package,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
+import { DataTable, type ColumnaDataTable, type AccionFila } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { toast } from "sonner";
-import {
-  CrearProductoSchema,
-  type CrearProducto,
-  puede,
-  MAX_IMAGENES_PRODUCTO,
-} from "@congeminco/shared";
+import { CrearProductoSchema, type CrearProducto, MAX_IMAGENES_PRODUCTO } from "@congeminco/shared";
 import {
   useProductos,
   useCrearProducto,
@@ -68,6 +56,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -98,11 +87,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ComboboxBuscable } from "@/components/ComboboxBuscable";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Combobox } from "@/components/Combobox";
+import { usePermiso } from "@/hooks/useYo";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 /* ─── Tipo para producto de la vista consolidada ─── */
 interface ProductoConsolidado {
@@ -116,18 +105,6 @@ interface ProductoConsolidado {
   BajoMinimo: boolean;
   IdCategoria: string;
   EsGeneral: boolean;
-}
-
-/* ─── Hook: rol del usuario actual ─── */
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: import("@congeminco/shared").RoleCode }>;
-    },
-  });
 }
 
 /* ─── Dialog: Alta / edición de producto ───
@@ -371,13 +348,14 @@ function DialogProducto({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Categoría</Label>
-                <ComboboxBuscable
+                <Combobox
                   opciones={(categorias ?? []).map((c) => ({
                     value: c.Id,
                     label: c.Nombre,
                   }))}
-                  value={idCategoria ?? ""}
-                  onChange={(v) => setValue("IdCategoria", v, { shouldValidate: true })}
+                  value={idCategoria || null}
+                  onChange={(v) => setValue("IdCategoria", v ?? "", { shouldValidate: true })}
+                  permitirLimpiar={false}
                   buscarPlaceholder="Buscar categoría..."
                   vacioTexto="No se encontraron categorías."
                 />
@@ -387,14 +365,15 @@ function DialogProducto({
               </div>
               <div className="space-y-1">
                 <Label>Unidad de medida</Label>
-                <ComboboxBuscable
+                <Combobox
                   opciones={(unidades ?? []).map((u) => ({
                     value: u.Id,
                     label: u.Nombre,
                     codigo: u.Codigo,
                   }))}
-                  value={idUnidad ?? ""}
-                  onChange={(v) => setValue("IdUnidadMedida", v, { shouldValidate: true })}
+                  value={idUnidad || null}
+                  onChange={(v) => setValue("IdUnidadMedida", v ?? "", { shouldValidate: true })}
+                  permitirLimpiar={false}
                   buscarPlaceholder="Buscar por código o nombre..."
                   vacioTexto="No se encontraron unidades."
                 />
@@ -811,13 +790,14 @@ function DialogAsociarCategoria({
         <div className="space-y-4">
           <div className="space-y-1">
             <Label>Categoría</Label>
-            <ComboboxBuscable
+            <Combobox
               opciones={(categorias ?? []).map((c) => ({
                 value: c.Id,
                 label: c.Nombre,
               }))}
-              value={idCategoriaSeleccionada}
-              onChange={setIdCategoriaSeleccionada}
+              value={idCategoriaSeleccionada || null}
+              onChange={(v) => setIdCategoriaSeleccionada(v ?? "")}
+              permitirLimpiar={false}
               placeholder="Seleccionar categoría..."
               buscarPlaceholder="Buscar categoría..."
               vacioTexto="No se encontraron categorías."
@@ -875,9 +855,8 @@ export default function ProductosPage() {
   const [productoImagenes, setProductoImagenes] = useState<ProductoConsolidado | null>(null);
   const [productoEliminar, setProductoEliminar] = useState<ProductoConsolidado | null>(null);
 
-  const { data: productos, isLoading } = useProductos();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "productoEscritura");
+  const { data: productos, isLoading: cargando, isError: error, refetch } = useProductos();
+  const puedeEscribir = usePermiso("productoEscritura");
   const { mutateAsync: eliminarProducto } = useEliminarProducto();
 
   // Una sola query para TODA la puente producto<->tipo
@@ -917,22 +896,114 @@ export default function ProductosPage() {
   // desde ProductoStockConsolidado que sí lo tiene (la API lo devuelve).
   const productosFiltradosConId = productosFiltrados as ProductoConsolidado[];
 
-  const paginacion = usePaginacion(productosFiltradosConId, 10);
+  const columnas = useMemo<ColumnaDataTable<ProductoConsolidado>[]>(
+    () => [
+      { id: "sku", titulo: "SKU", celda: (p) => p.Sku, className: "font-mono text-xs" },
+      { id: "nombre", titulo: "Nombre", celda: (p) => p.NombreProducto, className: "font-medium" },
+      {
+        id: "categoria",
+        titulo: "Categoría",
+        celda: (p) => p.NombreCategoria,
+        className: "text-sm text-muted-foreground",
+        ocultarEnMovil: true,
+      },
+      {
+        id: "tipos",
+        titulo: "Tipos de equipo",
+        ocultarEnMovil: true,
+        celda: (p) => {
+          const tiposNombres = tiposPorProducto.get(p.IdProducto);
+          return (
+            <div className="flex flex-wrap gap-1">
+              {p.EsGeneral ? (
+                <Badge variant="outline" className="text-xs">
+                  General
+                </Badge>
+              ) : tiposNombres?.length ? (
+                tiposNombres.map((nombre) => (
+                  <Badge key={nombre} variant="secondary" className="text-xs">
+                    {nombre}
+                  </Badge>
+                ))
+              ) : (
+                <Badge variant="warning" className="text-xs">
+                  Sin clasificar
+                </Badge>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: "stockMinimo",
+        titulo: "Stock mín.",
+        alineacion: "derecha",
+        celda: (p) => p.StockMinimo,
+        ocultarEnMovil: true,
+      },
+      {
+        id: "stockActual",
+        titulo: "Stock actual",
+        alineacion: "derecha",
+        celda: (p) => (
+          <span className={`font-semibold ${p.BajoMinimo ? "text-warning" : ""}`}>
+            {p.StockTotal}
+          </span>
+        ),
+      },
+      {
+        id: "estado",
+        titulo: "Estado",
+        celda: (p) => (
+          <Badge variant={p.BajoMinimo ? "warning" : "default"}>
+            {p.BajoMinimo ? "Bajo mínimo" : "OK"}
+          </Badge>
+        ),
+      },
+    ],
+    [tiposPorProducto],
+  );
+
+  const acciones = useMemo<AccionFila<ProductoConsolidado>[]>(
+    () => [
+      { label: "Ver kardex", icono: History, onClick: (p) => setProductoKardex(p) },
+      {
+        label: "Editar",
+        icono: Pencil,
+        visible: () => puedeEscribir,
+        onClick: (p) => setEditando(p),
+      },
+      {
+        label: "Imágenes",
+        icono: ImageIcon,
+        visible: () => puedeEscribir,
+        onClick: (p) => setProductoImagenes(p),
+      },
+      {
+        label: "Eliminar",
+        icono: Trash2,
+        variante: "destructiva",
+        visible: () => puedeEscribir,
+        onClick: (p) => setProductoEliminar(p),
+      },
+    ],
+    [puedeEscribir],
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Catálogo de productos</h1>
-          <p className="text-muted-foreground">Administra el inventario de materiales</p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={() => setEditando("nuevo")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo producto
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Catálogo de productos"
+        descripcion="Administra el inventario de materiales"
+        acciones={
+          puedeEscribir && (
+            <Button onClick={() => setEditando("nuevo")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo producto
+            </Button>
+          )
+        }
+      />
 
       {/* Búsqueda + filtro por categoría + asociar por categoría */}
       <div className="flex flex-wrap gap-3">
@@ -946,14 +1017,14 @@ export default function ProductosPage() {
           />
         </div>
 
-        <ComboboxBuscable
+        <Combobox
           className="w-52"
           opciones={[
             { value: "__todas__", label: "Todas las categorías" },
             ...categorias.map((cat) => ({ value: cat, label: cat })),
           ]}
           value={categoriaFiltro}
-          onChange={setCategoriaFiltro}
+          onChange={(v) => setCategoriaFiltro(v ?? "__todas__")}
           placeholder="Todas las categorías"
           buscarPlaceholder="Buscar categoría..."
           vacioTexto="No se encontraron categorías."
@@ -967,133 +1038,30 @@ export default function ProductosPage() {
         )}
       </div>
 
-      {/* Tabla */}
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Categoría</TableHead>
-                <TableHead>Tipos de equipo</TableHead>
-                <TableHead className="text-right">Stock mín.</TableHead>
-                <TableHead className="text-right">Stock actual</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
-                    No se encontraron productos.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((p) => {
-                  const tiposNombres = tiposPorProducto.get(p.IdProducto);
-                  return (
-                    <TableRow key={p.IdProducto}>
-                      <TableCell className="font-mono text-xs">{p.Sku}</TableCell>
-                      <TableCell className="font-medium">{p.NombreProducto}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {p.NombreCategoria}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {p.EsGeneral ? (
-                            <Badge variant="outline" className="text-xs">
-                              General
-                            </Badge>
-                          ) : tiposNombres?.length ? (
-                            tiposNombres.map((nombre) => (
-                              <Badge key={nombre} variant="secondary" className="text-xs">
-                                {nombre}
-                              </Badge>
-                            ))
-                          ) : (
-                            <Badge variant="warning" className="text-xs">
-                              Sin clasificar
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">{p.StockMinimo}</TableCell>
-                      <TableCell
-                        className={`text-right font-semibold ${
-                          p.BajoMinimo ? "text-amber-600" : ""
-                        }`}
-                      >
-                        {p.StockTotal}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={p.BajoMinimo ? "warning" : "default"}>
-                          {p.BajoMinimo ? "Bajo mínimo" : "OK"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              aria-label="Acciones"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem onClick={() => setProductoKardex(p)}>
-                              <History className="mr-2 h-4 w-4" />
-                              Ver kardex
-                            </DropdownMenuItem>
-                            {puedeEscribir && (
-                              <>
-                                <DropdownMenuItem onClick={() => setEditando(p)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setProductoImagenes(p)}>
-                                  <ImageIcon className="mr-2 h-4 w-4" />
-                                  Imágenes
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => setProductoEliminar(p)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Eliminar
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-          <Paginacion
-            pagina={paginacion.pagina}
-            totalPaginas={paginacion.totalPaginas}
-            totalItems={paginacion.totalItems}
-            desde={paginacion.desde}
-            hasta={paginacion.hasta}
-            onPagina={paginacion.setPagina}
-          />
-        </div>
-      )}
+      <DataTable
+        columnas={columnas}
+        datos={productosFiltradosConId}
+        obtenerId={(p) => p.IdProducto}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: Package,
+          titulo: "No se encontraron productos",
+          descripcion:
+            busqueda || categoriaFiltro !== "__todas__"
+              ? "Ajusta la búsqueda o el filtro de categoría."
+              : "Registra el primer producto del catálogo.",
+          accion:
+            puedeEscribir && !busqueda && categoriaFiltro === "__todas__" ? (
+              <Button size="sm" onClick={() => setEditando("nuevo")}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo producto
+              </Button>
+            ) : undefined,
+        }}
+        acciones={acciones}
+      />
 
       {/* Dialogs */}
       <DialogProducto
