@@ -11,10 +11,8 @@
  */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Warehouse } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { toast } from "sonner";
 import {
@@ -24,7 +22,6 @@ import {
   type CrearUbicacion,
   type ActualizarUbicacion,
   type Ubicacion,
-  puede,
 } from "@congeminco/shared";
 import {
   useUbicaciones,
@@ -32,18 +29,13 @@ import {
   useActualizarUbicacion,
   useEliminarUbicacion,
 } from "@/hooks/useUbicaciones";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -58,26 +50,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
 
 const ETIQUETA_TIPO: Record<string, string> = {
   almacen_central: "Almacén central",
   proyecto: "Proyecto",
   otro: "Otro",
 };
-
-/* ─── Hook: rol del usuario actual ─── */
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: import("@congeminco/shared").RoleCode }>;
-    },
-  });
-}
 
 /* ─── Dialog: Crear / Editar ubicación ─── */
 function DialogUbicacion({
@@ -185,26 +163,45 @@ function DialogUbicacion({
   );
 }
 
+const COLUMNAS: ColumnaDataTable<Ubicacion>[] = [
+  {
+    id: "codigo",
+    titulo: "Código",
+    celda: (u) => u.Codigo,
+    className: "font-mono text-xs",
+  },
+  {
+    id: "nombre",
+    titulo: "Nombre",
+    celda: (u) => u.Nombre,
+    className: "font-medium",
+  },
+  {
+    id: "tipo",
+    titulo: "Tipo",
+    celda: (u) => <Badge variant="outline">{ETIQUETA_TIPO[u.Tipo] ?? u.Tipo}</Badge>,
+  },
+  {
+    id: "direccion",
+    titulo: "Dirección",
+    celda: (u) => u.Direccion ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+];
+
 /* ─── Página principal ─── */
 export default function AlmacenesPage() {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [ubicacionEditar, setUbicacionEditar] = useState<Ubicacion | null>(null);
   const [ubicacionEliminar, setUbicacionEliminar] = useState<Ubicacion | null>(null);
 
-  const { data: ubicaciones, isLoading } = useUbicaciones();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "catalogoAdmin");
+  const { data: ubicaciones, isLoading: cargando, isError: error, refetch } = useUbicaciones();
+  const puedeEscribir = usePermiso("catalogoAdmin");
   const { mutateAsync: eliminarUbicacion } = useEliminarUbicacion();
-
-  const paginacion = usePaginacion(ubicaciones ?? [], 10);
 
   const abrirNuevo = () => {
     setUbicacionEditar(null);
-    setMostrarDialog(true);
-  };
-
-  const abrirEditar = (u: Ubicacion) => {
-    setUbicacionEditar(u);
     setMostrarDialog(true);
   };
 
@@ -215,89 +212,52 @@ export default function AlmacenesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Almacenes</h1>
-          <p className="text-muted-foreground">Administra las ubicaciones y almacenes</p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={abrirNuevo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva ubicación
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Almacenes"
+        descripcion="Administra las ubicaciones y almacenes"
+        breadcrumbs={[{ label: "Maestros" }, { label: "Almacenes" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva ubicación
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Dirección</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={puedeEscribir ? 5 : 4}
-                    className="py-10 text-center text-muted-foreground"
-                  >
-                    No hay ubicaciones registradas.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((u) => (
-                  <TableRow key={u.Id}>
-                    <TableCell className="font-mono text-xs">{u.Codigo}</TableCell>
-                    <TableCell className="font-medium">{u.Nombre}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{ETIQUETA_TIPO[u.Tipo] ?? u.Tipo}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {u.Direccion ?? "—"}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="space-x-1 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEditar(u)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setUbicacionEliminar(u)}
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          <Paginacion
-            pagina={paginacion.pagina}
-            totalPaginas={paginacion.totalPaginas}
-            totalItems={paginacion.totalItems}
-            desde={paginacion.desde}
-            hasta={paginacion.hasta}
-            onPagina={paginacion.setPagina}
-          />
-        </div>
-      )}
+      <DataTable
+        columnas={COLUMNAS}
+        datos={ubicaciones}
+        obtenerId={(u) => u.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: Warehouse,
+          titulo: "No hay ubicaciones registradas",
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (u) => {
+                    setUbicacionEditar(u);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (u) => setUbicacionEliminar(u),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && <DialogUbicacion ubicacion={ubicacionEditar} onClose={cerrarDialog} />}
 
