@@ -11,10 +11,8 @@
  */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Cog } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { toast } from "sonner";
 import {
@@ -23,7 +21,6 @@ import {
   type CrearEquipo,
   type ActualizarEquipo,
   type Equipo,
-  puede,
 } from "@congeminco/shared";
 import {
   useEquipos,
@@ -32,18 +29,13 @@ import {
   useEliminarEquipo,
 } from "@/hooks/useEquipos";
 import { useTiposEquipo } from "@/hooks/useTiposEquipo";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -58,20 +50,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-
-/* ─── Hook: rol del usuario actual ─── */
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: import("@congeminco/shared").RoleCode }>;
-    },
-  });
-}
 
 /* ─── Dialog: Crear / Editar equipo ─── */
 function DialogEquipo({ equipo, onClose }: { equipo: Equipo | null; onClose: () => void }) {
@@ -181,26 +159,50 @@ function DialogEquipo({ equipo, onClose }: { equipo: Equipo | null; onClose: () 
   );
 }
 
+const COLUMNAS: ColumnaDataTable<Equipo>[] = [
+  {
+    id: "codigo",
+    titulo: "Código",
+    celda: (e) => e.Codigo,
+    className: "font-mono text-xs",
+  },
+  {
+    id: "nombre",
+    titulo: "Nombre",
+    celda: (e) => e.Nombre,
+    className: "font-medium",
+  },
+  {
+    id: "tipo",
+    titulo: "Tipo",
+    celda: (e) =>
+      e.NombreTipoEquipo ? (
+        <Badge variant="secondary">{e.NombreTipoEquipo}</Badge>
+      ) : (
+        <Badge variant="warning">Sin tipo</Badge>
+      ),
+  },
+  {
+    id: "descripcion",
+    titulo: "Descripción",
+    celda: (e) => e.Descripcion ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+];
+
 /* ─── Página principal ─── */
 export default function EquiposPage() {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [equipoEditar, setEquipoEditar] = useState<Equipo | null>(null);
   const [equipoEliminar, setEquipoEliminar] = useState<Equipo | null>(null);
 
-  const { data: equipos, isLoading } = useEquipos();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "productoEscritura");
+  const { data: equipos, isLoading: cargando, isError: error, refetch } = useEquipos();
+  const puedeEscribir = usePermiso("productoEscritura");
   const { mutateAsync: eliminarEquipo } = useEliminarEquipo();
-
-  const paginacion = usePaginacion(equipos ?? [], 10);
 
   const abrirNuevo = () => {
     setEquipoEditar(null);
-    setMostrarDialog(true);
-  };
-
-  const abrirEditar = (e: Equipo) => {
-    setEquipoEditar(e);
     setMostrarDialog(true);
   };
 
@@ -211,93 +213,52 @@ export default function EquiposPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Equipos</h1>
-          <p className="text-muted-foreground">Administra los equipos de la empresa</p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={abrirNuevo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo equipo
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Equipos"
+        descripcion="Administra los equipos de la empresa"
+        breadcrumbs={[{ label: "Maestros" }, { label: "Equipos" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo equipo
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Descripción</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={puedeEscribir ? 5 : 4}
-                    className="py-10 text-center text-muted-foreground"
-                  >
-                    No hay equipos registrados.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((e) => (
-                  <TableRow key={e.Id}>
-                    <TableCell className="font-mono text-xs">{e.Codigo}</TableCell>
-                    <TableCell className="font-medium">{e.Nombre}</TableCell>
-                    <TableCell>
-                      {e.NombreTipoEquipo ? (
-                        <Badge variant="secondary">{e.NombreTipoEquipo}</Badge>
-                      ) : (
-                        <Badge variant="warning">Sin tipo</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {e.Descripcion ?? "—"}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="space-x-1 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEditar(e)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setEquipoEliminar(e)}
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          <Paginacion
-            pagina={paginacion.pagina}
-            totalPaginas={paginacion.totalPaginas}
-            totalItems={paginacion.totalItems}
-            desde={paginacion.desde}
-            hasta={paginacion.hasta}
-            onPagina={paginacion.setPagina}
-          />
-        </div>
-      )}
+      <DataTable
+        columnas={COLUMNAS}
+        datos={equipos}
+        obtenerId={(e) => e.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: Cog,
+          titulo: "No hay equipos registrados",
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (e) => {
+                    setEquipoEditar(e);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (e) => setEquipoEliminar(e),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && <DialogEquipo equipo={equipoEditar} onClose={cerrarDialog} />}
 
