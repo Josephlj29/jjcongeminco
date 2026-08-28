@@ -12,10 +12,9 @@
  * fila. Solo admin (el backend lo exige; la UI también gatea).
  */
 import { useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, Download, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import { puede, type RoleCode, type ReporteImportacion } from "@congeminco/shared";
+import { type ReporteImportacion } from "@congeminco/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +38,8 @@ import {
 } from "@/components/ui/table";
 import { useCategorias, useUnidades, useUbicaciones } from "@/hooks/useCatalogo";
 import { useTiposEquipo } from "@/hooks/useTiposEquipo";
+import { useYo, usePermiso } from "@/hooks/useYo";
+import { PageHeader } from "@/components/PageHeader";
 import {
   leerFilasExcel,
   descargarPlantillaExcel,
@@ -46,17 +47,6 @@ import {
   celdaANumero,
   celdaALista,
 } from "@/lib/xlsx-cliente";
-
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: RoleCode }>;
-    },
-  });
-}
 
 /* ---------- piezas compartidas ---------- */
 
@@ -104,9 +94,9 @@ function ResultadoCard({ reporte }: { reporte: ReporteImportacion }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           {ok ? (
-            <CheckCircle className="h-5 w-5 text-emerald-500" />
+            <CheckCircle className="h-5 w-5 text-success" />
           ) : (
-            <XCircle className="h-5 w-5 text-amber-500" />
+            <XCircle className="h-5 w-5 text-warning" />
           )}
           Resultado
         </CardTitle>
@@ -470,24 +460,21 @@ function TabSaldos() {
 /* ---------- página ---------- */
 
 export default function ImportarPage() {
-  const { data: yo } = useRolActual();
-  const esAdmin = puede(yo?.rol ?? null, "catalogoAdmin");
+  const { data: yo } = useYo();
+  const esAdmin = usePermiso("catalogoAdmin");
 
   return (
     <div className="max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Importar</h1>
-        <p className="text-muted-foreground">
-          Carga masiva desde Excel (.xlsx). Validación todo-o-nada: si una fila falla, no se aplica
-          nada y verás el detalle por fila.
-        </p>
-      </div>
+      <PageHeader
+        titulo="Importar"
+        descripcion="Carga masiva desde Excel (.xlsx). Validación todo-o-nada: si una fila falla, no se aplica nada y verás el detalle por fila."
+      />
 
       {yo && !esAdmin ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldAlert className="h-5 w-5 text-amber-500" />
+              <ShieldAlert className="h-5 w-5 text-warning" />
               Sin acceso
             </CardTitle>
             <CardDescription>
