@@ -13,11 +13,14 @@ import { Search, Package, AlertTriangle, Boxes } from "lucide-react";
 import type { ProductoStockConsolidado } from "@congeminco/shared";
 import { useSaldos, useSaldosPorUbicacion } from "@/hooks/useSaldos";
 import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
+import { moneda } from "@/lib/format";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
+import { PageHeader } from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
 import {
   Sheet,
   SheetContent,
@@ -57,10 +60,6 @@ function ImagenProducto({ url, size }: { url: string | null; size: number }) {
       />
     </div>
   );
-}
-
-function moneda(n: number): string {
-  return `S/ ${n.toFixed(2)}`;
 }
 
 /* ── Detalle (contenido del Sheet) ── */
@@ -204,7 +203,7 @@ const TarjetaSaldo = memo(function TarjetaSaldo({
 });
 
 export default function SaldosPage() {
-  const { data: saldos, isLoading } = useSaldos();
+  const { data: saldos, isLoading, isError, refetch } = useSaldos();
   // Precarga las asociaciones producto↔tipo para que la sección "Equipos
   // compatibles" del detalle aparezca al instante al abrir el Sheet.
   useAsociacionesTiposEquipo();
@@ -235,12 +234,7 @@ export default function SaldosPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight">Saldos</h1>
-        <p className="text-sm text-muted-foreground">
-          Consulta el stock disponible de cada producto
-        </p>
-      </div>
+      <PageHeader titulo="Saldos" descripcion="Consulta el stock disponible de cada producto" />
 
       {/* Búsqueda grande */}
       <div className="relative">
@@ -293,6 +287,8 @@ export default function SaldosPage() {
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState onReintentar={() => void refetch()} />
       ) : filtrados.length === 0 ? (
         <EmptyState
           icon={Boxes}
