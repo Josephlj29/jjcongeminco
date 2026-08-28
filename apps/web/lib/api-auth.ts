@@ -7,7 +7,7 @@
  * Retorna { usuario } o lanza una NextResponse 401/403.
  */
 import { NextResponse } from "next/server";
-import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/server";
+import { obtenerUsuario } from "@/lib/supabase/server";
 import type { RoleCode } from "@congeminco/shared";
 
 export interface UsuarioRequest {

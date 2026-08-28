@@ -14,7 +14,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X, Download } from "lucide-react";
-import { useCategorias, useUbicaciones, useProveedores } from "@/hooks/useCatalogo";
+import { useCategorias, useProveedores } from "@/hooks/useCatalogo";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { useProductos } from "@/hooks/useProductos";
 import { exportarCsv } from "@/lib/csv";
@@ -189,7 +189,6 @@ export default function ReportesPage() {
   const [buscarRec, setBuscarRec] = useState(false);
 
   const { data: categorias } = useCategorias();
-  const { data: ubicaciones } = useUbicaciones();
   const { data: proveedores } = useProveedores();
   const { data: equipos } = useEquipos();
   const { data: vehiculos } = useVehiculos();

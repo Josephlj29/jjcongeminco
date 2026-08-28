@@ -1,0 +1,13 @@
+node_modules
+pnpm-lock.yaml
+.next
+.open-next
+.wrangler
+.turbo
+RecursosExcel
+docs
+packages/db/migrations
+packages/db/build
+apps/web/public
+*.sql
+*.md

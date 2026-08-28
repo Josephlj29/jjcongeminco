@@ -7,7 +7,7 @@
  * → carrusel con flechas (‹ ›), contador y flechas del teclado. Usado al elegir
  * un producto en Movimientos para ampliar/ver todas sus fotos.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { useImagenesProducto } from "@/hooks/useImagenes";
 import {
@@ -50,8 +50,10 @@ export function GaleriaProductoDialog({
   }, [idProducto, open]);
 
   const total = imgs.length;
-  const ir = (delta: number) =>
-    setIndex((i) => (total ? (i + delta + total) % total : 0));
+  const ir = useCallback(
+    (delta: number) => setIndex((i) => (total ? (i + delta + total) % total : 0)),
+    [total]
+  );
 
   // Flechas del teclado.
   useEffect(() => {
@@ -62,7 +64,7 @@ export function GaleriaProductoDialog({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, total]);
+  }, [open, total, ir]);
 
   const actual = imgs[Math.min(index, Math.max(total - 1, 0))];
 

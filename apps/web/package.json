@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare deploy"
+    "cf:deploy": "opennextjs-cloudflare deploy",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@congeminco/shared": "workspace:*",
@@ -49,14 +50,25 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
+    "@next/eslint-plugin-next": "^15.3.3",
     "@opennextjs/cloudflare": "^1.4.0",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.68.0",
+    "@typescript-eslint/parser": "^8.68.0",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.3.3",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.68.0",
     "wrangler": "^4.0.0"
   }
 }

@@ -279,7 +279,6 @@ export default function SaldosPage() {
       {/* Búsqueda grande */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-        {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
         <Input
           autoFocus
           value={busqueda}
