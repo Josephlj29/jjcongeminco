@@ -49,6 +49,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { moneda } from "@/lib/format";
+import type { RequerimientoDetalleLinea } from "@congeminco/shared";
 
 const ORIGEN_LABEL: Record<string, string> = {
   planificado: "Planificado",
@@ -58,12 +60,14 @@ const ORIGEN_LABEL: Record<string, string> = {
 
 const SITUACION_VARIANTE = {
   pendiente: "default" as const,
+  parcial: "warning" as const,
   atendido: "success" as const,
   anulado: "destructive" as const,
 };
 
-function moneda(n: number): string {
-  return `S/ ${n.toFixed(2)}`;
+/** Saldo pendiente de una línea (lo que aún se puede entregar). */
+function restanteDe(l: RequerimientoDetalleLinea): number {
+  return Math.max(0, l.Cantidad - l.CantidadAtendida);
 }
 
 type EstadoLinea = { cantidad: string; modo: "stock" | "compra"; costo: string };
@@ -99,7 +103,9 @@ export function DialogAprobarRequerimiento({
       seededRef.current = req.Id;
       const init: Record<string, EstadoLinea> = {};
       req.Detalle.forEach((l) => {
-        init[l.Id] = { cantidad: String(l.Cantidad), modo: "stock", costo: "" };
+        // Siembra con el SALDO pendiente (no la cantidad total): en un requerimiento
+        // parcial ya se entregó parte, y solo resta lo pendiente.
+        init[l.Id] = { cantidad: String(restanteDe(l)), modo: "stock", costo: "" };
       });
       setLineas(init);
     }
@@ -119,24 +125,25 @@ export function DialogAprobarRequerimiento({
   const setLinea = (id: string, patch: Partial<EstadoLinea>) =>
     setLineas((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
 
-  // Cantidad numérica efectiva por línea (clamp 0..solicitada).
-  const cantNum = (solicitada: number, st?: EstadoLinea) =>
-    Math.max(0, Math.min(solicitada, Number(st?.cantidad) || 0));
+  // Cantidad numérica efectiva por línea (clamp 0..restante).
+  const cantNum = (restante: number, st?: EstadoLinea) =>
+    Math.max(0, Math.min(restante, Number(st?.cantidad) || 0));
 
   const hayCompra = (req?.Detalle ?? []).some(
-    (l) => lineas[l.Id]?.modo === "compra" && cantNum(l.Cantidad, lineas[l.Id]) > 0,
+    (l) => lineas[l.Id]?.modo === "compra" && cantNum(restanteDe(l), lineas[l.Id]) > 0,
   );
 
   const total = (req?.Detalle ?? []).reduce((acc, l) => {
     const st = lineas[l.Id];
-    const cant = cantNum(l.Cantidad, st);
+    const cant = cantNum(restanteDe(l), st);
     if (cant <= 0) return acc;
     const costo = st?.modo === "compra" ? Number(st.costo) || 0 : l.CostoPromedio;
     return acc + cant * costo;
   }, 0);
 
-  const pendiente = req?.Situacion === "pendiente";
-  const puedeActuar = pendiente && puedeAprobar;
+  // Pendiente y parcial admiten (re-)atención.
+  const abierto = req?.Situacion === "pendiente" || req?.Situacion === "parcial";
+  const puedeActuar = abierto && puedeAprobar;
   const sinAlmacenes = !!ubicaciones && ubicaciones.length === 0;
 
   const onAprobar = async () => {
@@ -145,11 +152,11 @@ export function DialogAprobarRequerimiento({
       const st = lineas[l.Id];
       return {
         IdDetalle: l.Id,
-        Cantidad: cantNum(l.Cantidad, st),
+        Cantidad: cantNum(restanteDe(l), st),
         Modo: st?.modo ?? "stock",
         Costo: st?.modo === "compra" ? Number(st.costo) || undefined : undefined,
       };
-    });
+    }).filter((l) => l.Cantidad > 0); // solo líneas con entrega (evita "entregar 0" en re-atención)
 
     if (!payload.some((l) => l.Cantidad > 0)) {
       toast.error("Indica al menos una cantidad a entregar.");
@@ -276,15 +283,14 @@ export function DialogAprobarRequerimiento({
                   <TableRow>
                     <TableHead>Producto</TableHead>
                     <TableHead className="w-20 text-right">Solic.</TableHead>
+                    <TableHead className="w-20 text-right">Atend.</TableHead>
                     {puedeActuar ? (
                       <>
                         <TableHead className="w-24">Entregar</TableHead>
                         <TableHead className="w-40">Modo</TableHead>
                         <TableHead className="w-28">Costo compra</TableHead>
                       </>
-                    ) : (
-                      <TableHead className="w-24 text-right">Atendido</TableHead>
-                    )}
+                    ) : null}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -297,13 +303,23 @@ export function DialogAprobarRequerimiento({
                           <p className="font-mono text-xs text-muted-foreground">{l.Sku}</p>
                         </TableCell>
                         <TableCell className="text-right">{l.Cantidad}</TableCell>
+                        <TableCell className="text-right">
+                          {l.CantidadAtendida > 0 ? (
+                            <span className={restanteDe(l) === 0 ? "text-success" : "text-warning"}>
+                              {l.CantidadAtendida}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         {puedeActuar ? (
                           <>
                             <TableCell>
                               <Input
                                 type="number"
                                 min={0}
-                                max={l.Cantidad}
+                                max={restanteDe(l)}
+                                disabled={restanteDe(l) === 0}
                                 className="h-8"
                                 value={st?.cantidad ?? ""}
                                 onChange={(e) => setLinea(l.Id, { cantidad: e.target.value })}
@@ -353,11 +369,7 @@ export function DialogAprobarRequerimiento({
                               )}
                             </TableCell>
                           </>
-                        ) : (
-                          <TableCell className="text-right font-medium">
-                            {l.CantidadAtendida}
-                          </TableCell>
-                        )}
+                        ) : null}
                       </TableRow>
                     );
                   })}
@@ -410,8 +422,8 @@ export function DialogAprobarRequerimiento({
             )}
 
             {req.Situacion === "atendido" && (
-              <div className="flex items-start gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2.5 text-sm">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+              <div className="flex items-start gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-sm">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <p>Este requerimiento ya fue atendido: la salida quedó registrada y valorizada.</p>
               </div>
             )}
@@ -422,7 +434,7 @@ export function DialogAprobarRequerimiento({
               </div>
             )}
 
-            {pendiente && !puedeAprobar && (
+            {abierto && !puedeAprobar && (
               <div className="rounded-lg border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
                 Tu rol no puede aprobar ni rechazar requerimientos. Solo lectura.
               </div>

@@ -3,6 +3,7 @@ import type {
   AtenderRequerimiento,
   CrearRequerimiento,
   RequerimientoConDetalle,
+  SituacionRequerimiento,
 } from "@congeminco/shared";
 
 async function leerError(res: Response): Promise<string> {
@@ -17,11 +18,11 @@ export interface RequerimientoResumen {
   Origen: string;
   IdEquipo: string | null;
   IdVehiculo: string | null;
-  Situacion: "pendiente" | "atendido" | "anulado";
+  Situacion: SituacionRequerimiento;
 }
 
 export function useRequerimientos(
-  opts: { limit?: number; situacion?: "pendiente" | "atendido" | "anulado" } = {},
+  opts: { limit?: number; situacion?: SituacionRequerimiento } = {},
 ) {
   const sp = new URLSearchParams();
   if (opts.limit) sp.set("limit", String(opts.limit));

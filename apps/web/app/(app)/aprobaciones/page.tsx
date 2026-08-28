@@ -45,8 +45,16 @@ const ORIGEN_LABEL: Record<string, string> = {
 
 const SITUACION_VARIANTE = {
   pendiente: "default" as const,
+  parcial: "warning" as const,
   atendido: "success" as const,
   anulado: "destructive" as const,
+};
+
+const SITUACION_LABEL: Record<string, string> = {
+  pendiente: "pendiente · revisar",
+  parcial: "parcial · re-atender",
+  atendido: "atendido",
+  anulado: "anulado",
 };
 
 function BotonPdf({ id }: { id: string }) {
@@ -88,6 +96,14 @@ export default function AprobacionesPage() {
     situacion: "pendiente",
   });
   const {
+    data: parciales,
+    isLoading: cargParc,
+    isError: errParc,
+    refetch: refetchParc,
+  } = useRequerimientos({
+    situacion: "parcial",
+  });
+  const {
     data: atendidos,
     isLoading: cargAt,
     isError: errAt,
@@ -109,6 +125,17 @@ export default function AprobacionesPage() {
   const historico: RequerimientoResumen[] = [...(atendidos ?? []), ...(anulados ?? [])].sort(
     (a, b) => b.FechaRequerimiento.localeCompare(a.FechaRequerimiento),
   );
+
+  // "Por atender" = pendientes + parciales (ambos admiten (re-)atención).
+  const cargandoPorAtender = cargandoPend || cargParc;
+  const errorPorAtender = errorPend || errParc;
+  const porAtender: RequerimientoResumen[] = [...(pendientes ?? []), ...(parciales ?? [])].sort(
+    (a, b) => b.FechaRequerimiento.localeCompare(a.FechaRequerimiento),
+  );
+  const reintentarPorAtender = () => {
+    void refetchPend();
+    void refetchParc();
+  };
 
   if (yo && !puedeAprobar) {
     return (
@@ -133,26 +160,26 @@ export default function AprobacionesPage() {
       <Tabs defaultValue="pendientes" className="space-y-4">
         <TabsList>
           <TabsTrigger value="pendientes">
-            Pendientes{pendientes?.length ? ` (${pendientes.length})` : ""}
+            Por atender{porAtender.length ? ` (${porAtender.length})` : ""}
           </TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
-        {/* ─── Pendientes ─── */}
+        {/* ─── Por atender (pendientes + parciales) ─── */}
         <TabsContent value="pendientes">
-          {cargandoPend ? (
+          {cargandoPorAtender ? (
             <div className="space-y-2">
               {[...Array(5)].map((_, i) => (
                 <Skeleton key={i} className="h-12" />
               ))}
             </div>
-          ) : errorPend ? (
-            <ErrorState onReintentar={() => void refetchPend()} />
-          ) : !pendientes?.length ? (
+          ) : errorPorAtender ? (
+            <ErrorState onReintentar={reintentarPorAtender} />
+          ) : !porAtender.length ? (
             <EmptyState
               icon={ClipboardCheck}
               titulo="Todo al día"
-              descripcion="No hay requerimientos pendientes de aprobación."
+              descripcion="No hay requerimientos pendientes ni parciales por atender."
             />
           ) : (
             <div className="rounded-lg border">
@@ -168,7 +195,7 @@ export default function AprobacionesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendientes.map((r) => (
+                  {porAtender.map((r) => (
                     <TableRow
                       key={r.Id}
                       className="cursor-pointer"
@@ -184,7 +211,9 @@ export default function AprobacionesPage() {
                         {ORIGEN_LABEL[r.Origen] ?? r.Origen}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="default">pendiente · revisar</Badge>
+                        <Badge variant={SITUACION_VARIANTE[r.Situacion] ?? "default"}>
+                          {SITUACION_LABEL[r.Situacion] ?? r.Situacion}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <BotonPdf id={r.Id} />
