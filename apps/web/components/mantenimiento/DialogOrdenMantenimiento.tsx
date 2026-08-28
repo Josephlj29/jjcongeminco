@@ -74,7 +74,7 @@ function armarNumeroOrden(
   tipo: string | undefined,
   fecha: string | undefined,
   placa: string | null | undefined,
-  numerosExistentes: string[]
+  numerosExistentes: string[],
 ): string | null {
   if (!tipo || !fecha || !placa) return null;
   const [y, m, d] = fecha.split("-");
@@ -110,7 +110,7 @@ export function DialogOrdenMantenimiento({
   const isPending = creando || act;
 
   const [trabajos, setTrabajos] = useState<string[]>(
-    orden && orden.Trabajos.length ? orden.Trabajos.map((t) => t.Descripcion) : [""]
+    orden && orden.Trabajos.length ? orden.Trabajos.map((t) => t.Descripcion) : [""],
   );
 
   const {
@@ -151,7 +151,7 @@ export function DialogOrdenMantenimiento({
     watch("TipoMantenimiento"),
     watch("FechaOrden"),
     placaSeleccionada,
-    numerosExistentes
+    numerosExistentes,
   );
   const togglePersonal = (id: string) => {
     const next = idsPersonal.includes(id)
@@ -182,12 +182,14 @@ export function DialogOrdenMantenimiento({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{modoEdicion ? "Editar orden de trabajo" : "Nueva orden de trabajo"}</DialogTitle>
+          <DialogTitle>
+            {modoEdicion ? "Editar orden de trabajo" : "Nueva orden de trabajo"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <div className="space-y-1">
               <Label>Tipo *</Label>
               <Select
@@ -242,8 +244,8 @@ export function DialogOrdenMantenimiento({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="space-y-1 col-span-2 md:col-span-1">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div className="col-span-2 space-y-1 md:col-span-1">
               <Label>Placa *</Label>
               <Select
                 value={watch("IdVehiculo") ?? ""}
@@ -298,8 +300,9 @@ export function DialogOrdenMantenimiento({
           {/* Personal asignado (varios; todos por igual) */}
           <div className="space-y-1">
             <Label>
-              Personal asignado * {idsPersonal.length > 0 && (
-                <span className="text-muted-foreground font-normal">
+              Personal asignado *{" "}
+              {idsPersonal.length > 0 && (
+                <span className="font-normal text-muted-foreground">
                   ({idsPersonal.length} seleccionado{idsPersonal.length === 1 ? "" : "s"})
                 </span>
               )}
@@ -321,7 +324,9 @@ export function DialogOrdenMantenimiento({
                         <span
                           className={cn(
                             "flex h-4 w-4 items-center justify-center rounded border",
-                            activo ? "bg-primary border-primary text-primary-foreground" : "border-input"
+                            activo
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-input",
                           )}
                         >
                           {activo && <Check className="h-3 w-3" />}
@@ -380,7 +385,7 @@ export function DialogOrdenMantenimiento({
             <div className="space-y-2">
               {trabajos.map((t, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-5 text-right">{i + 1}</span>
+                  <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}</span>
                   <Input
                     value={t}
                     placeholder="Descripción del trabajo..."
@@ -392,9 +397,11 @@ export function DialogOrdenMantenimiento({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
                     onClick={() =>
-                      setTrabajos((arr) => (arr.length > 1 ? arr.filter((_, idx) => idx !== i) : arr))
+                      setTrabajos((arr) =>
+                        arr.length > 1 ? arr.filter((_, idx) => idx !== i) : arr,
+                      )
                     }
                     disabled={trabajos.length === 1}
                   >

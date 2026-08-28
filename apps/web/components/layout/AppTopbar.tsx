@@ -22,12 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -121,27 +116,27 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Hamburguesa — solo mobile */}
       <Sheet>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden shrink-0"
+            className="shrink-0 md:hidden"
             aria-label="Abrir menú"
           >
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-72">
+        <SheetContent side="left" className="w-72 p-0">
           <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           <AppSidebarContent usuario={usuario} collapsed={false} />
         </SheetContent>
       </Sheet>
 
       {/* Breadcrumb */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <Breadcrumb>
           <BreadcrumbList>
             {crumbs.map((crumb, index) => {
@@ -166,7 +161,7 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
       </div>
 
       {/* Acciones del lado derecho */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex shrink-0 items-center gap-1">
         {/* Toggle de tema */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -194,9 +189,14 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
         {/* Menú de usuario */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menú de usuario">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              aria-label="Menú de usuario"
+            >
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                <AvatarFallback className="bg-primary text-xs font-bold text-primary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -205,13 +205,9 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {usuario.nombreCompleto ?? "—"}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {usuario.email ?? "—"}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground capitalize mt-0.5">
+                <p className="text-sm font-medium leading-none">{usuario.nombreCompleto ?? "—"}</p>
+                <p className="text-xs leading-none text-muted-foreground">{usuario.email ?? "—"}</p>
+                <p className="mt-0.5 text-xs capitalize leading-none text-muted-foreground">
                   {usuario.rol}
                 </p>
               </div>

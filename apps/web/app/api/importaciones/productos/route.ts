@@ -18,11 +18,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import {
-  ImportarProductosSchema,
-  puede,
-  type ReporteImportacion,
-} from "@congeminco/shared";
+import { ImportarProductosSchema, puede, type ReporteImportacion } from "@congeminco/shared";
 
 export async function POST(request: NextRequest) {
   const { usuario, error } = await autenticarRequest();
@@ -43,7 +39,7 @@ export async function POST(request: NextRequest) {
     return respuestaError(
       "Formato del lote inválido.",
       400,
-      parsed.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`)
+      parsed.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`),
     );
   }
 
@@ -55,11 +51,9 @@ export async function POST(request: NextRequest) {
       : "importacion-productos.xlsx";
 
   const supabase = await crearClienteServidor();
-  const { data, error: rpcError } = await supabase
-    .schema("inv")
-    .rpc("FnImportarProductos", {
-      PLote: { ...parsed.data, NombreArchivo: nombreArchivo },
-    });
+  const { data, error: rpcError } = await supabase.schema("inv").rpc("FnImportarProductos", {
+    PLote: { ...parsed.data, NombreArchivo: nombreArchivo },
+  });
 
   if (rpcError) {
     return respuestaError(`No se pudo importar: ${rpcError.message}`, 500);

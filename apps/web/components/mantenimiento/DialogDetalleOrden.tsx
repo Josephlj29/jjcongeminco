@@ -7,12 +7,7 @@
  * consumidos (con su costo congelado del ledger).
  */
 import { useOrdenMantenimientoDetalle } from "@/hooks/useOrdenesMantenimiento";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -43,24 +38,16 @@ function moneda(n: number): string {
   return `S/ ${n.toFixed(2)}`;
 }
 
-export function DialogDetalleOrden({
-  idOrden,
-  onClose,
-}: {
-  idOrden: string;
-  onClose: () => void;
-}) {
+export function DialogDetalleOrden({ idOrden, onClose }: { idOrden: string; onClose: () => void }) {
   const { data: o, isLoading } = useOrdenMantenimientoDetalle(idOrden);
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             OT {o?.NumeroOrden ?? idOrden.slice(0, 8)}
-            {o && (
-              <Badge variant={SIT_VARIANTE[o.Situacion]}>{SIT_LABEL[o.Situacion]}</Badge>
-            )}
+            {o && <Badge variant={SIT_VARIANTE[o.Situacion]}>{SIT_LABEL[o.Situacion]}</Badge>}
           </DialogTitle>
         </DialogHeader>
 
@@ -99,17 +86,17 @@ export function DialogDetalleOrden({
               <div className="col-span-2">
                 <span className="text-muted-foreground">Personal: </span>
                 {o.Personales.length
-                  ? o.Personales
-                      .map((p) => `${p.NombreCompleto ?? "—"}${p.Cargo ? ` · ${p.Cargo}` : ""}`)
-                      .join(", ")
+                  ? o.Personales.map(
+                      (p) => `${p.NombreCompleto ?? "—"}${p.Cargo ? ` · ${p.Cargo}` : ""}`,
+                    ).join(", ")
                   : "—"}
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium mb-1">Trabajos realizados</h3>
+              <h3 className="mb-1 text-sm font-medium">Trabajos realizados</h3>
               {o.Trabajos.length ? (
-                <ol className="list-decimal pl-5 text-sm space-y-0.5">
+                <ol className="list-decimal space-y-0.5 pl-5 text-sm">
                   {o.Trabajos.map((t) => (
                     <li key={t.Id}>{t.Descripcion}</li>
                   ))}
@@ -121,21 +108,21 @@ export function DialogDetalleOrden({
 
             {o.Observaciones && (
               <div>
-                <h3 className="text-sm font-medium mb-1">Observaciones</h3>
+                <h3 className="mb-1 text-sm font-medium">Observaciones</h3>
                 <p className="text-sm text-muted-foreground">{o.Observaciones}</p>
               </div>
             )}
 
             <div>
-              <h3 className="text-sm font-medium mb-1">Repuestos consumidos</h3>
+              <h3 className="mb-1 text-sm font-medium">Repuestos consumidos</h3>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Detalle</TableHead>
-                      <TableHead className="text-center w-20">Cant.</TableHead>
-                      <TableHead className="text-center w-16">U.M</TableHead>
-                      <TableHead className="text-right w-28">Valor</TableHead>
+                      <TableHead className="w-20 text-center">Cant.</TableHead>
+                      <TableHead className="w-16 text-center">U.M</TableHead>
+                      <TableHead className="w-28 text-right">Valor</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -167,7 +154,7 @@ export function DialogDetalleOrden({
 
             {o.Evidencias.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium mb-1">Evidencia fotográfica</h3>
+                <h3 className="mb-1 text-sm font-medium">Evidencia fotográfica</h3>
                 <EvidenciaMantenimiento idOrden={idOrden} editable={false} />
               </div>
             )}

@@ -31,10 +31,7 @@ export async function autenticarRequest(): Promise<
   } catch (e) {
     return {
       usuario: null,
-      error: NextResponse.json(
-        { error: "Token inválido o sesión expirada." },
-        { status: 401 }
-      ),
+      error: NextResponse.json({ error: "Token inválido o sesión expirada." }, { status: 401 }),
     };
   }
 }
@@ -49,7 +46,10 @@ export function respuestaError(mensaje: string, status = 400, detalles?: unknown
  * unique_violation (23505) -> 409 con mensaje amigable (p. ej. código duplicado
  * entre registros activos); cualquier otro código -> 500 con el mensaje crudo.
  */
-export function respuestaErrorBD(error: { code?: string; message: string }, mensajeDuplicado: string) {
+export function respuestaErrorBD(
+  error: { code?: string; message: string },
+  mensajeDuplicado: string,
+) {
   if (error.code === "23505") {
     return respuestaError(mensajeDuplicado, 409);
   }

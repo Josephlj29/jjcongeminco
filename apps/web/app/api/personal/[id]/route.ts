@@ -11,10 +11,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ActualizarPersonalSchema, puede } from "@congeminco/shared";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
   if (!puede(usuario.rol, "catalogoAdmin")) {
@@ -46,7 +43,7 @@ export async function PATCH(
     const dup = /UQ_T_Personal_IdUsuario|duplicate key/i.test(dbError.message);
     return NextResponse.json(
       { error: dup ? "Ese usuario ya está vinculado a otro personal." : dbError.message },
-      { status: dup ? 409 : 500 }
+      { status: dup ? 409 : 500 },
     );
   }
   if (!data) return respuestaError("Personal no encontrado.", 404);
@@ -55,7 +52,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
@@ -77,7 +74,7 @@ export async function DELETE(
   if (depData && depData.puedeEliminar === false) {
     return NextResponse.json(
       { error: "No se puede eliminar: es solicitante de requerimientos.", dependencias: deps },
-      { status: 409 }
+      { status: 409 },
     );
   }
 

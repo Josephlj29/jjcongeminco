@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  CrearEvidenciaMantenimiento,
-  OrdenMantenimientoEvidencia,
-} from "@congeminco/shared";
+import type { CrearEvidenciaMantenimiento, OrdenMantenimientoEvidencia } from "@congeminco/shared";
 
 /** Lista la evidencia fotográfica de una orden de mantenimiento. */
 export function useEvidenciasMantenimiento(idOrden: string | null) {
@@ -44,10 +41,9 @@ export function useEliminarEvidenciaMantenimiento(idOrden: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (idEvidencia: string) => {
-      const res = await fetch(
-        `/api/mantenimiento/${idOrden}/evidencias/${idEvidencia}`,
-        { method: "DELETE" }
-      );
+      const res = await fetch(`/api/mantenimiento/${idOrden}/evidencias/${idEvidencia}`, {
+        method: "DELETE",
+      });
       if (!res.ok && res.status !== 204) {
         throw new Error(`Error ${res.status} al eliminar evidencia`);
       }

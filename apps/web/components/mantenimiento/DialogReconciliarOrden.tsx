@@ -58,8 +58,7 @@ export function DialogReconciliarOrden({
   const [motivo, setMotivo] = useState("");
   const completa = evidenciaCompleta(evidencias);
 
-  const total =
-    orden?.Repuestos.reduce((acc, r) => acc + r.Cantidad * r.CostoUnitario, 0) ?? 0;
+  const total = orden?.Repuestos.reduce((acc, r) => acc + r.Cantidad * r.CostoUnitario, 0) ?? 0;
 
   const reconciliar = async (aprobar: boolean) => {
     if (!aprobar && !motivo.trim()) {
@@ -77,11 +76,9 @@ export function DialogReconciliarOrden({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Reconciliar OT {orden?.NumeroOrden ?? idOrden.slice(0, 8)}
-          </DialogTitle>
+          <DialogTitle>Reconciliar OT {orden?.NumeroOrden ?? idOrden.slice(0, 8)}</DialogTitle>
           <DialogDescription>
             Ratifica el consumo de repuestos que ya descontó stock.
           </DialogDescription>
@@ -120,9 +117,9 @@ export function DialogReconciliarOrden({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Repuesto</TableHead>
-                    <TableHead className="text-center w-20">Cant.</TableHead>
-                    <TableHead className="text-center w-16">U.M</TableHead>
-                    <TableHead className="text-right w-28">Valor</TableHead>
+                    <TableHead className="w-20 text-center">Cant.</TableHead>
+                    <TableHead className="w-16 text-center">U.M</TableHead>
+                    <TableHead className="w-28 text-right">Valor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -157,8 +154,8 @@ export function DialogReconciliarOrden({
               <div className="space-y-2 rounded-md border p-3">
                 <p className="text-sm font-medium">Evidencia fotográfica</p>
                 <p className="text-xs text-muted-foreground">
-                  Para aprobar y cerrar la orden, sube al menos una foto del estado actual
-                  y una de post-mantenimiento.
+                  Para aprobar y cerrar la orden, sube al menos una foto del estado actual y una de
+                  post-mantenimiento.
                 </p>
                 <EvidenciaMantenimiento idOrden={idOrden} editable />
               </div>
@@ -167,11 +164,11 @@ export function DialogReconciliarOrden({
             {rechazando && (
               <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 p-3">
                 <div className="flex items-start gap-2 text-destructive">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <p className="text-xs leading-tight">
-                    Rechazar genera una <strong>entrada de reversa contable</strong> que devuelve
-                    el stock al sistema. Si el repuesto ya se instaló físicamente, el almacén
-                    mostrará stock que no está en el estante. Usa el rechazo para
+                    Rechazar genera una <strong>entrada de reversa contable</strong> que devuelve el
+                    stock al sistema. Si el repuesto ya se instaló físicamente, el almacén mostrará
+                    stock que no está en el estante. Usa el rechazo para
                     <strong> errores de carga</strong>.
                   </p>
                 </div>
@@ -190,20 +187,30 @@ export function DialogReconciliarOrden({
             <DialogFooter className="gap-2">
               {!rechazando ? (
                 <>
-                  <Button variant="outline" onClick={() => setRechazando(true)} disabled={isPending}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setRechazando(true)}
+                    disabled={isPending}
+                  >
                     Rechazar
                   </Button>
                   <Button
                     onClick={() => reconciliar(true)}
                     disabled={isPending || !completa}
-                    title={!completa ? "Sube al menos una foto de cada tipo para aprobar." : undefined}
+                    title={
+                      !completa ? "Sube al menos una foto de cada tipo para aprobar." : undefined
+                    }
                   >
                     {isPending ? "Procesando..." : "Aprobar"}
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="outline" onClick={() => setRechazando(false)} disabled={isPending}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setRechazando(false)}
+                    disabled={isPending}
+                  >
                     Volver
                   </Button>
                   <Button

@@ -38,10 +38,7 @@ interface FilaDetalle {
   T_Vehiculo: { Placa: string } | null;
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autenticarRequest();
   if (error) return error;
 
@@ -52,7 +49,7 @@ export async function GET(
     .schema("inv")
     .from("T_Requerimiento")
     .select(
-      "Id, NumeroRequerimiento, FechaRequerimiento, Origen, Situacion, IdEquipo, IdVehiculo, IdPersonalSolicitante, Notas, IdDocumentoInventario, T_Equipo(Codigo, Nombre), T_Vehiculo(Placa), T_Personal(NombreCompleto, T_Cargo(Nombre))"
+      "Id, NumeroRequerimiento, FechaRequerimiento, Origen, Situacion, IdEquipo, IdVehiculo, IdPersonalSolicitante, Notas, IdDocumentoInventario, T_Equipo(Codigo, Nombre), T_Vehiculo(Placa), T_Personal(NombreCompleto, T_Cargo(Nombre))",
     )
     .eq("Id", id)
     .eq("Estado", true)
@@ -69,7 +66,7 @@ export async function GET(
     .schema("inv")
     .from("T_RequerimientoDetalle")
     .select(
-      "Id, IdProducto, Cantidad, CantidadAtendida, Notas, IdVehiculo, T_Producto(Nombre, Sku, CostoPromedio), T_Vehiculo(Placa)"
+      "Id, IdProducto, Cantidad, CantidadAtendida, Notas, IdVehiculo, T_Producto(Nombre, Sku, CostoPromedio), T_Vehiculo(Placa)",
     )
     .eq("IdRequerimiento", id)
     .eq("Estado", true);

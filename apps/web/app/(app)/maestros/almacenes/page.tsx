@@ -26,7 +26,12 @@ import {
   type Ubicacion,
   puede,
 } from "@congeminco/shared";
-import { useUbicaciones, useCrearUbicacion, useActualizarUbicacion, useEliminarUbicacion } from "@/hooks/useUbicaciones";
+import {
+  useUbicaciones,
+  useCrearUbicacion,
+  useActualizarUbicacion,
+  useEliminarUbicacion,
+} from "@/hooks/useUbicaciones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -132,17 +137,13 @@ function DialogUbicacion({
             <div className="space-y-1">
               <Label htmlFor="Codigo">Código *</Label>
               <Input id="Codigo" placeholder="ALM-001" {...register("Codigo")} />
-              {errors.Codigo && (
-                <p className="text-xs text-destructive">{errors.Codigo.message}</p>
-              )}
+              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
             </div>
             <div className="space-y-1">
               <Label>Tipo *</Label>
               <Select
                 defaultValue={ubicacion?.Tipo ?? "proyecto"}
-                onValueChange={(v) =>
-                  setValue("Tipo", v as CrearUbicacion["Tipo"])
-                }
+                onValueChange={(v) => setValue("Tipo", v as CrearUbicacion["Tipo"])}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar..." />
@@ -155,18 +156,14 @@ function DialogUbicacion({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.Tipo && (
-                <p className="text-xs text-destructive">{errors.Tipo.message}</p>
-              )}
+              {errors.Tipo && <p className="text-xs text-destructive">{errors.Tipo.message}</p>}
             </div>
           </div>
 
           <div className="space-y-1">
             <Label htmlFor="Nombre">Nombre *</Label>
             <Input id="Nombre" placeholder="Almacén principal" {...register("Nombre")} />
-            {errors.Nombre && (
-              <p className="text-xs text-destructive">{errors.Nombre.message}</p>
-            )}
+            {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
           </div>
 
           <div className="space-y-1">
@@ -254,7 +251,7 @@ export default function AlmacenesPage() {
                 <TableRow>
                   <TableCell
                     colSpan={puedeEscribir ? 5 : 4}
-                    className="text-center text-muted-foreground py-10"
+                    className="py-10 text-center text-muted-foreground"
                   >
                     No hay ubicaciones registradas.
                   </TableCell>
@@ -271,7 +268,7 @@ export default function AlmacenesPage() {
                       {u.Direccion ?? "—"}
                     </TableCell>
                     {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button variant="ghost" size="sm" onClick={() => abrirEditar(u)}>
                           Editar
                         </Button>
@@ -281,7 +278,7 @@ export default function AlmacenesPage() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => setUbicacionEliminar(u)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
                           Eliminar
                         </Button>
                       </TableCell>
@@ -302,16 +299,16 @@ export default function AlmacenesPage() {
         </div>
       )}
 
-      {mostrarDialog && (
-        <DialogUbicacion ubicacion={ubicacionEditar} onClose={cerrarDialog} />
-      )}
+      {mostrarDialog && <DialogUbicacion ubicacion={ubicacionEditar} onClose={cerrarDialog} />}
 
       <DialogEliminar
         entidad="ubicacion"
         id={ubicacionEliminar?.Id ?? null}
         nombre={ubicacionEliminar?.Nombre ?? ""}
         open={!!ubicacionEliminar}
-        onOpenChange={(v) => { if (!v) setUbicacionEliminar(null); }}
+        onOpenChange={(v) => {
+          if (!v) setUbicacionEliminar(null);
+        }}
         onConfirmar={async () => {
           if (!ubicacionEliminar) return;
           try {

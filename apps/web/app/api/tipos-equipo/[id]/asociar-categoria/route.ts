@@ -13,10 +13,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { AsociarCategoriaTipoEquipoSchema, puede } from "@congeminco/shared";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 

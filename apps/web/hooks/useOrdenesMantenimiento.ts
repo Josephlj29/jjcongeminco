@@ -141,7 +141,15 @@ export function useReconciliarOrden() {
 export function useFinalizarOrden() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, anular, motivo }: { id: string; anular: boolean; motivo?: string }) => {
+    mutationFn: async ({
+      id,
+      anular,
+      motivo,
+    }: {
+      id: string;
+      anular: boolean;
+      motivo?: string;
+    }) => {
       const res = await fetch(`/api/mantenimiento/${id}/cerrar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

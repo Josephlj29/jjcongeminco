@@ -23,10 +23,7 @@ import {
   puede,
 } from "@congeminco/shared";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autenticarRequest();
   if (error) return error;
 
@@ -49,10 +46,7 @@ export async function GET(
   return NextResponse.json(data);
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
@@ -86,7 +80,7 @@ export async function POST(
   if ((count ?? 0) >= MAX_EVIDENCIA_MANTENIMIENTO) {
     return respuestaError(
       `Cada tipo admite como máximo ${MAX_EVIDENCIA_MANTENIMIENTO} fotos.`,
-      409
+      409,
     );
   }
 

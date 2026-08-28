@@ -21,7 +21,7 @@ export interface RequerimientoResumen {
 }
 
 export function useRequerimientos(
-  opts: { limit?: number; situacion?: "pendiente" | "atendido" | "anulado" } = {}
+  opts: { limit?: number; situacion?: "pendiente" | "atendido" | "anulado" } = {},
 ) {
   const sp = new URLSearchParams();
   if (opts.limit) sp.set("limit", String(opts.limit));
@@ -31,8 +31,7 @@ export function useRequerimientos(
     queryKey: ["requerimientos", opts.limit ?? null, opts.situacion ?? null],
     queryFn: async () => {
       const res = await fetch(`/api/requerimientos${qs ? `?${qs}` : ""}`);
-      if (!res.ok)
-        throw new Error(`Error ${res.status} al cargar requerimientos`);
+      if (!res.ok) throw new Error(`Error ${res.status} al cargar requerimientos`);
       return res.json() as Promise<RequerimientoResumen[]>;
     },
   });
@@ -76,13 +75,7 @@ export function useRequerimientoDetalle(id: string | null) {
 export function useAtenderRequerimiento() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: AtenderRequerimiento;
-    }) => {
+    mutationFn: async ({ id, data }: { id: string; data: AtenderRequerimiento }) => {
       const res = await fetch(`/api/requerimientos/${id}/atender`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -126,25 +126,19 @@ function DialogCategoria({
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {modoEdicion ? "Editar categoría" : "Nueva categoría"}
-          </DialogTitle>
+          <DialogTitle>{modoEdicion ? "Editar categoría" : "Nueva categoría"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="Codigo">Código *</Label>
               <Input id="Codigo" placeholder="CAT-001" {...register("Codigo")} />
-              {errors.Codigo && (
-                <p className="text-xs text-destructive">{errors.Codigo.message}</p>
-              )}
+              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="Nombre">Nombre *</Label>
               <Input id="Nombre" placeholder="Filtros" {...register("Nombre")} />
-              {errors.Nombre && (
-                <p className="text-xs text-destructive">{errors.Nombre.message}</p>
-              )}
+              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
             </div>
           </div>
 
@@ -152,9 +146,7 @@ function DialogCategoria({
             <Label>Familia padre</Label>
             <Select
               value={idPadre ?? SIN_PADRE}
-              onValueChange={(v) =>
-                setValue("IdCategoriaPadre", v === SIN_PADRE ? null : v)
-              }
+              onValueChange={(v) => setValue("IdCategoriaPadre", v === SIN_PADRE ? null : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Ninguna (familia raíz)" />
@@ -189,11 +181,7 @@ function DialogCategoria({
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending
-                ? "Guardando..."
-                : modoEdicion
-                  ? "Guardar cambios"
-                  : "Crear categoría"}
+              {isPending ? "Guardando..." : modoEdicion ? "Guardar cambios" : "Crear categoría"}
             </Button>
           </DialogFooter>
         </form>
@@ -293,7 +281,7 @@ export default function CategoriasPage() {
                       {c.Descripcion ?? "—"}
                     </TableCell>
                     {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button variant="ghost" size="sm" onClick={() => abrirEditar(c)}>
                           Editar
                         </Button>
@@ -303,7 +291,7 @@ export default function CategoriasPage() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => setCatEliminar(c)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
                           Eliminar
                         </Button>
                       </TableCell>
@@ -327,11 +315,7 @@ export default function CategoriasPage() {
       )}
 
       {mostrarDialog && (
-        <DialogCategoria
-          categoria={catEditar}
-          categorias={categorias ?? []}
-          onClose={cerrar}
-        />
+        <DialogCategoria categoria={catEditar} categorias={categorias ?? []} onClose={cerrar} />
       )}
 
       <DialogEliminar

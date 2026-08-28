@@ -16,10 +16,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { AtenderRequerimientoSchema, puede } from "@congeminco/shared";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
@@ -35,12 +32,10 @@ export async function POST(
   }
 
   const supabase = await crearClienteServidor();
-  const { data, error: dbError } = await supabase
-    .schema("inv")
-    .rpc("FnAtenderRequerimiento", {
-      PIdRequerimiento: id,
-      PEntrega: parsed.data,
-    });
+  const { data, error: dbError } = await supabase.schema("inv").rpc("FnAtenderRequerimiento", {
+    PIdRequerimiento: id,
+    PEntrega: parsed.data,
+  });
 
   if (dbError) {
     // Regla de negocio (no error de infraestructura) → 409. Stems robustos ante
@@ -48,12 +43,9 @@ export async function POST(
     const reglaNegocio =
       dbError.code === "23514" ||
       /stock insuficiente|pendiente|no existe|no entregar|solicitado|proveedor|comprobante|costo|creaste|almac[eé]n/i.test(
-        dbError.message
+        dbError.message,
       );
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 409 : 500 }
-    );
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
   }
 
   return NextResponse.json({ IdDocumentoInventario: data as string }, { status: 201 });

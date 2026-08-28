@@ -43,10 +43,13 @@ const ETIQUETAS_DEPENDENCIA: Record<string, string> = {
 
 /** Devuelve los pares [etiqueta, valor] de dependencias con valor > 0 */
 function dependenciasConDatos(
-  deps: DependenciasResult
+  deps: DependenciasResult,
 ): Array<{ etiqueta: string; valor: number }> {
   return Object.entries(deps)
-    .filter(([key, val]) => key !== "total" && key !== "puedeEliminar" && typeof val === "number" && val > 0)
+    .filter(
+      ([key, val]) =>
+        key !== "total" && key !== "puedeEliminar" && typeof val === "number" && val > 0,
+    )
     .map(([key, val]) => ({
       etiqueta: ETIQUETAS_DEPENDENCIA[key] ?? key,
       valor: val as number,
@@ -130,12 +133,12 @@ export function DialogEliminar({
               No se puede eliminar
             </AlertDialogTitle>
             <AlertDialogDescription>
-              &quot;{nombre}&quot; tiene datos enlazados que impiden su eliminación.
-              Para eliminarlo, primero anula o reasigna esos registros.
+              &quot;{nombre}&quot; tiene datos enlazados que impiden su eliminación. Para
+              eliminarlo, primero anula o reasigna esos registros.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {items.length > 0 && (
-            <ul className="rounded-md border bg-muted/50 px-4 py-3 space-y-1 text-sm">
+            <ul className="space-y-1 rounded-md border bg-muted/50 px-4 py-3 text-sm">
               {items.map(({ etiqueta, valor }) => (
                 <li key={etiqueta} className="flex items-center justify-between">
                   <span className="text-muted-foreground">{etiqueta}</span>
@@ -167,8 +170,8 @@ export function DialogEliminar({
             ¿Eliminar?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Esto desactivará &quot;{nombre}&quot; (eliminación lógica: el registro
-            deja de estar disponible pero se conserva para auditoría). ¿Confirmas?
+            Esto desactivará &quot;{nombre}&quot; (eliminación lógica: el registro deja de estar
+            disponible pero se conserva para auditoría). ¿Confirmas?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

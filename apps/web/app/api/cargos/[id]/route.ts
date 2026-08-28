@@ -11,10 +11,7 @@ import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-a
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ActualizarCargoSchema, puede } from "@congeminco/shared";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
   if (!puede(usuario.rol, "catalogoAdmin")) {
@@ -49,7 +46,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
@@ -71,7 +68,7 @@ export async function DELETE(
   if (depData && depData.puedeEliminar === false) {
     return NextResponse.json(
       { error: "No se puede eliminar: tiene personal asociado.", dependencias: deps },
-      { status: 409 }
+      { status: 409 },
     );
   }
 

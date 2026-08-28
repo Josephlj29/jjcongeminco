@@ -50,12 +50,12 @@ export function DialogCulminarOrden({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Culminar OT {numeroOrden ?? idOrden.slice(0, 8)}</DialogTitle>
           <DialogDescription>
-            Sube la evidencia fotográfica para cerrar la orden: al menos una foto del
-            estado actual y una de post-mantenimiento.
+            Sube la evidencia fotográfica para cerrar la orden: al menos una foto del estado actual
+            y una de post-mantenimiento.
           </DialogDescription>
         </DialogHeader>
 

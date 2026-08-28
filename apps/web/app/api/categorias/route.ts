@@ -42,9 +42,7 @@ export async function GET() {
   const nombrePorId = new Map(filas.map((c) => [c.Id, c.Nombre]));
   const resultado = filas.map((c) => ({
     ...c,
-    NombreCategoriaPadre: c.IdCategoriaPadre
-      ? nombrePorId.get(c.IdCategoriaPadre) ?? null
-      : null,
+    NombreCategoriaPadre: c.IdCategoriaPadre ? (nombrePorId.get(c.IdCategoriaPadre) ?? null) : null,
   }));
 
   return NextResponse.json(resultado);

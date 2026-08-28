@@ -72,17 +72,16 @@ export const CrearDocumentoSchema = z
   .refine(
     (d) =>
       d.TipoDocumento === "transferencia"
-        ? d.IdUbicacionOrigen && d.IdUbicacionDestino && d.IdUbicacionOrigen !== d.IdUbicacionDestino
+        ? d.IdUbicacionOrigen &&
+          d.IdUbicacionDestino &&
+          d.IdUbicacionOrigen !== d.IdUbicacionDestino
         : true,
     { message: "Una transferencia requiere origen y destino distintos." },
   )
-  .refine(
-    (d) => (d.TipoDocumento === "salida" ? d.Detalle.every((l) => !!l.IdVehiculo) : true),
-    {
-      message: "En una salida, cada línea debe tener su placa destino.",
-      path: ["Detalle"],
-    },
-  );
+  .refine((d) => (d.TipoDocumento === "salida" ? d.Detalle.every((l) => !!l.IdVehiculo) : true), {
+    message: "En una salida, cada línea debe tener su placa destino.",
+    path: ["Detalle"],
+  });
 export type CrearDocumento = z.infer<typeof CrearDocumentoSchema>;
 
 /* ─── Proveedor ─── */
@@ -220,11 +219,7 @@ export const ActualizarVehiculoSchema = CrearVehiculoSchema.partial().extend({
 export type ActualizarVehiculo = z.infer<typeof ActualizarVehiculoSchema>;
 
 /* ─── Requerimiento ─── */
-export const ORIGEN_REQUERIMIENTO = [
-  "planificado",
-  "presupuestado",
-  "desgaste_prematuro",
-] as const;
+export const ORIGEN_REQUERIMIENTO = ["planificado", "presupuestado", "desgaste_prematuro"] as const;
 export type OrigenRequerimiento = (typeof ORIGEN_REQUERIMIENTO)[number];
 
 export const DetalleRequerimientoSchema = z.object({
@@ -245,14 +240,10 @@ export const CrearRequerimientoSchema = z
     Notas: z.string().max(500).optional(),
     Detalle: z.array(DetalleRequerimientoSchema).min(1),
   })
-  .refine(
-    (r) => r.Detalle.every((l) => !!l.IdVehiculo) || !!r.IdEquipo || !!r.IdVehiculo,
-    {
-      message:
-        "Asigna una placa por línea, o elige un equipo/placa de cabecera como destino.",
-      path: ["Detalle"],
-    },
-  );
+  .refine((r) => r.Detalle.every((l) => !!l.IdVehiculo) || !!r.IdEquipo || !!r.IdVehiculo, {
+    message: "Asigna una placa por línea, o elige un equipo/placa de cabecera como destino.",
+    path: ["Detalle"],
+  });
 export type CrearRequerimiento = z.infer<typeof CrearRequerimientoSchema>;
 
 /* Aprobar un requerimiento: entrega por línea desde el almacén origen.
@@ -287,7 +278,7 @@ export const AtenderRequerimientoSchema = z
     {
       message: "La compra directa requiere proveedor y comprobante.",
       path: ["IdProveedor"],
-    }
+    },
   );
 export type AtenderRequerimiento = z.infer<typeof AtenderRequerimientoSchema>;
 export type LineaEntrega = z.infer<typeof LineaEntregaSchema>;
@@ -320,9 +311,7 @@ export const CrearOrdenMantenimientoSchema = z.object({
   IdVehiculo: z.string().uuid({ message: "Elige una placa." }),
   // Personales asignados a la orden (todos por igual). El primero del arreglo
   // es el solicitante del requerimiento que genera el consumo de repuestos.
-  IdsPersonal: z
-    .array(z.string().uuid())
-    .min(1, { message: "Asigna al menos un personal." }),
+  IdsPersonal: z.array(z.string().uuid()).min(1, { message: "Asigna al menos un personal." }),
   Observaciones: z.string().max(500).optional(),
   Trabajos: z.array(TrabajoMantenimientoSchema).default([]),
 });
@@ -365,13 +354,11 @@ export const ConsumirRepuestosSchema = z
     Lineas: z.array(LineaConsumoSchema).min(1, { message: "Agrega al menos un repuesto." }),
   })
   .refine(
-    (d) =>
-      !d.Lineas.some((l) => l.Modo === "compra") ||
-      (!!d.IdProveedor && !!d.Comprobante),
+    (d) => !d.Lineas.some((l) => l.Modo === "compra") || (!!d.IdProveedor && !!d.Comprobante),
     {
       message: "La compra directa requiere proveedor y comprobante.",
       path: ["IdProveedor"],
-    }
+    },
   )
   .refine((d) => !d.Lineas.some((l) => l.Modo === "compra" && !l.Costo), {
     message: "La compra directa requiere costo por línea.",

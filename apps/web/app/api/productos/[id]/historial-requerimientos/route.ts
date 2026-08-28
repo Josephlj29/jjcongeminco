@@ -11,10 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autenticarRequest();
   if (error) return error;
 
@@ -40,6 +37,6 @@ export async function GET(
       CantidadTotalPedida: 0,
       UltimaFechaPedido: null,
       VecesDesgastePrematuro: 0,
-    }
+    },
   );
 }

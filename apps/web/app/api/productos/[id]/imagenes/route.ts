@@ -15,10 +15,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearImagenProductoSchema, MAX_IMAGENES_PRODUCTO, puede } from "@congeminco/shared";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autenticarRequest();
   if (error) return error;
 
@@ -40,10 +37,7 @@ export async function GET(
   return NextResponse.json(data);
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
@@ -74,10 +68,7 @@ export async function POST(
   }
 
   if ((count ?? 0) >= MAX_IMAGENES_PRODUCTO) {
-    return respuestaError(
-      `Un producto admite como máximo ${MAX_IMAGENES_PRODUCTO} imágenes.`,
-      409
-    );
+    return respuestaError(`Un producto admite como máximo ${MAX_IMAGENES_PRODUCTO} imágenes.`, 409);
   }
 
   const { data, error: dbError } = await supabase

@@ -31,13 +31,13 @@ export function ErrorState({
       className={cn(
         "flex flex-col items-center justify-center gap-3 text-center",
         compacto ? "py-8" : "py-16",
-        className
+        className,
       )}
     >
       <div
         className={cn(
           "flex items-center justify-center rounded-full bg-destructive/10",
-          compacto ? "h-10 w-10" : "h-16 w-16"
+          compacto ? "h-10 w-10" : "h-16 w-16",
         )}
       >
         <AlertTriangle className={cn("text-destructive", compacto ? "h-5 w-5" : "h-8 w-8")} />

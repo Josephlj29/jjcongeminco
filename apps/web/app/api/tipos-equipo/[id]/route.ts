@@ -11,10 +11,7 @@ import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-a
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ActualizarTipoEquipoSchema, puede } from "@congeminco/shared";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
@@ -56,7 +53,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
@@ -81,7 +78,7 @@ export async function DELETE(
   if (depData && depData.puedeEliminar === false) {
     return NextResponse.json(
       { error: "No se puede eliminar: tiene datos enlazados.", dependencias: deps },
-      { status: 409 }
+      { status: 409 },
     );
   }
 

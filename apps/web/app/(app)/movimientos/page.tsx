@@ -38,11 +38,7 @@ import {
   type CrearDocumento,
   type ProductoStockConsolidado,
 } from "@congeminco/shared";
-import {
-  useCrearDocumento,
-  useDocumentos,
-  type DocumentoResumen,
-} from "@/hooks/useDocumentos";
+import { useCrearDocumento, useDocumentos, type DocumentoResumen } from "@/hooks/useDocumentos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useUbicaciones } from "@/hooks/useCatalogo";
 import { useVehiculos, useEquipos } from "@/hooks/useEquipos";
@@ -72,12 +68,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /* Labels en español para tipos de documento */
 const TIPO_LABEL: Record<string, string> = {
@@ -147,12 +138,12 @@ function LineaDetalle({
   const idVehiculoLinea = useWatch({ control, name: `Detalle.${index}.IdVehiculo` });
   const productos = useMemo(
     () => productosParaPlaca(idVehiculoLinea ?? undefined),
-    [productosParaPlaca, idVehiculoLinea]
+    [productosParaPlaca, idVehiculoLinea],
   );
 
   const producto = useMemo(
     () => productos.find((p) => p.IdProducto === idProducto) ?? null,
-    [productos, idProducto]
+    [productos, idProducto],
   );
   const costoPromedio = producto?.CostoPromedio ?? 0;
   const tieneOverride = costoUnitario !== undefined && costoUnitario !== null;
@@ -191,9 +182,7 @@ function LineaDetalle({
             <span className="underline-offset-2 hover:underline">Ver imágenes</span>
           </button>
         )}
-        {errorProducto && (
-          <p className="text-xs text-destructive mt-1">{errorProducto}</p>
-        )}
+        {errorProducto && <p className="mt-1 text-xs text-destructive">{errorProducto}</p>}
       </TableCell>
       <TableCell className="align-top">
         <Input
@@ -215,18 +204,11 @@ function LineaDetalle({
                 min={0}
                 step="0.01"
                 className="h-9 bg-muted/40"
-                value={
-                  tieneOverride
-                    ? (costoUnitario as number)
-                    : costoPromedio.toFixed(2)
-                }
+                value={tieneOverride ? (costoUnitario as number) : costoPromedio.toFixed(2)}
                 onChange={(e) => {
                   if (tieneOverride) {
                     const v = e.target.valueAsNumber;
-                    setValue(
-                      `Detalle.${index}.CostoUnitario`,
-                      Number.isNaN(v) ? 0 : v
-                    );
+                    setValue(`Detalle.${index}.CostoUnitario`, Number.isNaN(v) ? 0 : v);
                   }
                 }}
               />
@@ -251,16 +233,13 @@ function LineaDetalle({
                     variant="link"
                     size="sm"
                     className="h-auto p-0 text-xs"
-                    onClick={() =>
-                      setValue(`Detalle.${index}.CostoUnitario`, undefined)
-                    }
+                    onClick={() => setValue(`Detalle.${index}.CostoUnitario`, undefined)}
                   >
                     Volver al promedio
                   </Button>
                 </div>
                 <p className="text-[11px] leading-tight text-muted-foreground">
-                  El método oficial es promedio (NIC 2); este override queda
-                  registrado.
+                  El método oficial es promedio (NIC 2); este override queda registrado.
                 </p>
               </div>
             ) : (
@@ -272,9 +251,8 @@ function LineaDetalle({
                       <Info className="h-3 w-3 cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      Las salidas se valorizan al costo promedio móvil del
-                      producto. Si no se envía un costo, la BD congela el
-                      promedio vigente al momento del movimiento.
+                      Las salidas se valorizan al costo promedio móvil del producto. Si no se envía
+                      un costo, la BD congela el promedio vigente al momento del movimiento.
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -352,9 +330,10 @@ export default function MovimientosPage() {
     linea: number;
   }>({ open: false, idProducto: null, linea: 0 });
 
-  const [galeria, setGaleria] = useState<{ open: boolean; idProducto: string | null }>(
-    { open: false, idProducto: null }
-  );
+  const [galeria, setGaleria] = useState<{ open: boolean; idProducto: string | null }>({
+    open: false,
+    idProducto: null,
+  });
 
   const paginacion = usePaginacion(documentos ?? [], 10);
 
@@ -381,7 +360,7 @@ export default function MovimientosPage() {
   const tipoDocumento = watch("TipoDocumento");
   const idVehiculo = watch("IdVehiculo");
   const numeroDocPreview = siguienteNumeroDocumento(
-    (documentos ?? []).map((d) => d.NumeroDocumento)
+    (documentos ?? []).map((d) => d.NumeroDocumento),
   );
   // El refine de Detalle (path:["Detalle"]) puede quedar en .message o en .root.message.
   const detalleErrorMsg =
@@ -389,8 +368,7 @@ export default function MovimientosPage() {
     (errors.Detalle as { root?: { message?: string } } | undefined)?.root?.message;
 
   const esTransferencia = tipoDocumento === "transferencia";
-  const esEntrada =
-    tipoDocumento === "entrada" || tipoDocumento === "existencia_inicial";
+  const esEntrada = tipoDocumento === "entrada" || tipoDocumento === "existencia_inicial";
   const esSalida = tipoDocumento === "salida";
 
   const todosProductos = useMemo(() => productos ?? [], [productos]);
@@ -402,7 +380,7 @@ export default function MovimientosPage() {
         Id: v.Id,
         label: v.Placa + (v.Modelo ? ` — ${v.Modelo}` : ""),
       })),
-    [vehiculos]
+    [vehiculos],
   );
 
   /* Productos compatibles con la placa de UNA línea (vehículo -> equipo -> tipo).
@@ -411,20 +389,16 @@ export default function MovimientosPage() {
     (idVeh: string | undefined) => {
       if (!esSalida || !soloCompatibles || !idVeh) return todosProductos;
       const veh = vehiculos?.find((v) => v.Id === idVeh);
-      const equipo = veh?.IdEquipo
-        ? equipos?.find((e) => e.Id === veh.IdEquipo)
-        : undefined;
+      const equipo = veh?.IdEquipo ? equipos?.find((e) => e.Id === veh.IdEquipo) : undefined;
       const idTipo = equipo?.IdTipoEquipo ?? null;
       if (!idTipo) return todosProductos;
       const compat = new Set<string>();
       (asociaciones ?? [])
         .filter((a) => a.IdTipoEquipo === idTipo)
         .forEach((a) => compat.add(a.IdProducto));
-      return todosProductos.filter(
-        (p) => compat.has(p.IdProducto) || p.EsGeneral
-      );
+      return todosProductos.filter((p) => compat.has(p.IdProducto) || p.EsGeneral);
     },
-    [esSalida, soloCompatibles, vehiculos, equipos, asociaciones, todosProductos]
+    [esSalida, soloCompatibles, vehiculos, equipos, asociaciones, todosProductos],
   );
 
   const onSubmit = async (data: CrearDocumento) => {
@@ -473,17 +447,15 @@ export default function MovimientosPage() {
             <CardTitle className="text-base">Documento</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="space-y-1">
                 <Label>Tipo de documento</Label>
                 <Select
                   value={tipoDocumento ?? ""}
                   onValueChange={(v) => {
-                    setValue(
-                      "TipoDocumento",
-                      v as CrearDocumento["TipoDocumento"],
-                      { shouldValidate: true }
-                    );
+                    setValue("TipoDocumento", v as CrearDocumento["TipoDocumento"], {
+                      shouldValidate: true,
+                    });
                     // Al cambiar el tipo, limpiar los campos que dependen de él
                     // para no arrastrar valores del documento anterior.
                     setValue("IdUbicacionOrigen", undefined);
@@ -503,19 +475,13 @@ export default function MovimientosPage() {
                   </SelectContent>
                 </Select>
                 {errors.TipoDocumento && (
-                  <p className="text-xs text-destructive">
-                    {errors.TipoDocumento.message}
-                  </p>
+                  <p className="text-xs text-destructive">{errors.TipoDocumento.message}</p>
                 )}
               </div>
 
               <div className="space-y-1">
                 <Label htmlFor="FechaDocumento">Fecha</Label>
-                <Input
-                  id="FechaDocumento"
-                  type="date"
-                  {...register("FechaDocumento")}
-                />
+                <Input id="FechaDocumento" type="date" {...register("FechaDocumento")} />
               </div>
 
               <div className="space-y-1">
@@ -533,11 +499,7 @@ export default function MovimientosPage() {
 
               <div className="space-y-1">
                 <Label htmlFor="Comprobante">Comprobante (opcional)</Label>
-                <Input
-                  id="Comprobante"
-                  placeholder="F001-00001"
-                  {...register("Comprobante")}
-                />
+                <Input id="Comprobante" placeholder="F001-00001" {...register("Comprobante")} />
               </div>
             </div>
           </CardContent>
@@ -550,7 +512,7 @@ export default function MovimientosPage() {
               <CardTitle className="text-base">Ubicaciones</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+              <div className="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
                 {(esTransferencia || !esEntrada) && (
                   <div className="space-y-1">
                     <Label>Ubicación origen</Label>
@@ -608,12 +570,9 @@ export default function MovimientosPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex flex-wrap items-end gap-3">
-                <div className="space-y-1 flex-1 min-w-56 max-w-sm">
+                <div className="min-w-56 max-w-sm flex-1 space-y-1">
                   <Label>Placa por defecto (opcional)</Label>
-                  <Select
-                    value={idVehiculo ?? ""}
-                    onValueChange={(v) => setValue("IdVehiculo", v)}
-                  >
+                  <Select value={idVehiculo ?? ""} onValueChange={(v) => setValue("IdVehiculo", v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar placa..." />
                     </SelectTrigger>
@@ -634,7 +593,7 @@ export default function MovimientosPage() {
                     fields.forEach((_, i) =>
                       setValue(`Detalle.${i}.IdVehiculo`, idVehiculo, {
                         shouldValidate: true,
-                      })
+                      }),
                     )
                   }
                 >
@@ -642,7 +601,7 @@ export default function MovimientosPage() {
                 </Button>
               </div>
 
-              <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
+              <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={soloCompatibles}
@@ -652,8 +611,8 @@ export default function MovimientosPage() {
                 Solo productos compatibles con la placa de cada línea
               </label>
               <p className="text-xs text-muted-foreground">
-                Cada línea lleva su placa destino. Elige una por defecto y aplícala
-                a todas, o asigna una distinta por producto.
+                Cada línea lleva su placa destino. Elige una por defecto y aplícala a todas, o
+                asigna una distinta por producto.
               </p>
             </CardContent>
           </Card>
@@ -667,9 +626,7 @@ export default function MovimientosPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
-                append({ IdProducto: "", Cantidad: 1, IdVehiculo: idVehiculo })
-              }
+              onClick={() => append({ IdProducto: "", Cantidad: 1, IdVehiculo: idVehiculo })}
             >
               <Plus className="mr-1 h-3 w-3" />
               Agregar línea
@@ -677,7 +634,7 @@ export default function MovimientosPage() {
           </CardHeader>
           <CardContent>
             <Separator className="mb-4" />
-            <div className="rounded-md border overflow-x-auto">
+            <div className="overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -706,9 +663,7 @@ export default function MovimientosPage() {
                       onAbrirHistorial={(idProducto) =>
                         setDialogProducto({ open: true, idProducto, linea: idx })
                       }
-                      onAbrirGaleria={(idProducto) =>
-                        setGaleria({ open: true, idProducto })
-                      }
+                      onAbrirGaleria={(idProducto) => setGaleria({ open: true, idProducto })}
                       errorProducto={errors.Detalle?.[idx]?.IdProducto?.message}
                     />
                   ))}
@@ -716,11 +671,9 @@ export default function MovimientosPage() {
               </Table>
             </div>
 
-            {detalleErrorMsg && (
-              <p className="text-xs text-destructive mt-2">{detalleErrorMsg}</p>
-            )}
+            {detalleErrorMsg && <p className="mt-2 text-xs text-destructive">{detalleErrorMsg}</p>}
 
-            <div className="flex justify-end mt-6">
+            <div className="mt-6 flex justify-end">
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Registrando..." : "Registrar documento"}
               </Button>
@@ -733,28 +686,21 @@ export default function MovimientosPage() {
       <DialogHistorialPrecios
         idProducto={dialogProducto.idProducto}
         open={dialogProducto.open}
-        onOpenChange={(open) =>
-          setDialogProducto((prev) => ({ ...prev, open }))
-        }
-        onUsarPrecio={(costo) =>
-          setValue(`Detalle.${dialogProducto.linea}.CostoUnitario`, costo)
-        }
+        onOpenChange={(open) => setDialogProducto((prev) => ({ ...prev, open }))}
+        onUsarPrecio={(costo) => setValue(`Detalle.${dialogProducto.linea}.CostoUnitario`, costo)}
       />
 
       {/* Galería de imágenes del producto elegido (ampliar / carrusel) */}
       <GaleriaProductoDialog
         idProducto={galeria.idProducto}
-        nombre={
-          todosProductos.find((p) => p.IdProducto === galeria.idProducto)
-            ?.NombreProducto
-        }
+        nombre={todosProductos.find((p) => p.IdProducto === galeria.idProducto)?.NombreProducto}
         open={galeria.open}
         onClose={() => setGaleria({ open: false, idProducto: null })}
       />
 
       {/* Documentos recientes */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Documentos recientes</h2>
+        <h2 className="mb-4 text-lg font-semibold">Documentos recientes</h2>
         {cargandoDocs ? (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -762,7 +708,7 @@ export default function MovimientosPage() {
             ))}
           </div>
         ) : !documentos?.length ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed h-28 text-muted-foreground text-sm">
+          <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
             No hay documentos registrados aún.
           </div>
         ) : (
@@ -783,15 +729,11 @@ export default function MovimientosPage() {
                     <TableCell className="text-xs">
                       {new Date(d.FechaDocumento).toLocaleDateString("es-PE")}
                     </TableCell>
-                    <TableCell className="capitalize text-xs">
+                    <TableCell className="text-xs capitalize">
                       {TIPO_LABEL[d.TipoDocumento] ?? d.TipoDocumento}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {d.NumeroDocumento ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {d.Comprobante ?? "—"}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs">{d.NumeroDocumento ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{d.Comprobante ?? "—"}</TableCell>
                     <TableCell>
                       <Badge variant={d.Estado ? "success" : "destructive"}>
                         {d.Estado ? "Activo" : "Anulado"}

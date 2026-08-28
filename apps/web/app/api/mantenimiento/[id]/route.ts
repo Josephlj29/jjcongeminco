@@ -55,10 +55,7 @@ interface FilaMovimiento {
   } | null;
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autenticarRequest();
   if (error) return error;
 
@@ -69,7 +66,7 @@ export async function GET(
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
     )
     .eq("Id", id)
     .eq("Estado", true)
@@ -110,7 +107,7 @@ export async function GET(
         .schema("inv")
         .from("T_MovimientoStock")
         .select(
-          "IdProducto, Cantidad, CostoUnitario, T_Producto(Nombre, Sku, T_UnidadMedida(Codigo))"
+          "IdProducto, Cantidad, CostoUnitario, T_Producto(Nombre, Sku, T_UnidadMedida(Codigo))",
         )
         .eq("IdDocumentoInventario", salidaId)
         .eq("Direccion", -1);
@@ -168,7 +165,7 @@ export async function GET(
     MotivoReconciliacion: h.MotivoReconciliacion,
     FechaReconciliacion: h.FechaReconciliacion,
     Trabajos: ((trabajos as { Id: string; Secuencia: number; Descripcion: string }[]) ?? []).map(
-      (t) => ({ Id: t.Id, Secuencia: Number(t.Secuencia), Descripcion: t.Descripcion })
+      (t) => ({ Id: t.Id, Secuencia: Number(t.Secuencia), Descripcion: t.Descripcion }),
     ),
     Repuestos: repuestos,
     Evidencias: ((evidencias as OrdenMantenimientoConDetalle["Evidencias"]) ?? []).map((e) => ({
@@ -182,10 +179,7 @@ export async function GET(
   return NextResponse.json(resultado);
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
   if (!puede(usuario.rol, "requerimientoCrear")) {
@@ -206,17 +200,14 @@ export async function PATCH(
 
   if (dbError) {
     const reglaNegocio = /abierta|no existe|edita/i.test(dbError.message);
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 409 : 500 }
-    );
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
   }
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
@@ -235,10 +226,7 @@ export async function DELETE(
 
   if (dbError) {
     const reglaNegocio = /no existe|ya consumio|permiso/i.test(dbError.message);
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 409 : 500 }
-    );
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
   }
   return new NextResponse(null, { status: 204 });
 }

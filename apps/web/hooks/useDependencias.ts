@@ -25,10 +25,7 @@ export interface DependenciasResult {
   [k: string]: number | boolean | undefined;
 }
 
-async function fetchDependencias(
-  entidad: string,
-  id: string
-): Promise<DependenciasResult> {
+async function fetchDependencias(entidad: string, id: string): Promise<DependenciasResult> {
   const res = await fetch(`/api/dependencias/${entidad}/${id}`);
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -40,7 +37,7 @@ async function fetchDependencias(
 export function useDependencias(
   entidad: string,
   id: string | null | undefined,
-  habilitado: boolean
+  habilitado: boolean,
 ) {
   return useQuery({
     queryKey: ["dependencias", entidad, id],

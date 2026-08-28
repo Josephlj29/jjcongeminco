@@ -18,10 +18,7 @@ import {
   type ProductoConDetalle,
 } from "@congeminco/shared";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autenticarRequest();
   if (error) return error;
 
@@ -60,10 +57,7 @@ export async function GET(
   return NextResponse.json(resultado);
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
@@ -87,22 +81,14 @@ export async function PUT(
     if (dbError.code === "23505") {
       return respuestaErrorBD(dbError, "El SKU ya está en uso por un producto activo.");
     }
-    const reglaNegocio = /general no lleva|al menos un tipo|no existe/i.test(
-      dbError.message
-    );
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 400 : 500 }
-    );
+    const reglaNegocio = /general no lleva|al menos un tipo|no existe/i.test(dbError.message);
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 400 : 500 });
   }
 
   return NextResponse.json({ Id: data as string });
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
@@ -144,7 +130,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
@@ -169,7 +155,7 @@ export async function DELETE(
   if (depData && depData.puedeEliminar === false) {
     return NextResponse.json(
       { error: "No se puede eliminar: tiene datos enlazados.", dependencias: deps },
-      { status: 409 }
+      { status: 409 },
     );
   }
 

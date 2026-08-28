@@ -58,7 +58,7 @@ export type ModuloCode = (typeof MODULOS)[keyof typeof MODULOS];
 */
 export function puedeVerModulo(
   modulos: readonly string[] | null | undefined,
-  modulo: ModuloCode
+  modulo: ModuloCode,
 ): boolean {
   if (!modulos) return false;
   return modulos.includes(modulo);

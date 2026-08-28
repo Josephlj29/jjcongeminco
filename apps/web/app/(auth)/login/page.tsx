@@ -17,13 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const LoginSchema = z.object({
@@ -62,21 +56,19 @@ export default function LoginPage() {
   return (
     <div
       className={cn(
-        "min-h-screen flex items-center justify-center px-4",
-        "bg-gradient-to-br from-background via-muted/30 to-muted/60"
+        "flex min-h-screen items-center justify-center px-4",
+        "bg-gradient-to-br from-background via-muted/30 to-muted/60",
       )}
     >
       <div className="w-full max-w-sm">
         {/* Logo encima de la card */}
-        <div className="flex justify-center mb-6">
+        <div className="mb-6 flex justify-center">
           <Logo className="h-20 w-auto" />
         </div>
 
-        <Card className="shadow-xl border-border/50">
-          <CardHeader className="space-y-1 text-center pb-4">
-            <CardTitle className="text-2xl font-bold tracking-tight">
-              Bienvenido
-            </CardTitle>
+        <Card className="border-border/50 shadow-xl">
+          <CardHeader className="space-y-1 pb-4 text-center">
+            <CardTitle className="text-2xl font-bold tracking-tight">Bienvenido</CardTitle>
             <CardDescription className="text-muted-foreground">
               Sistema de inventario — JJ Congeminco
             </CardDescription>
@@ -91,11 +83,13 @@ export default function LoginPage() {
                   type="email"
                   placeholder="tu@empresa.com"
                   autoComplete="email"
-                  className={cn(errors.email && "border-destructive focus-visible:ring-destructive")}
+                  className={cn(
+                    errors.email && "border-destructive focus-visible:ring-destructive",
+                  )}
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-xs text-destructive flex items-center gap-1">
+                  <p className="flex items-center gap-1 text-xs text-destructive">
                     <AlertCircle className="h-3 w-3" />
                     {errors.email.message}
                   </p>
@@ -109,11 +103,13 @@ export default function LoginPage() {
                   type="password"
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className={cn(errors.password && "border-destructive focus-visible:ring-destructive")}
+                  className={cn(
+                    errors.password && "border-destructive focus-visible:ring-destructive",
+                  )}
                   {...register("password")}
                 />
                 {errors.password && (
-                  <p className="text-xs text-destructive flex items-center gap-1">
+                  <p className="flex items-center gap-1 text-xs text-destructive">
                     <AlertCircle className="h-3 w-3" />
                     {errors.password.message}
                   </p>
@@ -122,16 +118,12 @@ export default function LoginPage() {
 
               {error && (
                 <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5">
-                  <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-                  <p className="text-sm text-destructive leading-snug">{error}</p>
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                  <p className="text-sm leading-snug text-destructive">{error}</p>
                 </div>
               )}
 
-              <Button
-                type="submit"
-                className="w-full font-semibold"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="w-full font-semibold" disabled={isSubmitting}>
                 {isSubmitting ? "Ingresando..." : "Ingresar"}
               </Button>
             </form>

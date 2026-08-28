@@ -12,10 +12,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { AnularRequerimientoSchema, puede } from "@congeminco/shared";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
@@ -31,20 +28,15 @@ export async function POST(
   }
 
   const supabase = await crearClienteServidor();
-  const { error: dbError } = await supabase
-    .schema("inv")
-    .rpc("FnAnularRequerimiento", {
-      PIdRequerimiento: id,
-      PMotivo: parsed.data.Motivo ?? null,
-    });
+  const { error: dbError } = await supabase.schema("inv").rpc("FnAnularRequerimiento", {
+    PIdRequerimiento: id,
+    PMotivo: parsed.data.Motivo ?? null,
+  });
 
   if (dbError) {
     // Regla de negocio → 409. Stems robustos ante reformulaciones del mensaje SQL.
     const reglaNegocio = /pendiente|no existe/i.test(dbError.message);
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 409 : 500 }
-    );
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
   }
 
   return NextResponse.json({ ok: true });

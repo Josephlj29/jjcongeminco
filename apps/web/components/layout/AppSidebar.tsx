@@ -39,12 +39,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { puedeVerModulo, MODULOS, type ModuloCode, type RoleCode } from "@congeminco/shared";
@@ -75,23 +70,95 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true, modulo: MODULOS.DASHBOARD },
   { href: "/saldos", label: "Saldos", icon: Boxes, exact: false, modulo: MODULOS.SALDOS },
   { href: "/productos", label: "Catálogo", icon: Package, exact: false, modulo: MODULOS.CATALOGO },
-  { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight, exact: false, modulo: MODULOS.MOVIMIENTOS },
-  { href: "/requerimientos", label: "Requerimientos", icon: ClipboardList, exact: false, modulo: MODULOS.REQUERIMIENTOS },
-  { href: "/aprobaciones", label: "Aprobaciones", icon: ClipboardCheck, exact: false, modulo: MODULOS.APROBACIONES },
-  { href: "/mantenimiento", label: "Mantenimiento", icon: Hammer, exact: false, modulo: MODULOS.MANTENIMIENTO },
+  {
+    href: "/movimientos",
+    label: "Movimientos",
+    icon: ArrowLeftRight,
+    exact: false,
+    modulo: MODULOS.MOVIMIENTOS,
+  },
+  {
+    href: "/requerimientos",
+    label: "Requerimientos",
+    icon: ClipboardList,
+    exact: false,
+    modulo: MODULOS.REQUERIMIENTOS,
+  },
+  {
+    href: "/aprobaciones",
+    label: "Aprobaciones",
+    icon: ClipboardCheck,
+    exact: false,
+    modulo: MODULOS.APROBACIONES,
+  },
+  {
+    href: "/mantenimiento",
+    label: "Mantenimiento",
+    icon: Hammer,
+    exact: false,
+    modulo: MODULOS.MANTENIMIENTO,
+  },
   { href: "/reportes", label: "Reportes", icon: BarChart2, exact: false, modulo: MODULOS.REPORTES },
   { href: "/importar", label: "Importar", icon: Upload, exact: false, modulo: MODULOS.IMPORTAR },
 ];
 
 const MAESTROS_ITEMS: NavItem[] = [
-  { href: "/maestros/categorias", label: "Categorías", icon: FolderTree, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
-  { href: "/maestros/personal", label: "Personal", icon: Users, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
-  { href: "/maestros/cargos", label: "Cargos", icon: BriefcaseBusiness, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
-  { href: "/maestros/proveedores", label: "Proveedores", icon: Truck, exact: false, modulo: MODULOS.MAESTROS_PROVEEDORES },
-  { href: "/maestros/almacenes", label: "Almacenes", icon: Warehouse, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
-  { href: "/maestros/equipos", label: "Equipos", icon: Wrench, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
-  { href: "/maestros/vehiculos", label: "Vehículos", icon: Car, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
-  { href: "/maestros/tipos-equipo", label: "Tipos de equipo", icon: Tags, exact: false, modulo: MODULOS.MAESTROS_GENERAL },
+  {
+    href: "/maestros/categorias",
+    label: "Categorías",
+    icon: FolderTree,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
+  {
+    href: "/maestros/personal",
+    label: "Personal",
+    icon: Users,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
+  {
+    href: "/maestros/cargos",
+    label: "Cargos",
+    icon: BriefcaseBusiness,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
+  {
+    href: "/maestros/proveedores",
+    label: "Proveedores",
+    icon: Truck,
+    exact: false,
+    modulo: MODULOS.MAESTROS_PROVEEDORES,
+  },
+  {
+    href: "/maestros/almacenes",
+    label: "Almacenes",
+    icon: Warehouse,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
+  {
+    href: "/maestros/equipos",
+    label: "Equipos",
+    icon: Wrench,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
+  {
+    href: "/maestros/vehiculos",
+    label: "Vehículos",
+    icon: Car,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
+  {
+    href: "/maestros/tipos-equipo",
+    label: "Tipos de equipo",
+    icon: Tags,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
 ];
 
 /** Enlace de nav individual — soporta modo colapsado con tooltip */
@@ -116,7 +183,7 @@ function NavLink({
     collapsed ? "justify-center gap-0 w-10 h-10 px-0" : "gap-3",
     isActive
       ? "bg-sidebar-accent text-sidebar-accent-foreground"
-      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
   );
 
   if (collapsed) {
@@ -154,7 +221,7 @@ export function AppSidebarContent({
   // (seg.T_RolModulo). Defensa en profundidad sobre la RLS.
   const navItems = NAV_ITEMS.filter((item) => puedeVerModulo(usuario.modulos, item.modulo));
   const maestrosItems = MAESTROS_ITEMS.filter((item) =>
-    puedeVerModulo(usuario.modulos, item.modulo)
+    puedeVerModulo(usuario.modulos, item.modulo),
   );
 
   return (
@@ -162,13 +229,10 @@ export function AppSidebarContent({
       <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
         {/* Logo / Título */}
         <div
-          className={cn(
-            "flex items-center gap-2 px-4 py-5",
-            collapsed && "justify-center px-0"
-          )}
+          className={cn("flex items-center gap-2 px-4 py-5", collapsed && "justify-center px-0")}
         >
           {collapsed ? (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
               JJ
             </div>
           ) : (
@@ -183,8 +247,8 @@ export function AppSidebarContent({
         {/* Navegación */}
         <nav
           className={cn(
-            "flex-1 overflow-y-auto py-4 space-y-1",
-            collapsed ? "px-2 flex flex-col items-center" : "px-3"
+            "flex-1 space-y-1 overflow-y-auto py-4",
+            collapsed ? "flex flex-col items-center px-2" : "px-3",
           )}
         >
           {navItems.map(({ href, label, icon, exact }) => (
@@ -200,29 +264,27 @@ export function AppSidebarContent({
 
           {/* Grupo Maestros — se oculta entero si el rol no ve ningún maestro */}
           {maestrosItems.length > 0 && (
-          <div className={cn("pt-4", collapsed && "w-full flex flex-col items-center")}>
-            {!collapsed && (
-              <div className="flex items-center gap-2 px-3 pb-1">
-                <BookOpen className="h-3.5 w-3.5 text-sidebar-foreground/40" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-                  Maestros
-                </span>
-              </div>
-            )}
-            {collapsed && (
-              <Separator className="bg-sidebar-border mb-2 w-6" />
-            )}
-            {maestrosItems.map(({ href, label, icon, exact }) => (
-              <NavLink
-                key={href}
-                href={href}
-                label={label}
-                icon={icon}
-                exact={exact}
-                collapsed={collapsed}
-              />
-            ))}
-          </div>
+            <div className={cn("pt-4", collapsed && "flex w-full flex-col items-center")}>
+              {!collapsed && (
+                <div className="flex items-center gap-2 px-3 pb-1">
+                  <BookOpen className="h-3.5 w-3.5 text-sidebar-foreground/40" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+                    Maestros
+                  </span>
+                </div>
+              )}
+              {collapsed && <Separator className="mb-2 w-6 bg-sidebar-border" />}
+              {maestrosItems.map(({ href, label, icon, exact }) => (
+                <NavLink
+                  key={href}
+                  href={href}
+                  label={label}
+                  icon={icon}
+                  exact={exact}
+                  collapsed={collapsed}
+                />
+              ))}
+            </div>
           )}
         </nav>
       </div>
@@ -256,8 +318,8 @@ export function AppSidebar({ usuario }: Props) {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col h-screen border-r border-sidebar-border bg-sidebar transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "hidden h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 md:flex",
+        collapsed ? "w-16" : "w-64",
       )}
     >
       <div className="flex-1 overflow-hidden">
@@ -265,19 +327,20 @@ export function AppSidebar({ usuario }: Props) {
       </div>
 
       {/* Botón colapsar */}
-      <div className={cn("px-3 py-3 border-t border-sidebar-border", collapsed && "px-2 flex justify-center")}>
+      <div
+        className={cn(
+          "border-t border-sidebar-border px-3 py-3",
+          collapsed && "flex justify-center px-2",
+        )}
+      >
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleCollapsed}
-          className="h-8 w-8 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+          className="h-8 w-8 text-sidebar-foreground/50 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
           aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
         >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
     </aside>

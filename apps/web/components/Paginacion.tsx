@@ -25,11 +25,9 @@ export function Paginacion({
   onPagina,
 }: PaginacionProps) {
   return (
-    <div className="flex items-center justify-end gap-4 px-1 pt-3 pb-1">
+    <div className="flex items-center justify-end gap-4 px-1 pb-1 pt-3">
       <p className="text-sm text-muted-foreground">
-        {totalItems === 0
-          ? "0 de 0 registros"
-          : `Mostrando ${desde}–${hasta} de ${totalItems}`}
+        {totalItems === 0 ? "0 de 0 registros" : `Mostrando ${desde}–${hasta} de ${totalItems}`}
       </p>
 
       <div className="flex items-center gap-1">
@@ -44,7 +42,7 @@ export function Paginacion({
           Anterior
         </Button>
 
-        <span className="px-3 text-sm text-muted-foreground select-none">
+        <span className="select-none px-3 text-sm text-muted-foreground">
           Página {pagina} de {totalPaginas}
         </span>
 

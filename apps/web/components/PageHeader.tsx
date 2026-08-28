@@ -24,7 +24,10 @@ export function PageHeader({
   return (
     <div className={cn("space-y-2", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav aria-label="Migas de pan" className="flex items-center gap-1 text-sm text-muted-foreground">
+        <nav
+          aria-label="Migas de pan"
+          className="flex items-center gap-1 text-sm text-muted-foreground"
+        >
           {breadcrumbs.map((miga, i) => (
             <React.Fragment key={`${miga.label}-${i}`}>
               {i > 0 && <ChevronRight className="h-3.5 w-3.5" aria-hidden />}

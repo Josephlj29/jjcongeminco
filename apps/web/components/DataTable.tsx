@@ -113,7 +113,7 @@ export function DataTable<T>({
                   className={cn(
                     claseAlineacion(col.alineacion),
                     col.ocultarEnMovil && "hidden md:table-cell",
-                    col.className
+                    col.className,
                   )}
                 >
                   {col.titulo}
@@ -175,17 +175,14 @@ export function DataTable<T>({
                       className={cn(
                         claseAlineacion(col.alineacion),
                         col.ocultarEnMovil && "hidden md:table-cell",
-                        col.className
+                        col.className,
                       )}
                     >
                       {col.celda(fila)}
                     </TableCell>
                   ))}
                   {hayAcciones && (
-                    <TableCell
-                      className="text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <MenuAcciones fila={fila} acciones={acciones!} />
                     </TableCell>
                   )}

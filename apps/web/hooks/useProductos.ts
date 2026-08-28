@@ -1,9 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  CrearProducto,
-  ActualizarProducto,
-  ProductoConDetalle,
-} from "@congeminco/shared";
+import type { CrearProducto, ActualizarProducto, ProductoConDetalle } from "@congeminco/shared";
 
 /* Tipo para la vista consolidada de stock */
 export interface ProductoConsolidado {
@@ -107,13 +103,7 @@ export function useEditarProducto() {
 export function useActualizarProducto() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<ActualizarProducto>;
-    }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ActualizarProducto> }) => {
       const res = await fetch(`/api/productos/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

@@ -3,11 +3,7 @@
  */
 import { requerirModulo, MODULOS } from "@/lib/auth-guard";
 
-export default async function AprobacionesLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AprobacionesLayout({ children }: { children: React.ReactNode }) {
   await requerirModulo(MODULOS.APROBACIONES);
   return <>{children}</>;
 }

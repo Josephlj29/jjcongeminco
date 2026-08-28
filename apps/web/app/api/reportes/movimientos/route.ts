@@ -34,10 +34,7 @@ export async function GET(request: NextRequest) {
   const tipoDocumento = searchParams.get("tipoDocumento");
 
   const supabase = await crearClienteServidor();
-  let query = supabase
-    .schema("inv")
-    .from("V_Reporte_Movimiento")
-    .select("*");
+  let query = supabase.schema("inv").from("V_Reporte_Movimiento").select("*");
 
   if (desde) query = query.gte("FechaMovimiento", desde);
   if (hasta) query = query.lte("FechaMovimiento", hasta);

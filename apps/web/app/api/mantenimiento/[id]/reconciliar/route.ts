@@ -13,10 +13,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ReconciliarOrdenSchema, puede } from "@congeminco/shared";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
   if (!puede(usuario.rol, "requerimientoAprobar")) {
@@ -31,21 +28,17 @@ export async function POST(
   }
 
   const supabase = await crearClienteServidor();
-  const { error: dbError } = await supabase
-    .schema("inv")
-    .rpc("FnReconciliarOrdenMantenimiento", {
-      PIdOrden: id,
-      PAprobar: parsed.data.Aprobar,
-      PMotivo: parsed.data.Motivo ?? null,
-    });
+  const { error: dbError } = await supabase.schema("inv").rpc("FnReconciliarOrdenMantenimiento", {
+    PIdOrden: id,
+    PAprobar: parsed.data.Aprobar,
+    PMotivo: parsed.data.Motivo ?? null,
+  });
 
   if (dbError) {
-    const reglaNegocio =
-      /consumida|no existe|permiso|registraste|revertir|egreso/i.test(dbError.message);
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 409 : 500 }
+    const reglaNegocio = /consumida|no existe|permiso|registraste|revertir|egreso/i.test(
+      dbError.message,
     );
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
   }
 
   return NextResponse.json({ ok: true });

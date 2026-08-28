@@ -34,27 +34,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-function ImagenProducto({
-  url,
-  size,
-}: {
-  url: string | null;
-  size: number;
-}) {
+function ImagenProducto({ url, size }: { url: string | null; size: number }) {
   if (url) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
         alt=""
-        className="rounded-md object-cover shrink-0 border"
+        className="shrink-0 rounded-md border object-cover"
         style={{ width: size, height: size }}
       />
     );
   }
   return (
     <div
-      className="flex items-center justify-center rounded-md bg-muted shrink-0 border"
+      className="flex shrink-0 items-center justify-center rounded-md border bg-muted"
       style={{ width: size, height: size }}
     >
       <Package
@@ -71,16 +65,12 @@ function moneda(n: number): string {
 
 /* ── Detalle (contenido del Sheet) ── */
 function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
-  const { data: porUbicacion, isLoading } = useSaldosPorUbicacion(
-    producto.IdProducto,
-    true
-  );
+  const { data: porUbicacion, isLoading } = useSaldosPorUbicacion(producto.IdProducto, true);
   const { data: asociaciones } = useAsociacionesTiposEquipo();
 
   const tiposCompatibles = useMemo(
-    () =>
-      (asociaciones ?? []).filter((a) => a.IdProducto === producto.IdProducto),
-    [asociaciones, producto.IdProducto]
+    () => (asociaciones ?? []).filter((a) => a.IdProducto === producto.IdProducto),
+    [asociaciones, producto.IdProducto],
   );
 
   return (
@@ -93,15 +83,9 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
           alt={producto.NombreProducto}
         />
         <div className="min-w-0">
-          <p className="font-mono text-xs text-muted-foreground">
-            {producto.Sku}
-          </p>
-          <p className="font-semibold leading-tight">
-            {producto.NombreProducto}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {producto.NombreCategoria}
-          </p>
+          <p className="font-mono text-xs text-muted-foreground">{producto.Sku}</p>
+          <p className="font-semibold leading-tight">{producto.NombreProducto}</p>
+          <p className="text-xs text-muted-foreground">{producto.NombreCategoria}</p>
         </div>
       </div>
 
@@ -116,9 +100,7 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
         </div>
         <div className="rounded-lg border p-3">
           <p className="text-xs text-muted-foreground">Costo prom.</p>
-          <p className="text-base font-bold">
-            {moneda(producto.CostoPromedio)}
-          </p>
+          <p className="text-base font-bold">{moneda(producto.CostoPromedio)}</p>
         </div>
       </div>
 
@@ -139,9 +121,7 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
             ))}
           </div>
         ) : !porUbicacion?.length ? (
-          <p className="text-sm text-muted-foreground">
-            Sin stock en ninguna ubicación.
-          </p>
+          <p className="text-sm text-muted-foreground">Sin stock en ninguna ubicación.</p>
         ) : (
           <div className="rounded-md border">
             <Table>
@@ -154,12 +134,8 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
               <TableBody>
                 {porUbicacion.map((u) => (
                   <TableRow key={u.IdUbicacion}>
-                    <TableCell className="text-sm">
-                      {u.NombreUbicacion}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {u.CantidadDisponible}
-                    </TableCell>
+                    <TableCell className="text-sm">{u.NombreUbicacion}</TableCell>
+                    <TableCell className="text-right font-medium">{u.CantidadDisponible}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -207,13 +183,11 @@ const TarjetaSaldo = memo(function TarjetaSaldo({
     <button
       type="button"
       onClick={() => onSelect(producto)}
-      className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50 min-h-[68px]"
+      className="flex min-h-[68px] items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50"
     >
       <ImagenProducto url={producto.UrlImagenPrincipal} size={56} />
       <div className="min-w-0 flex-1">
-        <p className="font-medium leading-tight truncate">
-          {producto.NombreProducto}
-        </p>
+        <p className="truncate font-medium leading-tight">{producto.NombreProducto}</p>
         <p className="font-mono text-xs text-muted-foreground">{producto.Sku}</p>
         {producto.BajoMinimo && (
           <Badge variant="warning" className="mt-1">
@@ -223,9 +197,7 @@ const TarjetaSaldo = memo(function TarjetaSaldo({
       </div>
       <div className="shrink-0 text-right">
         <p className="text-2xl font-bold leading-none">{producto.StockTotal}</p>
-        <p className="text-[11px] text-muted-foreground">
-          {producto.CodigoUnidad}
-        </p>
+        <p className="text-[11px] text-muted-foreground">{producto.CodigoUnidad}</p>
       </div>
     </button>
   );
@@ -238,13 +210,9 @@ export default function SaldosPage() {
   useAsociacionesTiposEquipo();
   const [busqueda, setBusqueda] = useState("");
   const [categoria, setCategoria] = useState<string | null>(null);
-  const [seleccionado, setSeleccionado] =
-    useState<ProductoStockConsolidado | null>(null);
+  const [seleccionado, setSeleccionado] = useState<ProductoStockConsolidado | null>(null);
 
-  const handleSelect = useCallback(
-    (p: ProductoStockConsolidado) => setSeleccionado(p),
-    []
-  );
+  const handleSelect = useCallback((p: ProductoStockConsolidado) => setSeleccionado(p), []);
 
   /* Categorías presentes en los datos (para los chips). */
   const categorias = useMemo(() => {
@@ -259,9 +227,7 @@ export default function SaldosPage() {
     const q = busqueda.trim().toLowerCase();
     return (saldos ?? []).filter((s) => {
       const coincideTexto =
-        !q ||
-        s.Sku.toLowerCase().includes(q) ||
-        s.NombreProducto.toLowerCase().includes(q);
+        !q || s.Sku.toLowerCase().includes(q) || s.NombreProducto.toLowerCase().includes(q);
       const coincideCategoria = !categoria || s.IdCategoria === categoria;
       return coincideTexto && coincideCategoria;
     });
@@ -278,7 +244,7 @@ export default function SaldosPage() {
 
       {/* Búsqueda grande */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         <Input
           autoFocus
           value={busqueda}
@@ -291,7 +257,7 @@ export default function SaldosPage() {
 
       {/* Chips de categoría */}
       {categorias.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           <button
             type="button"
             onClick={() => setCategoria(null)}
@@ -322,7 +288,7 @@ export default function SaldosPage() {
 
       {/* Resultados */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-20" />
           ))}
@@ -334,25 +300,18 @@ export default function SaldosPage() {
           descripcion="No se encontraron productos con esos criterios de búsqueda."
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtrados.map((p) => (
-            <TarjetaSaldo
-              key={p.IdProducto}
-              producto={p}
-              onSelect={handleSelect}
-            />
+            <TarjetaSaldo key={p.IdProducto} producto={p} onSelect={handleSelect} />
           ))}
         </div>
       )}
 
       {/* Sheet de detalle */}
-      <Sheet
-        open={!!seleccionado}
-        onOpenChange={(open) => !open && setSeleccionado(null)}
-      >
+      <Sheet open={!!seleccionado} onOpenChange={(open) => !open && setSeleccionado(null)}>
         <SheetContent
           side="bottom"
-          className="max-h-[85vh] overflow-y-auto sm:inset-y-0 sm:right-0 sm:bottom-auto sm:max-h-none sm:h-full sm:w-3/4 sm:max-w-md"
+          className="max-h-[85vh] overflow-y-auto sm:inset-y-0 sm:bottom-auto sm:right-0 sm:h-full sm:max-h-none sm:w-3/4 sm:max-w-md"
         >
           <SheetHeader className="text-left">
             <SheetTitle>Detalle de producto</SheetTitle>

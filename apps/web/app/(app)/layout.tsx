@@ -17,11 +17,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
 import { AppBottomNav } from "@/components/layout/AppBottomNav";
 
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   // Verificación server-side de la sesión
   let usuario;
   try {
@@ -31,13 +27,13 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex h-screen flex-col">
       <AppTopbar usuario={usuario} />
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar usuario={usuario} />
         <main className="flex-1 overflow-y-auto bg-background">
           {/* pb extra en móvil para que el bottom-nav fijo no tape el contenido */}
-          <div className="container mx-auto max-w-7xl px-4 pt-6 pb-24 sm:px-6 md:py-8">
+          <div className="container mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 md:py-8">
             {children}
           </div>
         </main>

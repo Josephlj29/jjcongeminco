@@ -13,10 +13,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { FinalizarOrdenSchema, puede } from "@congeminco/shared";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
   if (!puede(usuario.rol, "requerimientoCrear")) {
@@ -35,16 +32,11 @@ export async function POST(
     ? await supabase
         .schema("inv")
         .rpc("FnAnularOrdenMantenimiento", { PIdOrden: id, PMotivo: parsed.data.Motivo ?? null })
-    : await supabase
-        .schema("inv")
-        .rpc("FnCerrarOrdenMantenimiento", { PIdOrden: id });
+    : await supabase.schema("inv").rpc("FnCerrarOrdenMantenimiento", { PIdOrden: id });
 
   if (dbError) {
     const reglaNegocio = /abierta|no existe|repuestos|reconciliar/i.test(dbError.message);
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 409 : 500 }
-    );
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
   }
 
   return NextResponse.json({ ok: true });

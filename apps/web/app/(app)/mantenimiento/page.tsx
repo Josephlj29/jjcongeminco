@@ -107,9 +107,7 @@ function nombreOrden(o: OrdenMantenimientoResumen): string {
 }
 
 function personalTexto(o: OrdenMantenimientoResumen): string {
-  return o.Personales.length
-    ? o.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
-    : "—";
+  return o.Personales.length ? o.Personales.map((p) => p.NombreCompleto ?? "—").join(", ") : "—";
 }
 
 /* ── Handlers compartidos por tarjeta (móvil) y fila (desktop) ── */
@@ -234,9 +232,7 @@ function TarjetaOrden({
           <span>· {TIPO_LABEL[o.TipoMantenimiento]}</span>
           <span>· {TURNO_LABEL[o.Turno] ?? o.Turno}</span>
         </div>
-        <p className="truncate text-xs text-muted-foreground">
-          👷 {personalTexto(o)}
-        </p>
+        <p className="truncate text-xs text-muted-foreground">👷 {personalTexto(o)}</p>
       </button>
       <div className="absolute right-1.5 top-1.5">
         <AccionesOrden orden={o} handlers={handlers} />
@@ -292,7 +288,8 @@ export default function MantenimientoPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Mantenimiento</h1>
           <p className="text-sm text-muted-foreground">
-            Órdenes de trabajo por placa. Los repuestos se consumen del inventario y el admin los ratifica.
+            Órdenes de trabajo por placa. Los repuestos se consumen del inventario y el admin los
+            ratifica.
           </p>
         </div>
         {puedeEscribir && (
@@ -368,7 +365,9 @@ export default function MantenimientoPage() {
                         <TableCell className="text-xs">{TURNO_LABEL[o.Turno] ?? o.Turno}</TableCell>
                         <TableCell className="text-xs">{personalTexto(o)}</TableCell>
                         <TableCell>
-                          <Badge variant={SIT_VARIANTE[o.Situacion]}>{SIT_LABEL[o.Situacion]}</Badge>
+                          <Badge variant={SIT_VARIANTE[o.Situacion]}>
+                            {SIT_LABEL[o.Situacion]}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <AccionesOrden orden={o} handlers={handlers} />
@@ -389,9 +388,7 @@ export default function MantenimientoPage() {
         <DialogOrdenMantenimiento orden={detalleEditar} onClose={() => setEditarId(null)} />
       )}
 
-      {detalleId && (
-        <DialogDetalleOrden idOrden={detalleId} onClose={() => setDetalleId(null)} />
-      )}
+      {detalleId && <DialogDetalleOrden idOrden={detalleId} onClose={() => setDetalleId(null)} />}
 
       {consumir && (
         <DialogConsumirRepuestos
@@ -410,10 +407,7 @@ export default function MantenimientoPage() {
       )}
 
       {reconciliar && (
-        <DialogReconciliarOrden
-          idOrden={reconciliar}
-          onClose={() => setReconciliar(null)}
-        />
+        <DialogReconciliarOrden idOrden={reconciliar} onClose={() => setReconciliar(null)} />
       )}
 
       <DialogEliminar

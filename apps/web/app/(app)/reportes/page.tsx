@@ -42,11 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraficoPorTipoDocumento } from "@/components/charts/GraficoPorTipoDocumento";
 import { GraficoDonutCategorias } from "@/components/charts/GraficoDonutCategorias";
-import type {
-  ReporteMovimiento,
-  ProductoValorizado,
-  ReporteRecambio,
-} from "@congeminco/shared";
+import type { ReporteMovimiento, ProductoValorizado, ReporteRecambio } from "@congeminco/shared";
 import { TIPO_DOCUMENTO } from "@congeminco/shared";
 
 const TIPO_LABEL: Record<string, string> = {
@@ -102,11 +98,7 @@ function useReporteMovimientos(filtros: FiltrosMovimiento, habilitado: boolean) 
   });
 }
 
-function useReporteValorizado(
-  idCategoria: string,
-  soloBajoMinimo: boolean,
-  habilitado: boolean
-) {
+function useReporteValorizado(idCategoria: string, soloBajoMinimo: boolean, habilitado: boolean) {
   const params = new URLSearchParams();
   if (idCategoria) params.set("idCategoria", idCategoria);
   if (soloBajoMinimo) params.set("soloBajoMinimo", "true");
@@ -138,11 +130,7 @@ function KpiMini({
         <p className="text-xs text-muted-foreground">{titulo}</p>
         <p
           className={`text-xl font-bold ${
-            acento === "positivo"
-              ? "text-emerald-600"
-              : acento === "negativo"
-                ? "text-red-600"
-                : ""
+            acento === "positivo" ? "text-emerald-600" : acento === "negativo" ? "text-red-600" : ""
           }`}
         >
           {valor}
@@ -194,19 +182,13 @@ export default function ReportesPage() {
   const { data: vehiculos } = useVehiculos();
   const { data: productos } = useProductos();
 
-  const { data: movimientos, isLoading: cargandoMov } = useReporteMovimientos(
-    filtros,
-    buscarMov
-  );
+  const { data: movimientos, isLoading: cargandoMov } = useReporteMovimientos(filtros, buscarMov);
   const { data: valorizado, isLoading: cargandoVal } = useReporteValorizado(
     catValorizado,
     soloBajoMinimo,
-    buscarVal
+    buscarVal,
   );
-  const { data: recambios, isLoading: cargandoRec } = useReporteRecambios(
-    recFiltros,
-    buscarRec
-  );
+  const { data: recambios, isLoading: cargandoRec } = useReporteRecambios(recFiltros, buscarRec);
 
   const kpisRec = useMemo(() => {
     const rows = recambios ?? [];
@@ -218,9 +200,8 @@ export default function ReportesPage() {
     };
   }, [recambios]);
 
-  const setFiltro =
-    (campo: keyof FiltrosMovimiento) => (valor: string) =>
-      setFiltros((prev) => ({ ...prev, [campo]: valor }));
+  const setFiltro = (campo: keyof FiltrosMovimiento) => (valor: string) =>
+    setFiltros((prev) => ({ ...prev, [campo]: valor }));
 
   /* ── Movimientos: KPIs ── */
   const kpisMov = useMemo(() => {
@@ -240,10 +221,7 @@ export default function ReportesPage() {
   const datosPorTipo = useMemo(() => {
     const mapa = new Map<string, number>();
     (movimientos ?? []).forEach((m) => {
-      mapa.set(
-        m.TipoDocumento,
-        (mapa.get(m.TipoDocumento) ?? 0) + m.ValorMovimiento
-      );
+      mapa.set(m.TipoDocumento, (mapa.get(m.TipoDocumento) ?? 0) + m.ValorMovimiento);
     });
     return [...mapa.entries()].map(([tipo, valor]) => ({
       tipo: TIPO_LABEL[tipo] ?? tipo,
@@ -268,7 +246,7 @@ export default function ReportesPage() {
 
   const totalMovValor = useMemo(
     () => (movimientos ?? []).reduce((s, m) => s + m.ValorMovimiento, 0),
-    [movimientos]
+    [movimientos],
   );
 
   /* ── Valorizado: KPIs ── */
@@ -285,10 +263,7 @@ export default function ReportesPage() {
   const datosDonutVal = useMemo(() => {
     const mapa = new Map<string, number>();
     (valorizado ?? []).forEach((v) => {
-      mapa.set(
-        v.NombreCategoria,
-        (mapa.get(v.NombreCategoria) ?? 0) + v.ValorTotal
-      );
+      mapa.set(v.NombreCategoria, (mapa.get(v.NombreCategoria) ?? 0) + v.ValorTotal);
     });
     return [...mapa.entries()]
       .map(([nombre, valor]) => ({ nombre, valor }))
@@ -349,7 +324,7 @@ export default function ReportesPage() {
         { key: "Cantidad", label: "Cantidad" },
         { key: "Valor", label: "Valor (S/)" },
       ],
-      "reporte-movimientos"
+      "reporte-movimientos",
     );
   };
 
@@ -374,7 +349,7 @@ export default function ReportesPage() {
         { key: "ValorTotal", label: "Valor total (S/)" },
         { key: "BajoMinimo", label: "Bajo mínimo" },
       ],
-      "reporte-valorizado"
+      "reporte-valorizado",
     );
   };
 
@@ -401,7 +376,7 @@ export default function ReportesPage() {
         { key: "Promedio", label: "Promedio días" },
         { key: "Acelerado", label: "Acelerado" },
       ],
-      "reporte-recambios"
+      "reporte-recambios",
     );
   };
 
@@ -409,9 +384,7 @@ export default function ReportesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Reportes</h1>
-        <p className="text-muted-foreground">
-          Analiza movimientos y stock valorizado
-        </p>
+        <p className="text-muted-foreground">Analiza movimientos y stock valorizado</p>
       </div>
 
       <Tabs defaultValue="movimientos" className="space-y-6">
@@ -428,7 +401,7 @@ export default function ReportesPage() {
               <CardTitle className="text-base">Filtros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="space-y-1">
                   <Label htmlFor="desde">Desde</Label>
                   <Input
@@ -479,7 +452,7 @@ export default function ReportesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="space-y-1">
                   <Label>Producto</Label>
                   <Select onValueChange={setFiltro("idProducto")}>
@@ -546,11 +519,7 @@ export default function ReportesPage() {
               {chipsFiltros.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {chipsFiltros.map((chip) => (
-                    <Badge
-                      key={chip.campo}
-                      variant="secondary"
-                      className="gap-1 pr-1"
-                    >
+                    <Badge key={chip.campo} variant="secondary" className="gap-1 pr-1">
                       {chip.label}
                       <button
                         type="button"
@@ -566,9 +535,7 @@ export default function ReportesPage() {
               )}
 
               <div className="flex gap-2">
-                <Button onClick={() => setBuscarMov(true)}>
-                  Generar reporte
-                </Button>
+                <Button onClick={() => setBuscarMov(true)}>Generar reporte</Button>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -591,13 +558,13 @@ export default function ReportesPage() {
                   ))}
                 </div>
               ) : !movimientos?.length ? (
-                <div className="flex items-center justify-center rounded-lg border border-dashed h-28 text-muted-foreground text-sm">
+                <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
                   No se encontraron movimientos con esos filtros.
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* KPI cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <KpiMini
                       titulo="Total entradas"
                       valor={moneda(kpisMov.entradas)}
@@ -618,9 +585,7 @@ export default function ReportesPage() {
                   {/* Gráfico por tipo */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">
-                        Valor por tipo de documento
-                      </CardTitle>
+                      <CardTitle className="text-base">Valor por tipo de documento</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <GraficoPorTipoDocumento datos={datosPorTipo} height={260} />
@@ -629,16 +594,12 @@ export default function ReportesPage() {
 
                   {/* Tabla con subtotales por tipo */}
                   <div className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={exportarMovimientos}
-                    >
+                    <Button variant="outline" size="sm" onClick={exportarMovimientos}>
                       <Download className="mr-1 h-3.5 w-3.5" />
                       Exportar CSV
                     </Button>
                   </div>
-                  <div className="rounded-lg border overflow-x-auto">
+                  <div className="overflow-x-auto rounded-lg border">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -657,9 +618,7 @@ export default function ReportesPage() {
                         ))}
                         <TableRow className="bg-muted/60 font-semibold">
                           <TableCell colSpan={6}>TOTAL</TableCell>
-                          <TableCell className="text-right">
-                            {moneda(totalMovValor)}
-                          </TableCell>
+                          <TableCell className="text-right">{moneda(totalMovValor)}</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -677,7 +636,7 @@ export default function ReportesPage() {
               <CardTitle className="text-base">Filtros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 max-w-md">
+              <div className="grid max-w-md grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Categoría</Label>
                   <Select onValueChange={setCatValorizado}>
@@ -694,7 +653,7 @@ export default function ReportesPage() {
                   </Select>
                 </div>
                 <div className="flex items-end pb-0.5">
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
                     <input
                       type="checkbox"
                       checked={soloBajoMinimo}
@@ -719,13 +678,13 @@ export default function ReportesPage() {
                   ))}
                 </div>
               ) : !valorizado?.length ? (
-                <div className="flex items-center justify-center rounded-lg border border-dashed h-28 text-muted-foreground text-sm">
+                <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
                   No se encontraron productos con esos filtros.
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* KPI cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <KpiMini titulo="Valor total" valor={moneda(kpisVal.total)} />
                     <KpiMini titulo="Ítems" valor={String(kpisVal.items)} />
                     <KpiMini
@@ -738,9 +697,7 @@ export default function ReportesPage() {
                   {/* Donut por categoría */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">
-                        Valor por categoría
-                      </CardTitle>
+                      <CardTitle className="text-base">Valor por categoría</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <GraficoDonutCategorias datos={datosDonutVal} height={280} />
@@ -748,16 +705,12 @@ export default function ReportesPage() {
                   </Card>
 
                   <div className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={exportarValorizado}
-                    >
+                    <Button variant="outline" size="sm" onClick={exportarValorizado}>
                       <Download className="mr-1 h-3.5 w-3.5" />
                       Exportar CSV
                     </Button>
                   </div>
-                  <div className="rounded-lg border overflow-x-auto">
+                  <div className="overflow-x-auto rounded-lg border">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -773,18 +726,12 @@ export default function ReportesPage() {
                       <TableBody>
                         {valorizado.map((p) => (
                           <TableRow key={p.IdProducto}>
-                            <TableCell className="font-mono text-xs">
-                              {p.Sku}
-                            </TableCell>
-                            <TableCell className="font-medium text-sm">
+                            <TableCell className="font-mono text-xs">{p.Sku}</TableCell>
+                            <TableCell className="text-sm font-medium">
                               {p.NombreProducto}
                             </TableCell>
-                            <TableCell className="text-xs">
-                              {p.NombreCategoria}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {p.StockTotal}
-                            </TableCell>
+                            <TableCell className="text-xs">{p.NombreCategoria}</TableCell>
+                            <TableCell className="text-right">{p.StockTotal}</TableCell>
                             <TableCell className="text-right text-xs">
                               {moneda(p.CostoPromedio)}
                             </TableCell>
@@ -792,17 +739,13 @@ export default function ReportesPage() {
                               {moneda(p.ValorTotal)}
                             </TableCell>
                             <TableCell>
-                              {p.BajoMinimo && (
-                                <Badge variant="warning">Bajo mínimo</Badge>
-                              )}
+                              {p.BajoMinimo && <Badge variant="warning">Bajo mínimo</Badge>}
                             </TableCell>
                           </TableRow>
                         ))}
                         <TableRow className="bg-muted/60 font-semibold">
                           <TableCell colSpan={5}>TOTAL</TableCell>
-                          <TableCell className="text-right">
-                            {moneda(kpisVal.total)}
-                          </TableCell>
+                          <TableCell className="text-right">{moneda(kpisVal.total)}</TableCell>
                           <TableCell />
                         </TableRow>
                       </TableBody>
@@ -821,15 +764,13 @@ export default function ReportesPage() {
               <CardTitle className="text-base">Filtros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 max-w-md">
+              <div className="grid max-w-md grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Desde</Label>
                   <Input
                     type="date"
                     value={recFiltros.desde}
-                    onChange={(e) =>
-                      setRecFiltros((p) => ({ ...p, desde: e.target.value }))
-                    }
+                    onChange={(e) => setRecFiltros((p) => ({ ...p, desde: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1">
@@ -837,13 +778,11 @@ export default function ReportesPage() {
                   <Input
                     type="date"
                     value={recFiltros.hasta}
-                    onChange={(e) =>
-                      setRecFiltros((p) => ({ ...p, hasta: e.target.value }))
-                    }
+                    onChange={(e) => setRecFiltros((p) => ({ ...p, hasta: e.target.value }))}
                   />
                 </div>
               </div>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={recFiltros.soloAcelerados}
@@ -854,10 +793,10 @@ export default function ReportesPage() {
                 />
                 Solo recambios acelerados (prematuros)
               </label>
-              <p className="text-[11px] leading-tight text-muted-foreground max-w-md">
-                &quot;Acelerado&quot; = marcado como desgaste prematuro, o pedido de
-                nuevo mucho antes del promedio de ese ítem en ese equipo/placa
-                (sin necesidad de configurar vida útil).
+              <p className="max-w-md text-[11px] leading-tight text-muted-foreground">
+                &quot;Acelerado&quot; = marcado como desgaste prematuro, o pedido de nuevo mucho
+                antes del promedio de ese ítem en ese equipo/placa (sin necesidad de configurar vida
+                útil).
               </p>
               <Button onClick={() => setBuscarRec(true)}>Generar reporte</Button>
             </CardContent>
@@ -872,12 +811,12 @@ export default function ReportesPage() {
                   ))}
                 </div>
               ) : !recambios?.length ? (
-                <div className="flex items-center justify-center rounded-lg border border-dashed h-28 text-muted-foreground text-sm">
+                <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
                   No se encontraron recambios con esos filtros.
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <KpiMini titulo="Recambios" valor={String(kpisRec.total)} />
                     <KpiMini
                       titulo="Acelerados"
@@ -894,7 +833,7 @@ export default function ReportesPage() {
                     </Button>
                   </div>
 
-                  <div className="rounded-lg border overflow-x-auto">
+                  <div className="overflow-x-auto rounded-lg border">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -917,7 +856,7 @@ export default function ReportesPage() {
                                 {r.Sku}
                               </span>
                             </TableCell>
-                            <TableCell className="text-xs whitespace-nowrap">
+                            <TableCell className="whitespace-nowrap text-xs">
                               {new Date(r.FechaRequerimiento).toLocaleDateString("es-PE")}
                             </TableCell>
                             <TableCell className="text-xs">{r.Origen}</TableCell>
@@ -928,9 +867,7 @@ export default function ReportesPage() {
                               {r.PromedioDiasPar ?? "—"}
                             </TableCell>
                             <TableCell>
-                              {r.Acelerado && (
-                                <Badge variant="warning">Acelerado</Badge>
-                              )}
+                              {r.Acelerado && <Badge variant="warning">Acelerado</Badge>}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -965,7 +902,7 @@ function GrupoMovimiento({
           </TableCell>
           <TableCell className="text-xs">{m.NombreProducto}</TableCell>
           <TableCell className="text-xs">{m.NombreUbicacion}</TableCell>
-          <TableCell className="text-xs font-mono">{m.Placa ?? "—"}</TableCell>
+          <TableCell className="font-mono text-xs">{m.Placa ?? "—"}</TableCell>
           <TableCell
             className={`text-right text-xs font-medium ${
               m.Direccion === 1 ? "text-emerald-600" : "text-red-600"
@@ -974,18 +911,14 @@ function GrupoMovimiento({
             {m.Direccion === 1 ? "+" : "-"}
             {m.Cantidad}
           </TableCell>
-          <TableCell className="text-right text-xs">
-            {moneda(m.ValorMovimiento)}
-          </TableCell>
+          <TableCell className="text-right text-xs">{moneda(m.ValorMovimiento)}</TableCell>
         </TableRow>
       ))}
       <TableRow className="bg-muted/30">
-        <TableCell colSpan={6} className="text-xs font-medium text-right">
+        <TableCell colSpan={6} className="text-right text-xs font-medium">
           Subtotal {TIPO_LABEL[grupo.tipo] ?? grupo.tipo}
         </TableCell>
-        <TableCell className="text-right text-xs font-semibold">
-          {moneda(grupo.subtotal)}
-        </TableCell>
+        <TableCell className="text-right text-xs font-semibold">{moneda(grupo.subtotal)}</TableCell>
       </TableRow>
     </>
   );

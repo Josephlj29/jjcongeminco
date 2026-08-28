@@ -38,10 +38,9 @@ export function useEliminarImagenProducto(idProducto: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (idImagen: string) => {
-      const res = await fetch(
-        `/api/productos/${idProducto}/imagenes/${idImagen}`,
-        { method: "DELETE" }
-      );
+      const res = await fetch(`/api/productos/${idProducto}/imagenes/${idImagen}`, {
+        method: "DELETE",
+      });
       if (!res.ok && res.status !== 204) {
         throw new Error(`Error ${res.status} al eliminar imagen`);
       }

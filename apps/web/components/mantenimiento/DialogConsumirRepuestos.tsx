@@ -132,18 +132,16 @@ export function DialogConsumirRepuestos({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Consumir repuestos {numeroOrden ? `· OT ${numeroOrden}` : ""}
-          </DialogTitle>
+          <DialogTitle>Consumir repuestos {numeroOrden ? `· OT ${numeroOrden}` : ""}</DialogTitle>
           <DialogDescription>
             Esto descuenta stock de inmediato. El admin lo ratifica después.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
-          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p className="text-xs leading-tight">
             El stock se descuenta al guardar (consumo provisional). Si el repuesto no está en
             almacén, usa <strong>compra directa</strong> en la línea.
@@ -180,7 +178,7 @@ export function DialogConsumirRepuestos({
             <TableBody>
               {lineas.map((l, i) => (
                 <TableRow key={i}>
-                  <TableCell className="align-top min-w-64">
+                  <TableCell className="min-w-64 align-top">
                     <ProductoCombobox
                       productos={productos ?? []}
                       value={l.idProducto}
@@ -230,7 +228,9 @@ export function DialogConsumirRepuestos({
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() =>
-                        setLineas((arr) => (arr.length > 1 ? arr.filter((_, idx) => idx !== i) : arr))
+                        setLineas((arr) =>
+                          arr.length > 1 ? arr.filter((_, idx) => idx !== i) : arr,
+                        )
                       }
                       disabled={lineas.length === 1}
                     >

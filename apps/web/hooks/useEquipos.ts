@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ActualizarEquipo, ActualizarVehiculo, CrearEquipo, CrearVehiculo, Equipo, Vehiculo } from "@congeminco/shared";
+import type {
+  ActualizarEquipo,
+  ActualizarVehiculo,
+  CrearEquipo,
+  CrearVehiculo,
+  Equipo,
+  Vehiculo,
+} from "@congeminco/shared";
 
 export function useEquipos() {
   return useQuery({

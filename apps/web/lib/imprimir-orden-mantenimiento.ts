@@ -136,7 +136,9 @@ function construirHtml(o: OrdenMantenimientoConDetalle): string {
   <div class="firma">PERSONAL RESPONSABLE${
     o.Personales.length
       ? `<br/><span style="color:#111">${esc(
-          o.Personales.map((p) => p.NombreCompleto ?? "").filter(Boolean).join(", ")
+          o.Personales.map((p) => p.NombreCompleto ?? "")
+            .filter(Boolean)
+            .join(", "),
         )}</span>`
       : ""
   }</div>

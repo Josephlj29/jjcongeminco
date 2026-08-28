@@ -29,10 +29,7 @@ export async function GET(request: NextRequest) {
   if (porUbicacion === "true") {
     const idProducto = searchParams.get("idProducto");
 
-    let query = supabase
-      .schema("inv")
-      .from("V_SaldoStock_PorUbicacion")
-      .select("*");
+    let query = supabase.schema("inv").from("V_SaldoStock_PorUbicacion").select("*");
 
     if (idProducto) {
       query = query.eq("IdProducto", idProducto);
@@ -51,10 +48,7 @@ export async function GET(request: NextRequest) {
   // Comportamiento original: vista consolidada
   const bajoMinimo = searchParams.get("bajoMinimo");
 
-  let query = supabase
-    .schema("inv")
-    .from("V_Producto_StockConsolidado")
-    .select("*");
+  let query = supabase.schema("inv").from("V_Producto_StockConsolidado").select("*");
 
   if (bajoMinimo === "true") {
     query = query.eq("BajoMinimo", true);

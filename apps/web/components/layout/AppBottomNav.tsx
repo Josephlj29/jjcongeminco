@@ -13,19 +13,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Boxes,
-  ClipboardList,
-  Hammer,
-  ClipboardCheck,
-  Menu,
-} from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Boxes, ClipboardList, Hammer, ClipboardCheck, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AppSidebarContent } from "@/components/layout/AppSidebar";
 import { cn } from "@/lib/utils";
 import { puedeVerModulo, MODULOS, type ModuloCode, type RoleCode } from "@congeminco/shared";
@@ -69,7 +58,7 @@ function BottomLink({
       href={href}
       className={cn(
         "flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1 text-[11px] font-medium transition-colors",
-        active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+        active ? "text-primary" : "text-muted-foreground hover:text-foreground",
       )}
     >
       <Icon className="h-5 w-5 shrink-0" />
@@ -86,7 +75,7 @@ export function AppBottomNav({ usuario }: { usuario: UsuarioProps }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-1 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
       aria-label="Navegación de campo"
     >
       {items.map((item) => (

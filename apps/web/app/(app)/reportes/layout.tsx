@@ -4,11 +4,7 @@
  */
 import { requerirModulo, MODULOS } from "@/lib/auth-guard";
 
-export default async function ReportesLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function ReportesLayout({ children }: { children: React.ReactNode }) {
   await requerirModulo(MODULOS.REPORTES);
   return <>{children}</>;
 }

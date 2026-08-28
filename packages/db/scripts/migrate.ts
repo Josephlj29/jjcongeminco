@@ -15,9 +15,7 @@ async function main() {
     )
   `;
 
-  const files = (await readdir(migrationsDir))
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
+  const files = (await readdir(migrationsDir)).filter((f) => f.endsWith(".sql")).sort();
 
   const applied = new Set(
     (await sql`select name from schema_migrations`).map((r) => r.name as string),

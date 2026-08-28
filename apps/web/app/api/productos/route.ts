@@ -24,10 +24,7 @@ export async function GET(request: NextRequest) {
   const bajoMinimo = searchParams.get("bajoMinimo");
 
   const supabase = await crearClienteServidor();
-  let query = supabase
-    .schema("inv")
-    .from("V_Producto_StockConsolidado")
-    .select("*");
+  let query = supabase.schema("inv").from("V_Producto_StockConsolidado").select("*");
 
   if (bajoMinimo === "true") {
     query = query.eq("BajoMinimo", true);
@@ -72,13 +69,8 @@ export async function POST(request: NextRequest) {
       return respuestaErrorBD(dbError, "El SKU ya está en uso por un producto activo.");
     }
     // Las violaciones de invariante son errores de validación (400), no de infra.
-    const reglaNegocio = /general no lleva|al menos un tipo|no existe/i.test(
-      dbError.message
-    );
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 400 : 500 }
-    );
+    const reglaNegocio = /general no lleva|al menos un tipo|no existe/i.test(dbError.message);
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 400 : 500 });
   }
 
   return NextResponse.json({ Id: data as string }, { status: 201 });

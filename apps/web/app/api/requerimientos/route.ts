@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   // Tope de seguridad: evita ?limit=999999999 (DoS de memoria).
   const cantidad = Math.min(
     Math.max(parseInt(searchParams.get("limit") ?? "50", 10) || 50, 1),
-    500
+    500,
   );
   const situacion = searchParams.get("situacion"); // pendiente | atendido | anulado
   const SITUACIONES = ["pendiente", "atendido", "anulado"];
@@ -33,9 +33,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .schema("inv")
     .from("T_Requerimiento")
-    .select(
-      "Id, NumeroRequerimiento, FechaRequerimiento, Origen, IdEquipo, IdVehiculo, Situacion"
-    )
+    .select("Id, NumeroRequerimiento, FechaRequerimiento, Origen, IdEquipo, IdVehiculo, Situacion")
     .eq("Estado", true);
 
   if (situacion) {

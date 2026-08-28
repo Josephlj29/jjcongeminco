@@ -15,12 +15,7 @@ import {
   type CrearCargo,
   type Cargo,
 } from "@congeminco/shared";
-import {
-  useCargos,
-  useCrearCargo,
-  useActualizarCargo,
-  useEliminarCargo,
-} from "@/hooks/useCargos";
+import { useCargos, useCrearCargo, useActualizarCargo, useEliminarCargo } from "@/hooks/useCargos";
 import { usePermiso } from "@/hooks/useYo";
 import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
@@ -36,13 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-function DialogCargo({
-  cargo,
-  onClose,
-}: {
-  cargo: Cargo | null;
-  onClose: () => void;
-}) {
+function DialogCargo({ cargo, onClose }: { cargo: Cargo | null; onClose: () => void }) {
   const modoEdicion = !!cargo;
   const { mutateAsync: crear, isPending: creando } = useCrearCargo();
   const { mutateAsync: actualizar, isPending: act } = useActualizarCargo();
@@ -85,16 +74,12 @@ function DialogCargo({
             <div className="space-y-1">
               <Label htmlFor="Codigo">Código *</Label>
               <Input id="Codigo" placeholder="MEC" {...register("Codigo")} />
-              {errors.Codigo && (
-                <p className="text-xs text-destructive">{errors.Codigo.message}</p>
-              )}
+              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="Nombre">Nombre *</Label>
               <Input id="Nombre" placeholder="Mecánico" {...register("Nombre")} />
-              {errors.Nombre && (
-                <p className="text-xs text-destructive">{errors.Nombre.message}</p>
-              )}
+              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
             </div>
           </div>
           <div className="space-y-1">

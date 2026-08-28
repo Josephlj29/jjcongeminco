@@ -5,11 +5,7 @@
  */
 import { requerirModulo, MODULOS } from "@/lib/auth-guard";
 
-export default async function MaestrosLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function MaestrosLayout({ children }: { children: React.ReactNode }) {
   await requerirModulo(MODULOS.MAESTROS_GENERAL);
   return <>{children}</>;
 }

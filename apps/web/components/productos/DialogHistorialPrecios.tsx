@@ -67,9 +67,9 @@ export function DialogHistorialPrecios({
         <DialogHeader>
           <DialogTitle>Historial de precios</DialogTitle>
           <DialogDescription>
-            Costos registrados por compras, ajustes o cargas manuales. Solo se
-            puede elegir un precio cuyo lote todavía tiene stock; los agotados se
-            muestran pero no son seleccionables. Valorización: promedio móvil (NIC 2).
+            Costos registrados por compras, ajustes o cargas manuales. Solo se puede elegir un
+            precio cuyo lote todavía tiene stock; los agotados se muestran pero no son
+            seleccionables. Valorización: promedio móvil (NIC 2).
           </DialogDescription>
         </DialogHeader>
 
@@ -80,7 +80,7 @@ export function DialogHistorialPrecios({
             ))}
           </div>
         ) : !precios?.length ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed h-28 text-muted-foreground text-sm">
+          <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
             Este producto no tiene historial de precios registrado.
           </div>
         ) : (
@@ -100,7 +100,7 @@ export function DialogHistorialPrecios({
               <TableBody>
                 {precios.map((p) => (
                   <TableRow key={p.Id} className={p.TieneStock ? "" : "opacity-50"}>
-                    <TableCell className="text-xs whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap text-xs">
                       {new Date(p.FechaPrecio).toLocaleDateString("es-PE")}
                     </TableCell>
                     <TableCell className="text-right text-xs font-medium">
@@ -109,13 +109,9 @@ export function DialogHistorialPrecios({
                     <TableCell className="text-right text-xs text-muted-foreground">
                       S/ {p.CostoPromedio.toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-xs">
-                      {p.NombreProveedor ?? "—"}
-                    </TableCell>
+                    <TableCell className="text-xs">{p.NombreProveedor ?? "—"}</TableCell>
                     <TableCell>
-                      <Badge variant={ORIGEN_VARIANTE[p.Origen]}>
-                        {ORIGEN_LABEL[p.Origen]}
-                      </Badge>
+                      <Badge variant={ORIGEN_VARIANTE[p.Origen]}>{ORIGEN_LABEL[p.Origen]}</Badge>
                     </TableCell>
                     <TableCell className="text-right text-xs">
                       {p.TieneStock ? (
@@ -138,9 +134,7 @@ export function DialogHistorialPrecios({
                           Usar este precio
                         </Button>
                       ) : (
-                        <span className="text-[11px] text-muted-foreground">
-                          Sin stock
-                        </span>
+                        <span className="text-[11px] text-muted-foreground">Sin stock</span>
                       )}
                     </TableCell>
                   </TableRow>

@@ -25,7 +25,7 @@ function escaparCeldaCsv(valor: unknown): string {
 export function exportarCsv(
   filas: Record<string, unknown>[],
   columnas: ColumnaDef[],
-  nombreArchivo: string
+  nombreArchivo: string,
 ): void {
   const encabezado = columnas.map((c) => escaparCeldaCsv(c.label)).join(",");
   const cuerpo = filas

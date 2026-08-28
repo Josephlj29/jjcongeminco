@@ -78,7 +78,7 @@ function BotonPdf({ id }: { id: string }) {
         }
       }}
     >
-      <FileText className="h-3.5 w-3.5 mr-1" />
+      <FileText className="mr-1 h-3.5 w-3.5" />
       {generando ? "..." : "PDF"}
     </Button>
   );
@@ -100,10 +100,9 @@ export default function AprobacionesPage() {
   });
 
   const cargandoHist = cargAt || cargAn;
-  const historico: RequerimientoResumen[] = [
-    ...(atendidos ?? []),
-    ...(anulados ?? []),
-  ].sort((a, b) => b.FechaRequerimiento.localeCompare(a.FechaRequerimiento));
+  const historico: RequerimientoResumen[] = [...(atendidos ?? []), ...(anulados ?? [])].sort(
+    (a, b) => b.FechaRequerimiento.localeCompare(a.FechaRequerimiento),
+  );
 
   if (yo && !puedeAprobar) {
     return (
@@ -125,8 +124,8 @@ export default function AprobacionesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Aprobaciones</h1>
         <p className="text-muted-foreground">
-          Revisa los requerimientos pendientes (aprueba o rechaza) y consulta el
-          histórico. Genera el PDF de cada solicitud para gestión o impresión.
+          Revisa los requerimientos pendientes (aprueba o rechaza) y consulta el histórico. Genera
+          el PDF de cada solicitud para gestión o impresión.
         </p>
       </div>
 

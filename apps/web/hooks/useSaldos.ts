@@ -1,8 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type {
-  ProductoStockConsolidado,
-  SaldoPorUbicacion,
-} from "@congeminco/shared";
+import type { ProductoStockConsolidado, SaldoPorUbicacion } from "@congeminco/shared";
 
 async function fetchSaldos(bajoMinimo?: boolean): Promise<ProductoStockConsolidado[]> {
   const url = bajoMinimo ? "/api/saldos?bajoMinimo=true" : "/api/saldos";

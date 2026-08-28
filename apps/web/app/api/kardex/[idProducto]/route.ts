@@ -11,7 +11,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ idProducto: string }> }
+  { params }: { params: Promise<{ idProducto: string }> },
 ) {
   const { error } = await autenticarRequest();
   if (error) return error;

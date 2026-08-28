@@ -16,28 +16,31 @@ interface GraficoTopProductosProps {
 }
 
 export function GraficoTopProductos({ datos, className, height = 300 }: GraficoTopProductosProps) {
-  const option = useMemo<EChartsOption>(() => ({
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-    legend: { show: false },
-    grid: { top: 8, right: 16, bottom: 8, left: 8, containLabel: true },
-    xAxis: { type: "value" },
-    yAxis: {
-      type: "category",
-      data: datos.map((d) => d.nombre),
-      axisLabel: {
-        width: 120,
-        overflow: "truncate",
+  const option = useMemo<EChartsOption>(
+    () => ({
+      tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+      legend: { show: false },
+      grid: { top: 8, right: 16, bottom: 8, left: 8, containLabel: true },
+      xAxis: { type: "value" },
+      yAxis: {
+        type: "category",
+        data: datos.map((d) => d.nombre),
+        axisLabel: {
+          width: 120,
+          overflow: "truncate",
+        },
       },
-    },
-    series: [
-      {
-        name: "Cantidad",
-        type: "bar",
-        data: datos.map((d) => d.cantidad),
-        barMaxWidth: 32,
-      },
-    ],
-  }), [datos]);
+      series: [
+        {
+          name: "Cantidad",
+          type: "bar",
+          data: datos.map((d) => d.cantidad),
+          barMaxWidth: 32,
+        },
+      ],
+    }),
+    [datos],
+  );
 
   return <EChart option={option} className={className} height={height} />;
 }

@@ -26,7 +26,7 @@ export async function crearClienteServidor() {
         setAll(cookiesToSet: CookieParaSetear[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options),
             );
           } catch {
             // setAll puede fallar en Server Components de solo lectura;
@@ -34,7 +34,7 @@ export async function crearClienteServidor() {
           }
         },
       },
-    }
+    },
   );
 }
 
@@ -49,8 +49,7 @@ export async function crearClienteServidor() {
 export async function obtenerUsuario() {
   const supabase = await crearClienteServidor();
 
-  const { data: authData, error: authError } =
-    await supabase.auth.getUser();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
 
   if (authError || !authData.user) {
     throw new Error("Sin sesión activa");
@@ -69,15 +68,14 @@ export async function obtenerUsuario() {
   }
 
   // Módulos del rol: fuente de verdad en seg.T_RolModulo (RBAC configurable).
-  const { data: modulosData } = await supabase
-    .schema("seg")
-    .rpc("FnModulosUsuario");
+  const { data: modulosData } = await supabase.schema("seg").rpc("FnModulosUsuario");
 
   return {
     id: authData.user.id,
     email: authData.user.email ?? null,
     nombreCompleto: usuarioData.NombreCompleto as string | null,
-    rol: (usuarioData.T_Rol as unknown as { Codigo: string }).Codigo as import("@congeminco/shared").RoleCode,
+    rol: (usuarioData.T_Rol as unknown as { Codigo: string })
+      .Codigo as import("@congeminco/shared").RoleCode,
     modulos: (modulosData as string[] | null) ?? [],
   };
 }

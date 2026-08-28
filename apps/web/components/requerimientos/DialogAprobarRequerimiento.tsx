@@ -124,7 +124,7 @@ export function DialogAprobarRequerimiento({
     Math.max(0, Math.min(solicitada, Number(st?.cantidad) || 0));
 
   const hayCompra = (req?.Detalle ?? []).some(
-    (l) => lineas[l.Id]?.modo === "compra" && cantNum(l.Cantidad, lineas[l.Id]) > 0
+    (l) => lineas[l.Id]?.modo === "compra" && cantNum(l.Cantidad, lineas[l.Id]) > 0,
   );
 
   const total = (req?.Detalle ?? []).reduce((acc, l) => {
@@ -194,7 +194,7 @@ export function DialogAprobarRequerimiento({
 
   return (
     <Dialog open={!!idRequerimiento} onOpenChange={(o) => !o && cerrar()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Requerimiento
@@ -203,9 +203,7 @@ export function DialogAprobarRequerimiento({
                 {req.NumeroRequerimiento ?? `#${req.Id.slice(0, 8)}`}
               </span>
             )}
-            {req && (
-              <Badge variant={SITUACION_VARIANTE[req.Situacion]}>{req.Situacion}</Badge>
-            )}
+            {req && <Badge variant={SITUACION_VARIANTE[req.Situacion]}>{req.Situacion}</Badge>}
           </DialogTitle>
           <DialogDescription>
             {puedeActuar
@@ -277,7 +275,7 @@ export function DialogAprobarRequerimiento({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Producto</TableHead>
-                    <TableHead className="text-right w-20">Solic.</TableHead>
+                    <TableHead className="w-20 text-right">Solic.</TableHead>
                     {puedeActuar ? (
                       <>
                         <TableHead className="w-24">Entregar</TableHead>
@@ -285,7 +283,7 @@ export function DialogAprobarRequerimiento({
                         <TableHead className="w-28">Costo compra</TableHead>
                       </>
                     ) : (
-                      <TableHead className="text-right w-24">Atendido</TableHead>
+                      <TableHead className="w-24 text-right">Atendido</TableHead>
                     )}
                   </TableRow>
                 </TableHeader>

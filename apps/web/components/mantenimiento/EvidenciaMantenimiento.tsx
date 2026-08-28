@@ -40,13 +40,9 @@ export function EvidenciaMantenimiento({
   const { mutateAsync: eliminar } = useEliminarEvidenciaMantenimiento(idOrden);
   const [subiendo, setSubiendo] = useState<TipoEvidencia | null>(null);
 
-  const porTipo = (tipo: TipoEvidencia) =>
-    (evidencias ?? []).filter((e) => e.Tipo === tipo);
+  const porTipo = (tipo: TipoEvidencia) => (evidencias ?? []).filter((e) => e.Tipo === tipo);
 
-  const handleSubir = async (
-    tipo: TipoEvidencia,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleSubir = async (tipo: TipoEvidencia, e: React.ChangeEvent<HTMLInputElement>) => {
     const archivo = e.target.files?.[0];
     e.target.value = "";
     if (!archivo) return;
@@ -108,8 +104,8 @@ export function EvidenciaMantenimiento({
                 <span
                   className={
                     fotos.length === 0
-                      ? "text-destructive font-normal"
-                      : "text-muted-foreground font-normal"
+                      ? "font-normal text-destructive"
+                      : "font-normal text-muted-foreground"
                   }
                 >
                   ({fotos.length}/{MAX_EVIDENCIA_MANTENIMIENTO})
@@ -163,9 +159,7 @@ export function EvidenciaMantenimiento({
 }
 
 /** Helper: ¿hay al menos 1 foto de cada tipo? (para habilitar el cierre). */
-export function evidenciaCompleta(
-  evidencias: { Tipo: TipoEvidencia }[] | undefined
-): boolean {
+export function evidenciaCompleta(evidencias: { Tipo: TipoEvidencia }[] | undefined): boolean {
   if (!evidencias) return false;
   return (
     evidencias.some((e) => e.Tipo === "estado_actual") &&

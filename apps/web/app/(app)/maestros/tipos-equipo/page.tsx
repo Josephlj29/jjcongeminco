@@ -124,16 +124,12 @@ function DialogTipoEquipo({
             <div className="space-y-1">
               <Label htmlFor="Codigo">Código *</Label>
               <Input id="Codigo" placeholder="TE-001" {...register("Codigo")} />
-              {errors.Codigo && (
-                <p className="text-xs text-destructive">{errors.Codigo.message}</p>
-              )}
+              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="Nombre">Nombre *</Label>
               <Input id="Nombre" placeholder="Excavadora hidráulica" {...register("Nombre")} />
-              {errors.Nombre && (
-                <p className="text-xs text-destructive">{errors.Nombre.message}</p>
-              )}
+              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
             </div>
           </div>
 
@@ -151,11 +147,7 @@ function DialogTipoEquipo({
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending
-                ? "Guardando..."
-                : modoEdicion
-                ? "Guardar cambios"
-                : "Crear tipo"}
+              {isPending ? "Guardando..." : modoEdicion ? "Guardar cambios" : "Crear tipo"}
             </Button>
           </DialogFooter>
         </form>
@@ -254,7 +246,7 @@ export default function TiposEquipoPage() {
                       {t.Descripcion ?? "—"}
                     </TableCell>
                     {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button variant="ghost" size="sm" onClick={() => abrirEditar(t)}>
                           Editar
                         </Button>
@@ -264,7 +256,7 @@ export default function TiposEquipoPage() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => setTipoEliminar(t)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
                           Eliminar
                         </Button>
                       </TableCell>
@@ -287,9 +279,7 @@ export default function TiposEquipoPage() {
         </div>
       )}
 
-      {mostrarDialog && (
-        <DialogTipoEquipo tipoEquipo={tipoEditar} onClose={cerrarDialog} />
-      )}
+      {mostrarDialog && <DialogTipoEquipo tipoEquipo={tipoEditar} onClose={cerrarDialog} />}
 
       <DialogEliminar
         entidad="tipoEquipo"

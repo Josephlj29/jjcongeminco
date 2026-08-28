@@ -83,7 +83,13 @@ export function useAsociacionesTiposEquipo() {
 export function useAsociarCategoria() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ idTipoEquipo, idCategoria }: { idTipoEquipo: string; idCategoria: string }) => {
+    mutationFn: async ({
+      idTipoEquipo,
+      idCategoria,
+    }: {
+      idTipoEquipo: string;
+      idCategoria: string;
+    }) => {
       const res = await fetch(`/api/tipos-equipo/${idTipoEquipo}/asociar-categoria`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

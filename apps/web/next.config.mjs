@@ -8,9 +8,7 @@ const nextConfig = {
 
 // En desarrollo, integrar el adaptador Cloudflare para emular el entorno Workers
 if (process.env.NODE_ENV === "development") {
-  const { initOpenNextCloudflareForDev } = await import(
-    "@opennextjs/cloudflare"
-  );
+  const { initOpenNextCloudflareForDev } = await import("@opennextjs/cloudflare");
   await initOpenNextCloudflareForDev();
 }
 

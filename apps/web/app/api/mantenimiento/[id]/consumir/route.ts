@@ -12,10 +12,7 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ConsumirRepuestosSchema, puede } from "@congeminco/shared";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
   if (!puede(usuario.rol, "requerimientoCrear")) {
@@ -41,12 +38,9 @@ export async function POST(
     const reglaNegocio =
       dbError.code === "23514" ||
       /stock insuficiente|abierta|no existe|proveedor|comprobante|costo|permiso|inactiv|repuesto/i.test(
-        dbError.message
+        dbError.message,
       );
-    return NextResponse.json(
-      { error: dbError.message },
-      { status: reglaNegocio ? 409 : 500 }
-    );
+    return NextResponse.json({ error: dbError.message }, { status: reglaNegocio ? 409 : 500 });
   }
 
   return NextResponse.json({ IdDocumentoInventario: data as string }, { status: 201 });

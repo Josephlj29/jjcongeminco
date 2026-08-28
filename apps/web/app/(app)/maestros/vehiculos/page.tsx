@@ -74,13 +74,7 @@ function useRolActual() {
 }
 
 /* ─── Dialog: Crear / Editar vehículo ─── */
-function DialogVehiculo({
-  vehiculo,
-  onClose,
-}: {
-  vehiculo: Vehiculo | null;
-  onClose: () => void;
-}) {
+function DialogVehiculo({ vehiculo, onClose }: { vehiculo: Vehiculo | null; onClose: () => void }) {
   const modoEdicion = !!vehiculo;
   const { mutateAsync: crear, isPending: creando } = useCrearVehiculo();
   const { mutateAsync: actualizar, isPending: actualizando } = useActualizarVehiculo();
@@ -131,9 +125,7 @@ function DialogVehiculo({
             <div className="space-y-1">
               <Label htmlFor="Placa">Placa *</Label>
               <Input id="Placa" placeholder="ABC-123" {...register("Placa")} />
-              {errors.Placa && (
-                <p className="text-xs text-destructive">{errors.Placa.message}</p>
-              )}
+              {errors.Placa && <p className="text-xs text-destructive">{errors.Placa.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="Modelo">Modelo</Label>
@@ -145,9 +137,7 @@ function DialogVehiculo({
             <Label>Equipo</Label>
             <Select
               defaultValue={vehiculo?.IdEquipo ?? undefined}
-              onValueChange={(v) =>
-                setValue("IdEquipo", v === "__ninguno__" ? null : v)
-              }
+              onValueChange={(v) => setValue("IdEquipo", v === "__ninguno__" ? null : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sin equipo asignado" />
@@ -249,7 +239,7 @@ export default function VehiculosPage() {
                 <TableRow>
                   <TableCell
                     colSpan={puedeEscribir ? 4 : 3}
-                    className="text-center text-muted-foreground py-10"
+                    className="py-10 text-center text-muted-foreground"
                   >
                     No hay vehículos registrados.
                   </TableCell>
@@ -265,7 +255,7 @@ export default function VehiculosPage() {
                       {equipoNombre(v.IdEquipo)}
                     </TableCell>
                     {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button variant="ghost" size="sm" onClick={() => abrirEditar(v)}>
                           Editar
                         </Button>
@@ -275,7 +265,7 @@ export default function VehiculosPage() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => setVehiculoEliminar(v)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
                           Eliminar
                         </Button>
                       </TableCell>
@@ -296,16 +286,16 @@ export default function VehiculosPage() {
         </div>
       )}
 
-      {mostrarDialog && (
-        <DialogVehiculo vehiculo={vehiculoEditar} onClose={cerrarDialog} />
-      )}
+      {mostrarDialog && <DialogVehiculo vehiculo={vehiculoEditar} onClose={cerrarDialog} />}
 
       <DialogEliminar
         entidad="vehiculo"
         id={vehiculoEliminar?.Id ?? null}
         nombre={vehiculoEliminar?.Placa ?? ""}
         open={!!vehiculoEliminar}
-        onOpenChange={(v) => { if (!v) setVehiculoEliminar(null); }}
+        onOpenChange={(v) => {
+          if (!v) setVehiculoEliminar(null);
+        }}
         onConfirmar={async () => {
           if (!vehiculoEliminar) return;
           try {

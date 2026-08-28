@@ -10,12 +10,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { useImagenesProducto } from "@/hooks/useImagenes";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function GaleriaProductoDialog({
@@ -37,11 +32,8 @@ export function GaleriaProductoDialog({
     () =>
       (imagenes ?? [])
         .slice()
-        .sort(
-          (a, b) =>
-            Number(b.EsPrincipal) - Number(a.EsPrincipal) || a.Orden - b.Orden
-        ),
-    [imagenes]
+        .sort((a, b) => Number(b.EsPrincipal) - Number(a.EsPrincipal) || a.Orden - b.Orden),
+    [imagenes],
   );
 
   // Reinicia el índice al abrir otro producto.
@@ -52,7 +44,7 @@ export function GaleriaProductoDialog({
   const total = imgs.length;
   const ir = useCallback(
     (delta: number) => setIndex((i) => (total ? (i + delta + total) % total : 0)),
-    [total]
+    [total],
   );
 
   // Flechas del teclado.

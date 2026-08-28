@@ -22,7 +22,12 @@ import {
   type Proveedor,
   puede,
 } from "@congeminco/shared";
-import { useProveedores, useCrearProveedor, useActualizarProveedor, useEliminarProveedor } from "@/hooks/useProveedores";
+import {
+  useProveedores,
+  useCrearProveedor,
+  useActualizarProveedor,
+  useEliminarProveedor,
+} from "@/hooks/useProveedores";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -132,7 +137,7 @@ function DialogProveedor({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
         </DialogHeader>
@@ -140,18 +145,14 @@ function DialogProveedor({
           <div className="space-y-1">
             <Label htmlFor="Nombre">Nombre *</Label>
             <Input id="Nombre" placeholder="Proveedor S.A." {...register("Nombre")} />
-            {errors.Nombre && (
-              <p className="text-xs text-destructive">{errors.Nombre.message}</p>
-            )}
+            {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="Ruc">RUC</Label>
               <Input id="Ruc" placeholder="20123456789" {...register("Ruc")} />
-              {errors.Ruc && (
-                <p className="text-xs text-destructive">{errors.Ruc.message}</p>
-              )}
+              {errors.Ruc && <p className="text-xs text-destructive">{errors.Ruc.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="Telefono">Teléfono</Label>
@@ -180,12 +181,12 @@ function DialogProveedor({
             </div>
 
             {fields.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">
+              <p className="py-2 text-xs text-muted-foreground">
                 Sin cuentas. Agrega una si el proveedor tiene datos bancarios.
               </p>
             ) : (
               fields.map((field, i) => (
-                <div key={field.id} className="rounded-md border p-3 space-y-2 relative">
+                <div key={field.id} className="relative space-y-2 rounded-md border p-3">
                   <button
                     type="button"
                     onClick={() => remove(i)}
@@ -211,14 +212,20 @@ function DialogProveedor({
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-xs">Tipo</Label>
-                        <select className={SELECT_CLASS} {...register(`Cuentas.${i}.TipoCuenta` as const)}>
+                        <select
+                          className={SELECT_CLASS}
+                          {...register(`Cuentas.${i}.TipoCuenta` as const)}
+                        >
                           <option value="corriente">Corriente</option>
                           <option value="ahorros">Ahorros</option>
                         </select>
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Moneda</Label>
-                        <select className={SELECT_CLASS} {...register(`Cuentas.${i}.Moneda` as const)}>
+                        <select
+                          className={SELECT_CLASS}
+                          {...register(`Cuentas.${i}.Moneda` as const)}
+                        >
                           <option value="PEN">Soles</option>
                           <option value="USD">Dólares</option>
                         </select>
@@ -248,7 +255,7 @@ function DialogProveedor({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 items-end">
+                  <div className="grid grid-cols-2 items-end gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">Titular (si difiere)</Label>
                       <Input
@@ -256,7 +263,7 @@ function DialogProveedor({
                         {...register(`Cuentas.${i}.TitularCuenta` as const)}
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-sm h-9">
+                    <label className="flex h-9 items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         className="h-4 w-4"
@@ -351,7 +358,7 @@ export default function ProveedoresPage() {
                 <TableRow>
                   <TableCell
                     colSpan={puedeEscribir ? 6 : 5}
-                    className="text-center text-muted-foreground py-10"
+                    className="py-10 text-center text-muted-foreground"
                   >
                     No hay proveedores registrados.
                   </TableCell>
@@ -375,7 +382,7 @@ export default function ProveedoresPage() {
                       )}
                     </TableCell>
                     {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button variant="ghost" size="sm" onClick={() => abrirEditar(p)}>
                           Editar
                         </Button>
@@ -385,7 +392,7 @@ export default function ProveedoresPage() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => setProveedorEliminar(p)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
                           Eliminar
                         </Button>
                       </TableCell>
@@ -406,16 +413,16 @@ export default function ProveedoresPage() {
         </div>
       )}
 
-      {mostrarDialog && (
-        <DialogProveedor proveedor={proveedorEditar} onClose={cerrarDialog} />
-      )}
+      {mostrarDialog && <DialogProveedor proveedor={proveedorEditar} onClose={cerrarDialog} />}
 
       <DialogEliminar
         entidad="proveedor"
         id={proveedorEliminar?.Id ?? null}
         nombre={proveedorEliminar?.Nombre ?? ""}
         open={!!proveedorEliminar}
-        onOpenChange={(v) => { if (!v) setProveedorEliminar(null); }}
+        onOpenChange={(v) => {
+          if (!v) setProveedorEliminar(null);
+        }}
         onConfirmar={async () => {
           if (!proveedorEliminar) return;
           try {

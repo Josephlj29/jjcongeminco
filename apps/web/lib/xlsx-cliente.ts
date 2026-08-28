@@ -7,9 +7,7 @@
  */
 
 /** Lee la primera hoja de un .xlsx y devuelve las filas como objetos por encabezado. */
-export async function leerFilasExcel(
-  file: File
-): Promise<Record<string, unknown>[]> {
+export async function leerFilasExcel(file: File): Promise<Record<string, unknown>[]> {
   const XLSX = await import("xlsx");
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array" });
@@ -27,23 +25,22 @@ export async function leerFilasExcel(
 export async function descargarPlantillaExcel(
   nombreArchivo: string,
   encabezados: string[],
-  ejemplos: Record<string, unknown>[]
+  ejemplos: Record<string, unknown>[],
 ): Promise<void> {
   const XLSX = await import("xlsx");
   const wb = XLSX.utils.book_new();
   const hoja = XLSX.utils.json_to_sheet(ejemplos, { header: encabezados });
   XLSX.utils.book_append_sheet(wb, hoja, "Plantilla");
-  XLSX.writeFile(
-    wb,
-    nombreArchivo.endsWith(".xlsx") ? nombreArchivo : `${nombreArchivo}.xlsx`
-  );
+  XLSX.writeFile(wb, nombreArchivo.endsWith(".xlsx") ? nombreArchivo : `${nombreArchivo}.xlsx`);
 }
 
 /** Normaliza una celda a booleano (sí/si/x/true/1/general → true). */
 export function celdaABool(valor: unknown): boolean {
   if (typeof valor === "boolean") return valor;
   if (typeof valor === "number") return valor === 1;
-  const s = String(valor ?? "").trim().toLowerCase();
+  const s = String(valor ?? "")
+    .trim()
+    .toLowerCase();
   return ["si", "sí", "x", "true", "1", "verdadero", "general"].includes(s);
 }
 

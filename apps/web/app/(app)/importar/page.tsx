@@ -13,24 +13,11 @@
  */
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Upload,
-  FileSpreadsheet,
-  CheckCircle,
-  XCircle,
-  Download,
-  ShieldAlert,
-} from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle, XCircle, Download, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { puede, type RoleCode, type ReporteImportacion } from "@congeminco/shared";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -50,11 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useCategorias,
-  useUnidades,
-  useUbicaciones,
-} from "@/hooks/useCatalogo";
+import { useCategorias, useUnidades, useUbicaciones } from "@/hooks/useCatalogo";
 import { useTiposEquipo } from "@/hooks/useTiposEquipo";
 import {
   leerFilasExcel,
@@ -87,7 +70,7 @@ function ZonaArchivo({
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div
-      className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-6 py-10 cursor-pointer hover:border-muted-foreground/50 transition-colors"
+      className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-6 py-10 transition-colors hover:border-muted-foreground/50"
       onClick={() => ref.current?.click()}
     >
       {archivo ? (
@@ -97,7 +80,7 @@ function ZonaArchivo({
         </span>
       ) : (
         <>
-          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+          <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             Haz clic para seleccionar un archivo .xlsx
           </p>
@@ -119,7 +102,7 @@ function ResultadoCard({ reporte }: { reporte: ReporteImportacion }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-base">
           {ok ? (
             <CheckCircle className="h-5 w-5 text-emerald-500" />
           ) : (
@@ -136,21 +119,17 @@ function ResultadoCard({ reporte }: { reporte: ReporteImportacion }) {
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">{reporte.cantidadFilas} filas</Badge>
-          {reporte.creados > 0 && (
-            <Badge variant="success">{reporte.creados} creados</Badge>
-          )}
+          {reporte.creados > 0 && <Badge variant="success">{reporte.creados} creados</Badge>}
           {reporte.actualizados > 0 && (
             <Badge variant="default">{reporte.actualizados} actualizados</Badge>
           )}
           {reporte.cantidadErrores > 0 && (
-            <Badge variant="destructive">
-              {reporte.cantidadErrores} errores
-            </Badge>
+            <Badge variant="destructive">{reporte.cantidadErrores} errores</Badge>
           )}
         </div>
 
         {reporte.errores.length > 0 && (
-          <div className="rounded-md border max-h-96 overflow-auto">
+          <div className="max-h-96 overflow-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -164,9 +143,7 @@ function ResultadoCard({ reporte }: { reporte: ReporteImportacion }) {
                   <TableRow key={i}>
                     <TableCell className="font-mono text-xs">{e.fila}</TableCell>
                     <TableCell className="text-xs">{e.columna}</TableCell>
-                    <TableCell className="text-xs text-destructive">
-                      {e.error}
-                    </TableCell>
+                    <TableCell className="text-xs text-destructive">{e.error}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -179,13 +156,7 @@ function ResultadoCard({ reporte }: { reporte: ReporteImportacion }) {
 }
 
 /** Lista compacta de códigos válidos de un catálogo (ayuda al armar el Excel). */
-function CodigosAyuda({
-  titulo,
-  codigos,
-}: {
-  titulo: string;
-  codigos: string[];
-}) {
+function CodigosAyuda({ titulo, codigos }: { titulo: string; codigos: string[] }) {
   if (!codigos.length) return null;
   return (
     <div className="space-y-1">
@@ -250,7 +221,7 @@ function TabProductos() {
           CodigoBarra: "",
           CodigoProductoProveedor: "",
         },
-      ]
+      ],
     );
 
   const importar = async () => {
@@ -273,8 +244,7 @@ function TabProductos() {
         TiposEquipo: celdaALista(r.TiposEquipo),
         StockMinimo: celdaANumero(r.StockMinimo) ?? undefined,
         CodigoBarra: String(r.CodigoBarra ?? "").trim() || undefined,
-        CodigoProductoProveedor:
-          String(r.CodigoProductoProveedor ?? "").trim() || undefined,
+        CodigoProductoProveedor: String(r.CodigoProductoProveedor ?? "").trim() || undefined,
       }));
 
       const res = await fetch("/api/importaciones/productos", {
@@ -289,13 +259,9 @@ function TabProductos() {
       const data = (await res.json()) as ReporteImportacion;
       setReporte(data);
       if (data.cantidadErrores === 0) {
-        toast.success(
-          `${data.creados} creados, ${data.actualizados} actualizados.`
-        );
+        toast.success(`${data.creados} creados, ${data.actualizados} actualizados.`);
       } else {
-        toast.warning(
-          `${data.cantidadErrores} errores — no se aplicó nada.`
-        );
+        toast.warning(`${data.cantidadErrores} errores — no se aplicó nada.`);
       }
     } catch (e) {
       toast.error((e as Error).message);
@@ -310,9 +276,9 @@ function TabProductos() {
         <CardHeader>
           <CardTitle className="text-base">Importar productos</CardTitle>
           <CardDescription>
-            Columnas: Sku, Nombre, CodigoCategoria, CodigoUnidad, EsGeneral
-            (sí/no), TiposEquipo (códigos separados por “;”), StockMinimo,
-            CodigoBarra, CodigoProductoProveedor. Un producto es general
+            Columnas: Sku, Nombre, CodigoCategoria, CodigoUnidad, EsGeneral (sí/no), TiposEquipo
+            (códigos separados por “;”), StockMinimo, CodigoBarra, CodigoProductoProveedor. Un
+            producto es general
             <strong> o </strong> tiene ≥1 tipo de equipo, nunca ambos.
           </CardDescription>
         </CardHeader>
@@ -320,20 +286,13 @@ function TabProductos() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="space-y-1">
               <Label>Si el SKU ya existe</Label>
-              <Select
-                value={modo}
-                onValueChange={(v) => setModo(v as "crear" | "upsert")}
-              >
+              <Select value={modo} onValueChange={(v) => setModo(v as "crear" | "upsert")}>
                 <SelectTrigger className="sm:w-72">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="crear">
-                    Solo crear (salta los existentes)
-                  </SelectItem>
-                  <SelectItem value="upsert">
-                    Crear y actualizar existentes
-                  </SelectItem>
+                  <SelectItem value="crear">Solo crear (salta los existentes)</SelectItem>
+                  <SelectItem value="upsert">Crear y actualizar existentes</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -343,32 +302,22 @@ function TabProductos() {
             </Button>
           </div>
 
-          <ZonaArchivo archivo={archivo} onSelect={(f) => {
-            setArchivo(f);
-            setReporte(null);
-          }} />
+          <ZonaArchivo
+            archivo={archivo}
+            onSelect={(f) => {
+              setArchivo(f);
+              setReporte(null);
+            }}
+          />
 
-          <Button
-            onClick={importar}
-            disabled={!archivo || cargando}
-            className="w-full"
-          >
+          <Button onClick={importar} disabled={!archivo || cargando} className="w-full">
             {cargando ? "Importando..." : "Importar productos"}
           </Button>
 
-          <div className="grid gap-3 sm:grid-cols-3 pt-2">
-            <CodigosAyuda
-              titulo="Categorías"
-              codigos={(categorias ?? []).map((c) => c.Codigo)}
-            />
-            <CodigosAyuda
-              titulo="Unidades"
-              codigos={(unidades ?? []).map((u) => u.Codigo)}
-            />
-            <CodigosAyuda
-              titulo="Tipos de equipo"
-              codigos={(tipos ?? []).map((t) => t.Codigo)}
-            />
+          <div className="grid gap-3 pt-2 sm:grid-cols-3">
+            <CodigosAyuda titulo="Categorías" codigos={(categorias ?? []).map((c) => c.Codigo)} />
+            <CodigosAyuda titulo="Unidades" codigos={(unidades ?? []).map((u) => u.Codigo)} />
+            <CodigosAyuda titulo="Tipos de equipo" codigos={(tipos ?? []).map((t) => t.Codigo)} />
           </div>
         </CardContent>
       </Card>
@@ -396,7 +345,7 @@ function TabSaldos() {
       [
         { CodigoUbicacion: "AREQUIPA", Sku: "ACE-001", Cantidad: 100, CostoUnitario: 25.5 },
         { CodigoUbicacion: "AREQUIPA", Sku: "GRA-001", Cantidad: 40, CostoUnitario: 18 },
-      ]
+      ],
     );
 
   const importar = async () => {
@@ -442,7 +391,7 @@ function TabSaldos() {
       setReporte(data);
       if (data.cantidadErrores === 0) {
         toast.success(
-          `${data.cantidadCorrectas} líneas aplicadas en ${data.creados} documento(s).`
+          `${data.cantidadCorrectas} líneas aplicadas en ${data.creados} documento(s).`,
         );
       } else {
         toast.warning(`${data.cantidadErrores} errores — no se aplicó nada.`);
@@ -460,30 +409,23 @@ function TabSaldos() {
         <CardHeader>
           <CardTitle className="text-base">Importar saldos</CardTitle>
           <CardDescription>
-            Columnas: CodigoUbicacion, Sku, Cantidad, CostoUnitario
-            (recomendado para valorizar). Los SKU y ubicaciones deben existir.
-            <strong> Inicial</strong> crea existencias desde cero;{" "}
-            <strong>recuento</strong> ajusta contra el saldo vigente.
+            Columnas: CodigoUbicacion, Sku, Cantidad, CostoUnitario (recomendado para valorizar).
+            Los SKU y ubicaciones deben existir.
+            <strong> Inicial</strong> crea existencias desde cero; <strong>recuento</strong> ajusta
+            contra el saldo vigente.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="space-y-1">
               <Label>Modo</Label>
-              <Select
-                value={modo}
-                onValueChange={(v) => setModo(v as "inicial" | "recuento")}
-              >
+              <Select value={modo} onValueChange={(v) => setModo(v as "inicial" | "recuento")}>
                 <SelectTrigger className="sm:w-64">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="inicial">
-                    Existencia inicial (desde cero)
-                  </SelectItem>
-                  <SelectItem value="recuento">
-                    Recuento (ajusta diferencia)
-                  </SelectItem>
+                  <SelectItem value="inicial">Existencia inicial (desde cero)</SelectItem>
+                  <SelectItem value="recuento">Recuento (ajusta diferencia)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -502,24 +444,20 @@ function TabSaldos() {
             </Button>
           </div>
 
-          <ZonaArchivo archivo={archivo} onSelect={(f) => {
-            setArchivo(f);
-            setReporte(null);
-          }} />
+          <ZonaArchivo
+            archivo={archivo}
+            onSelect={(f) => {
+              setArchivo(f);
+              setReporte(null);
+            }}
+          />
 
-          <Button
-            onClick={importar}
-            disabled={!archivo || cargando}
-            className="w-full"
-          >
+          <Button onClick={importar} disabled={!archivo || cargando} className="w-full">
             {cargando ? "Importando..." : "Importar saldos"}
           </Button>
 
           <div className="pt-2">
-            <CodigosAyuda
-              titulo="Ubicaciones"
-              codigos={(ubicaciones ?? []).map((u) => u.Codigo)}
-            />
+            <CodigosAyuda titulo="Ubicaciones" codigos={(ubicaciones ?? []).map((u) => u.Codigo)} />
           </div>
         </CardContent>
       </Card>
@@ -536,19 +474,19 @@ export default function ImportarPage() {
   const esAdmin = puede(yo?.rol ?? null, "catalogoAdmin");
 
   return (
-    <div className="space-y-8 max-w-3xl">
+    <div className="max-w-3xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Importar</h1>
         <p className="text-muted-foreground">
-          Carga masiva desde Excel (.xlsx). Validación todo-o-nada: si una fila
-          falla, no se aplica nada y verás el detalle por fila.
+          Carga masiva desde Excel (.xlsx). Validación todo-o-nada: si una fila falla, no se aplica
+          nada y verás el detalle por fila.
         </p>
       </div>
 
       {yo && !esAdmin ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <ShieldAlert className="h-5 w-5 text-amber-500" />
               Sin acceso
             </CardTitle>

@@ -48,14 +48,10 @@ function construirHtml(r: RequerimientoConDetalle): string {
         <td class="c">${esc(l.Cantidad)}</td>
         <td class="c">${esc(l.CantidadAtendida)}</td>
         <td>${esc(l.Notas ?? "")}</td>
-      </tr>`
+      </tr>`,
   ).join("");
 
-  const destino = r.Placa
-    ? `Placa ${esc(r.Placa)}`
-    : r.NombreEquipo
-      ? esc(r.NombreEquipo)
-      : "—";
+  const destino = r.Placa ? `Placa ${esc(r.Placa)}` : r.NombreEquipo ? esc(r.NombreEquipo) : "—";
 
   return `<!doctype html>
 <html lang="es">
@@ -108,8 +104,7 @@ function construirHtml(r: RequerimientoConDetalle): string {
       <td class="k">Solicitante</td>
       <td colspan="3">${
         r.NombreSolicitante
-          ? esc(r.NombreSolicitante) +
-            (r.CargoSolicitante ? ` (${esc(r.CargoSolicitante)})` : "")
+          ? esc(r.NombreSolicitante) + (r.CargoSolicitante ? ` (${esc(r.CargoSolicitante)})` : "")
           : "—"
       }</td>
     </tr>
@@ -135,9 +130,7 @@ function construirHtml(r: RequerimientoConDetalle): string {
 
   <div class="firmas">
     <div class="firma">Solicitado por${
-      r.NombreSolicitante
-        ? `<br/><span style="color:#111">${esc(r.NombreSolicitante)}</span>`
-        : ""
+      r.NombreSolicitante ? `<br/><span style="color:#111">${esc(r.NombreSolicitante)}</span>` : ""
     }</div>
     <div class="firma">Aprobado por</div>
     <div class="firma">Recibido por</div>

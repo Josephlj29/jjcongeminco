@@ -39,9 +39,7 @@ interface FilaOrden {
 }
 
 /** Normaliza el embed de personales a OrdenMantenimientoResumen["Personales"]. */
-function mapearPersonales(
-  filas: FilaPersonal[] | null
-): OrdenMantenimientoResumen["Personales"] {
+function mapearPersonales(filas: FilaPersonal[] | null): OrdenMantenimientoResumen["Personales"] {
   return (filas ?? [])
     .slice()
     .sort((a, b) => a.Orden - b.Orden)
@@ -67,7 +65,7 @@ export async function GET(request: NextRequest) {
   // Tope de seguridad: evita ?limit gigante (DoS de memoria).
   const cantidad = Math.min(
     Math.max(parseInt(searchParams.get("limit") ?? "100", 10) || 100, 1),
-    500
+    500,
   );
 
   const supabase = await crearClienteServidor();
@@ -75,7 +73,7 @@ export async function GET(request: NextRequest) {
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Situacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))"
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Situacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
     )
     .eq("Estado", true);
 

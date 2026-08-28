@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     .schema("inv")
     .from("T_DocumentoInventario")
     .select(
-      "Id, TipoDocumento, FechaDocumento, NumeroDocumento, Comprobante, Referencia, Notas, Estado, FechaCreacion, UsuarioCreacion"
+      "Id, TipoDocumento, FechaDocumento, NumeroDocumento, Comprobante, Referencia, Notas, Estado, FechaCreacion, UsuarioCreacion",
     )
     .order("FechaDocumento", { ascending: false })
     .order("FechaCreacion", { ascending: false })
@@ -47,10 +47,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   if (!puede(usuario.rol, "documentoEscritura")) {
-    return respuestaError(
-      "No tienes permiso para registrar documentos de inventario.",
-      403
-    );
+    return respuestaError("No tienes permiso para registrar documentos de inventario.", 403);
   }
 
   const body = await request.json().catch(() => null);

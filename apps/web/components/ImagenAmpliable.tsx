@@ -15,11 +15,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Package, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface ImagenAmpliableProps {
   url: string | null;
@@ -32,17 +28,9 @@ interface ImagenAmpliableProps {
 
 const PREVIEW = 224; // w-56 / h-56
 
-export function ImagenAmpliable({
-  url,
-  size,
-  alt = "",
-  nombre,
-  className,
-}: ImagenAmpliableProps) {
+export function ImagenAmpliable({ url, size, alt = "", nombre, className }: ImagenAmpliableProps) {
   const [hover, setHover] = React.useState(false);
-  const [coords, setCoords] = React.useState<{ x: number; y: number } | null>(
-    null
-  );
+  const [coords, setCoords] = React.useState<{ x: number; y: number } | null>(null);
   const [lightbox, setLightbox] = React.useState(false);
   const [zoom, setZoom] = React.useState(false);
   const ref = React.useRef<HTMLButtonElement>(null);
@@ -52,8 +40,8 @@ export function ImagenAmpliable({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-md bg-muted shrink-0 border",
-          className
+          "flex shrink-0 items-center justify-center rounded-md border bg-muted",
+          className,
         )}
         style={{ width: size, height: size }}
       >
@@ -95,7 +83,7 @@ export function ImagenAmpliable({
         }}
         className={cn(
           "group relative shrink-0 cursor-zoom-in overflow-hidden rounded-md border",
-          className
+          className,
         )}
         style={{ width: size, height: size }}
         title="Doble clic para ampliar"
@@ -123,17 +111,11 @@ export function ImagenAmpliable({
           >
             <div className="overflow-hidden rounded-lg border bg-background shadow-xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={url}
-                alt={alt}
-                className="h-56 w-56 bg-muted object-contain"
-              />
-              {nombre && (
-                <p className="max-w-56 truncate px-2 py-1 text-xs">{nombre}</p>
-              )}
+              <img src={url} alt={alt} className="h-56 w-56 bg-muted object-contain" />
+              {nombre && <p className="max-w-56 truncate px-2 py-1 text-xs">{nombre}</p>}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {/* Lightbox a pantalla (doble clic) */}
@@ -143,7 +125,7 @@ export function ImagenAmpliable({
           <div
             className={cn(
               "flex max-h-[85vh] items-center justify-center bg-muted/40",
-              zoom ? "overflow-auto" : "overflow-hidden"
+              zoom ? "overflow-auto" : "overflow-hidden",
             )}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -154,8 +136,8 @@ export function ImagenAmpliable({
               className={cn(
                 "select-none transition-transform duration-200",
                 zoom
-                  ? "max-w-none cursor-zoom-out scale-[1.75] origin-center"
-                  : "max-h-[85vh] w-auto cursor-zoom-in object-contain"
+                  ? "max-w-none origin-center scale-[1.75] cursor-zoom-out"
+                  : "max-h-[85vh] w-auto cursor-zoom-in object-contain",
               )}
             />
           </div>

@@ -5,11 +5,7 @@
  */
 import { requerirModulo, MODULOS } from "@/lib/auth-guard";
 
-export default async function ProveedoresLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function ProveedoresLayout({ children }: { children: React.ReactNode }) {
   await requerirModulo(MODULOS.MAESTROS_PROVEEDORES);
   return <>{children}</>;
 }

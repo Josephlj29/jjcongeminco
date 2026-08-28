@@ -26,10 +26,7 @@ export async function GET(request: NextRequest) {
   const soloBajoMinimo = searchParams.get("soloBajoMinimo");
 
   const supabase = await crearClienteServidor();
-  let query = supabase
-    .schema("inv")
-    .from("V_Producto_Valorizado")
-    .select("*");
+  let query = supabase.schema("inv").from("V_Producto_Valorizado").select("*");
 
   if (idCategoria) query = query.eq("NombreCategoria", idCategoria);
   if (soloBajoMinimo === "true") query = query.eq("BajoMinimo", true);

@@ -14,7 +14,7 @@ import { puede } from "@congeminco/shared";
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string; idEvidencia: string }> }
+  { params }: { params: Promise<{ id: string; idEvidencia: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;

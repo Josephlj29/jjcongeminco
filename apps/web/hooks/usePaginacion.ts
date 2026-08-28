@@ -17,10 +17,7 @@ export interface UsePaginacionResult<T> {
  * Resetea a página 1 cada vez que cambia la longitud o la referencia de `items`
  * (es decir, cuando cambia el resultado de un filtro).
  */
-export function usePaginacion<T>(
-  items: T[],
-  tamañoPagina = 10
-): UsePaginacionResult<T> {
+export function usePaginacion<T>(items: T[], tamañoPagina = 10): UsePaginacionResult<T> {
   const [pagina, setPagina] = useState(1);
 
   // Resetear a página 1 cuando el conjunto filtrado cambia
@@ -39,7 +36,7 @@ export function usePaginacion<T>(
 
   const itemsPagina = useMemo(
     () => items.slice((paginaValida - 1) * tamañoPagina, paginaValida * tamañoPagina),
-    [items, paginaValida, tamañoPagina]
+    [items, paginaValida, tamañoPagina],
   );
 
   return {

@@ -133,11 +133,7 @@ function DialogPersonal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="NombreCompleto">Nombre completo *</Label>
-            <Input
-              id="NombreCompleto"
-              placeholder="Juan Pérez"
-              {...register("NombreCompleto")}
-            />
+            <Input id="NombreCompleto" placeholder="Juan Pérez" {...register("NombreCompleto")} />
             {errors.NombreCompleto && (
               <p className="text-xs text-destructive">{errors.NombreCompleto.message}</p>
             )}
@@ -171,18 +167,14 @@ function DialogPersonal({
                 ))}
               </SelectContent>
             </Select>
-            {errors.IdCargo && (
-              <p className="text-xs text-destructive">{errors.IdCargo.message}</p>
-            )}
+            {errors.IdCargo && <p className="text-xs text-destructive">{errors.IdCargo.message}</p>}
           </div>
 
           <div className="space-y-1">
             <Label>Usuario de acceso (opcional)</Label>
             <Select
               value={idUsuario ?? SIN_USUARIO}
-              onValueChange={(v) =>
-                setValue("IdUsuario", v === SIN_USUARIO ? null : v)
-              }
+              onValueChange={(v) => setValue("IdUsuario", v === SIN_USUARIO ? null : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sin login" />
@@ -302,9 +294,7 @@ export default function PersonalPage() {
                 paginacion.itemsPagina.map((p) => (
                   <TableRow key={p.Id}>
                     <TableCell className="font-medium">{p.NombreCompleto}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {p.Dni ?? "—"}
-                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{p.Dni ?? "—"}</TableCell>
                     <TableCell className="text-sm">{p.NombreCargo ?? "—"}</TableCell>
                     <TableCell>
                       {p.NombreUsuario ? (
@@ -314,7 +304,7 @@ export default function PersonalPage() {
                       )}
                     </TableCell>
                     {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -331,7 +321,7 @@ export default function PersonalPage() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => setEliminarP(p)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
                           Eliminar
                         </Button>
                       </TableCell>

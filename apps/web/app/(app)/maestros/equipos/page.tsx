@@ -74,13 +74,7 @@ function useRolActual() {
 }
 
 /* ─── Dialog: Crear / Editar equipo ─── */
-function DialogEquipo({
-  equipo,
-  onClose,
-}: {
-  equipo: Equipo | null;
-  onClose: () => void;
-}) {
+function DialogEquipo({ equipo, onClose }: { equipo: Equipo | null; onClose: () => void }) {
   const modoEdicion = !!equipo;
   const { mutateAsync: crear, isPending: creando } = useCrearEquipo();
   const { mutateAsync: actualizar, isPending: actualizando } = useActualizarEquipo();
@@ -132,16 +126,12 @@ function DialogEquipo({
             <div className="space-y-1">
               <Label htmlFor="Codigo">Código *</Label>
               <Input id="Codigo" placeholder="EQ-001" {...register("Codigo")} />
-              {errors.Codigo && (
-                <p className="text-xs text-destructive">{errors.Codigo.message}</p>
-              )}
+              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="Nombre">Nombre *</Label>
               <Input id="Nombre" placeholder="Excavadora CAT 320" {...register("Nombre")} />
-              {errors.Nombre && (
-                <p className="text-xs text-destructive">{errors.Nombre.message}</p>
-              )}
+              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
             </div>
           </div>
 
@@ -149,9 +139,7 @@ function DialogEquipo({
             <Label>Tipo de equipo</Label>
             <Select
               defaultValue={equipo?.IdTipoEquipo ?? undefined}
-              onValueChange={(v) =>
-                setValue("IdTipoEquipo", v === "__ninguno__" ? null : v)
-              }
+              onValueChange={(v) => setValue("IdTipoEquipo", v === "__ninguno__" ? null : v)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar tipo..." />
@@ -172,7 +160,11 @@ function DialogEquipo({
 
           <div className="space-y-1">
             <Label htmlFor="Descripcion">Descripción</Label>
-            <Input id="Descripcion" placeholder="Descripción del equipo" {...register("Descripcion")} />
+            <Input
+              id="Descripcion"
+              placeholder="Descripción del equipo"
+              {...register("Descripcion")}
+            />
           </div>
 
           <DialogFooter>
@@ -255,7 +247,7 @@ export default function EquiposPage() {
                 <TableRow>
                   <TableCell
                     colSpan={puedeEscribir ? 5 : 4}
-                    className="text-center text-muted-foreground py-10"
+                    className="py-10 text-center text-muted-foreground"
                   >
                     No hay equipos registrados.
                   </TableCell>
@@ -276,7 +268,7 @@ export default function EquiposPage() {
                       {e.Descripcion ?? "—"}
                     </TableCell>
                     {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button variant="ghost" size="sm" onClick={() => abrirEditar(e)}>
                           Editar
                         </Button>
@@ -286,7 +278,7 @@ export default function EquiposPage() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => setEquipoEliminar(e)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
                           Eliminar
                         </Button>
                       </TableCell>
@@ -307,16 +299,16 @@ export default function EquiposPage() {
         </div>
       )}
 
-      {mostrarDialog && (
-        <DialogEquipo equipo={equipoEditar} onClose={cerrarDialog} />
-      )}
+      {mostrarDialog && <DialogEquipo equipo={equipoEditar} onClose={cerrarDialog} />}
 
       <DialogEliminar
         entidad="equipo"
         id={equipoEliminar?.Id ?? null}
         nombre={equipoEliminar?.Nombre ?? ""}
         open={!!equipoEliminar}
-        onOpenChange={(v) => { if (!v) setEquipoEliminar(null); }}
+        onOpenChange={(v) => {
+          if (!v) setEquipoEliminar(null);
+        }}
         onConfirmar={async () => {
           if (!equipoEliminar) return;
           try {

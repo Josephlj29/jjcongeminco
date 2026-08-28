@@ -48,10 +48,7 @@ export function ProductoCombobox({
   onChange,
   placeholder = "Seleccionar producto...",
 }: ProductoComboboxProps) {
-  const porId = React.useMemo(
-    () => new Map(productos.map((p) => [p.IdProducto, p])),
-    [productos]
-  );
+  const porId = React.useMemo(() => new Map(productos.map((p) => [p.IdProducto, p])), [productos]);
 
   const opciones = React.useMemo<OpcionCombobox[]>(
     () =>
@@ -60,7 +57,7 @@ export function ProductoCombobox({
         label: p.NombreProducto,
         codigo: p.Sku,
       })),
-    [productos]
+    [productos],
   );
 
   return (
@@ -95,9 +92,7 @@ export function ProductoCombobox({
             <span className="shrink-0 font-mono text-xs text-muted-foreground">
               {p?.StockTotal}
             </span>
-            <Check
-              className={cn("h-4 w-4 shrink-0", seleccionada ? "opacity-100" : "opacity-0")}
-            />
+            <Check className={cn("h-4 w-4 shrink-0", seleccionada ? "opacity-100" : "opacity-0")} />
           </>
         );
       }}

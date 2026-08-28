@@ -13,20 +13,10 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Package,
-  AlertTriangle,
-  Wallet,
-  ArrowLeftRight,
-} from "lucide-react";
+import { Package, AlertTriangle, Wallet, ArrowLeftRight } from "lucide-react";
 import type { ReporteMovimiento, ProductoValorizado } from "@congeminco/shared";
 import { useSaldos, useSaldosBajoMinimo } from "@/hooks/useSaldos";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -86,16 +76,10 @@ function KpiCard({
         />
       </CardHeader>
       <CardContent>
-        <div
-          className={`text-2xl font-bold ${
-            variante === "warning" ? "text-amber-600" : ""
-          }`}
-        >
+        <div className={`text-2xl font-bold ${variante === "warning" ? "text-amber-600" : ""}`}>
           {valor}
         </div>
-        {descripcion && (
-          <p className="text-xs text-muted-foreground">{descripcion}</p>
-        )}
+        {descripcion && <p className="text-xs text-muted-foreground">{descripcion}</p>}
       </CardContent>
     </Card>
   );
@@ -136,17 +120,14 @@ export default function DashboardPage() {
 
   const { data: saldos, isLoading: cargandoSaldos } = useSaldos();
   const { data: bajoMinimo, isLoading: cargandoBM } = useSaldosBajoMinimo();
-  const { data: movimientos, isLoading: cargandoMov } = useReporteMovimientos(
-    desde,
-    hasta
-  );
+  const { data: movimientos, isLoading: cargandoMov } = useReporteMovimientos(desde, hasta);
   const { data: valorizado, isLoading: cargandoVal } = useReporteValorizado();
 
   const totalProductos = saldos?.length ?? 0;
   const totalBajoMinimo = bajoMinimo?.length ?? 0;
   const valorInventario = useMemo(
     () => (valorizado ?? []).reduce((sum, v) => sum + v.ValorTotal, 0),
-    [valorizado]
+    [valorizado],
   );
   const totalMovimientos = movimientos?.length ?? 0;
 
@@ -201,9 +182,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Resumen del inventario — JJ Congeminco
-          </p>
+          <p className="text-muted-foreground">Resumen del inventario — JJ Congeminco</p>
         </div>
         <div className="w-full sm:w-48">
           <Select value={rango} onValueChange={setRango}>
@@ -265,9 +244,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">
-              Entradas vs salidas por día
-            </CardTitle>
+            <CardTitle className="text-base">Entradas vs salidas por día</CardTitle>
           </CardHeader>
           <CardContent>
             {cargandoMov ? (
@@ -302,9 +279,7 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            Top productos movidos (período)
-          </CardTitle>
+          <CardTitle className="text-base">Top productos movidos (período)</CardTitle>
         </CardHeader>
         <CardContent>
           {cargandoMov ? (
@@ -321,7 +296,7 @@ export default function DashboardPage() {
 
       {/* Tabla de productos bajo mínimo */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Productos bajo mínimo</h2>
+        <h2 className="mb-4 text-lg font-semibold">Productos bajo mínimo</h2>
         {cargandoBM ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
@@ -329,11 +304,11 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : !bajoMinimo?.length ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed h-32 text-muted-foreground text-sm">
+          <div className="flex h-32 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
             No hay productos bajo mínimo. ¡Todo en orden!
           </div>
         ) : (
-          <div className="rounded-lg border overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -349,9 +324,7 @@ export default function DashboardPage() {
                 {bajoMinimo.map((p) => (
                   <TableRow key={p.IdProducto}>
                     <TableCell className="font-mono text-xs">{p.Sku}</TableCell>
-                    <TableCell className="font-medium">
-                      {p.NombreProducto}
-                    </TableCell>
+                    <TableCell className="font-medium">{p.NombreProducto}</TableCell>
                     <TableCell>{p.NombreCategoria}</TableCell>
                     <TableCell className="text-right">{p.StockMinimo}</TableCell>
                     <TableCell className="text-right font-semibold text-amber-600">

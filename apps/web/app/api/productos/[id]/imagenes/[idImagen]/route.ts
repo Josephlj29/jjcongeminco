@@ -12,7 +12,7 @@ import { puede } from "@congeminco/shared";
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string; idImagen: string }> }
+  { params }: { params: Promise<{ id: string; idImagen: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;

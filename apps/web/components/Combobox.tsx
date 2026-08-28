@@ -48,10 +48,7 @@ interface ComboboxProps {
 
 /** "Cañería" -> "caneria" para búsqueda insensible a acentos. */
 function normalizar(texto: string): string {
-  return texto
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase();
+  return texto.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
 export function Combobox({
@@ -71,14 +68,14 @@ export function Combobox({
 
   const seleccionada = React.useMemo(
     () => opciones.find((o) => o.value === value) ?? null,
-    [opciones, value]
+    [opciones, value],
   );
 
   const filtradas = React.useMemo(() => {
     if (!busqueda) return opciones;
     const q = normalizar(busqueda);
     return opciones.filter((o) =>
-      normalizar(`${o.codigo ?? ""} ${o.label} ${o.descripcion ?? ""}`).includes(q)
+      normalizar(`${o.codigo ?? ""} ${o.label} ${o.descripcion ?? ""}`).includes(q),
     );
   }, [opciones, busqueda]);
 
@@ -141,7 +138,7 @@ export function Combobox({
                         <Check
                           className={cn(
                             "h-4 w-4 shrink-0",
-                            esSeleccionada ? "opacity-100" : "opacity-0"
+                            esSeleccionada ? "opacity-100" : "opacity-0",
                           )}
                         />
                         {opcion.codigo && (

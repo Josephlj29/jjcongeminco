@@ -38,7 +38,7 @@ function esEntidadValida(v: string): v is EntidadValida {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ entidad: string; id: string }> }
+  { params }: { params: Promise<{ entidad: string; id: string }> },
 ) {
   const { usuario, error } = await autenticarRequest();
   if (error) return error;
@@ -47,10 +47,7 @@ export async function GET(
   const { entidad, id } = await params;
 
   if (!esEntidadValida(entidad)) {
-    return respuestaError(
-      `Entidad inválida. Válidas: ${ENTIDADES_VALIDAS.join(", ")}.`,
-      400
-    );
+    return respuestaError(`Entidad inválida. Válidas: ${ENTIDADES_VALIDAS.join(", ")}.`, 400);
   }
 
   const supabase = await crearClienteServidor();

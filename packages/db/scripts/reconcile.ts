@@ -24,7 +24,9 @@ async function main() {
 
   console.error(`✗ ${diffs.length} descuadres entre cache y ledger:`);
   for (const d of diffs) {
-    console.error(`  prod=${d.IdProducto} ubic=${d.IdUbicacion} cache=${d.Cache} ledger=${d.Ledger}`);
+    console.error(
+      `  prod=${d.IdProducto} ubic=${d.IdUbicacion} cache=${d.Cache} ledger=${d.Ledger}`,
+    );
   }
   await sql.end();
   process.exit(1);
