@@ -21,17 +21,23 @@ export async function DELETE(
     return respuestaError("No tienes permiso para gestionar imágenes.", 403);
   }
 
-  const { idImagen } = await params;
+  const { id, idImagen } = await params;
   const supabase = await crearClienteServidor();
 
-  const { error: dbError } = await supabase
+  // Scope por el producto padre: no se puede borrar una imagen de otro producto.
+  const { data, error: dbError } = await supabase
     .schema("inv")
     .from("T_ProductoImagen")
     .delete()
-    .eq("Id", idImagen);
+    .eq("Id", idImagen)
+    .eq("IdProducto", id)
+    .select("Id");
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
+  }
+  if (!data?.length) {
+    return respuestaError("La imagen no existe o no pertenece a este producto.", 404);
   }
 
   return new NextResponse(null, { status: 204 });

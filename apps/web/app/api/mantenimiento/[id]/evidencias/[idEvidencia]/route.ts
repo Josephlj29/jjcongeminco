@@ -23,17 +23,23 @@ export async function DELETE(
     return respuestaError("No tienes permiso para gestionar evidencia de mantenimiento.", 403);
   }
 
-  const { idEvidencia } = await params;
+  const { id, idEvidencia } = await params;
   const supabase = await crearClienteServidor();
 
-  const { error: dbError } = await supabase
+  // Scope por la orden padre: no se puede borrar evidencia de otra OT.
+  const { data, error: dbError } = await supabase
     .schema("inv")
     .from("T_OrdenMantenimientoEvidencia")
     .delete()
-    .eq("Id", idEvidencia);
+    .eq("Id", idEvidencia)
+    .eq("IdOrdenMantenimiento", id)
+    .select("Id");
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
+  }
+  if (!data?.length) {
+    return respuestaError("La evidencia no existe o no pertenece a esta orden.", 404);
   }
 
   return new NextResponse(null, { status: 204 });
