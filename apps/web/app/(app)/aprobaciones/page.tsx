@@ -15,14 +15,15 @@
  * (Mantenimiento → pestaña "Por aprobar"), no aquí.
  */
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ClipboardCheck, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { puede, type RoleCode } from "@congeminco/shared";
 import { useRequerimientos, type RequerimientoResumen } from "@/hooks/useRequerimientos";
+import { useYo, usePermiso } from "@/hooks/useYo";
 import { DialogAprobarRequerimiento } from "@/components/requerimientos/DialogAprobarRequerimiento";
 import { imprimirSolicitudRequerimiento } from "@/lib/imprimir-solicitud";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,17 +48,6 @@ const SITUACION_VARIANTE = {
   atendido: "success" as const,
   anulado: "destructive" as const,
 };
-
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: RoleCode }>;
-    },
-  });
-}
 
 function BotonPdf({ id }: { id: string }) {
   const [generando, setGenerando] = useState(false);
@@ -85,21 +75,37 @@ function BotonPdf({ id }: { id: string }) {
 }
 
 export default function AprobacionesPage() {
-  const { data: yo } = useRolActual();
-  const puedeAprobar = puede(yo?.rol ?? null, "requerimientoAprobar");
+  const { data: yo } = useYo();
+  const puedeAprobar = usePermiso("requerimientoAprobar");
   const [seleccionado, setSeleccionado] = useState<string | null>(null);
 
-  const { data: pendientes, isLoading: cargandoPend } = useRequerimientos({
+  const {
+    data: pendientes,
+    isLoading: cargandoPend,
+    isError: errorPend,
+    refetch: refetchPend,
+  } = useRequerimientos({
     situacion: "pendiente",
   });
-  const { data: atendidos, isLoading: cargAt } = useRequerimientos({
+  const {
+    data: atendidos,
+    isLoading: cargAt,
+    isError: errAt,
+    refetch: refetchAt,
+  } = useRequerimientos({
     situacion: "atendido",
   });
-  const { data: anulados, isLoading: cargAn } = useRequerimientos({
+  const {
+    data: anulados,
+    isLoading: cargAn,
+    isError: errAn,
+    refetch: refetchAn,
+  } = useRequerimientos({
     situacion: "anulado",
   });
 
   const cargandoHist = cargAt || cargAn;
+  const errorHist = errAt || errAn;
   const historico: RequerimientoResumen[] = [...(atendidos ?? []), ...(anulados ?? [])].sort(
     (a, b) => b.FechaRequerimiento.localeCompare(a.FechaRequerimiento),
   );
@@ -107,9 +113,7 @@ export default function AprobacionesPage() {
   if (yo && !puedeAprobar) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Aprobaciones</h1>
-        </div>
+        <PageHeader titulo="Aprobaciones" />
         <EmptyState
           icon={ClipboardCheck}
           titulo="Sin acceso"
@@ -121,13 +125,10 @@ export default function AprobacionesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Aprobaciones</h1>
-        <p className="text-muted-foreground">
-          Revisa los requerimientos pendientes (aprueba o rechaza) y consulta el histórico. Genera
-          el PDF de cada solicitud para gestión o impresión.
-        </p>
-      </div>
+      <PageHeader
+        titulo="Aprobaciones"
+        descripcion="Revisa los requerimientos pendientes (aprueba o rechaza) y consulta el histórico. Genera el PDF de cada solicitud para gestión o impresión."
+      />
 
       <Tabs defaultValue="pendientes" className="space-y-4">
         <TabsList>
@@ -145,6 +146,8 @@ export default function AprobacionesPage() {
                 <Skeleton key={i} className="h-12" />
               ))}
             </div>
+          ) : errorPend ? (
+            <ErrorState onReintentar={() => void refetchPend()} />
           ) : !pendientes?.length ? (
             <EmptyState
               icon={ClipboardCheck}
@@ -205,6 +208,13 @@ export default function AprobacionesPage() {
                 <Skeleton key={i} className="h-12" />
               ))}
             </div>
+          ) : errorHist ? (
+            <ErrorState
+              onReintentar={() => {
+                void refetchAt();
+                void refetchAn();
+              }}
+            />
           ) : !historico.length ? (
             <EmptyState
               icon={ClipboardCheck}
