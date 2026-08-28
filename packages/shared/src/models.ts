@@ -384,3 +384,38 @@ export interface KardexFila {
   CantidadConSigno: number;
   SaldoCorrido: number;
 }
+
+/* ── Dashboard ───────────────────────────────────────────────────────────
+   Resumen agregado en el servidor (GET /api/dashboard). Reemplaza el fan-out
+   a /api/reportes/* + /api/saldos que hacía el cliente (evita el 403 por
+   módulo REPORTES y mueve la agregación fuera del navegador). */
+
+export interface DashboardProductoBajoMinimo {
+  IdProducto: string;
+  Sku: string;
+  NombreProducto: string;
+  NombreCategoria: string;
+  StockMinimo: number;
+  StockTotal: number;
+}
+
+export interface ResumenDashboard {
+  kpis: {
+    totalProductos: number;
+    valorInventario: number;
+    bajoMinimo: number;
+    movimientosPeriodo: number;
+    /* Período anterior de igual longitud, para calcular deltas. */
+    anterior: {
+      valorMovido: number;
+      valorMovidoActual: number;
+      movimientosPeriodo: number;
+    };
+  };
+  tendencia: { fecha: string; entradas: number; salidas: number }[];
+  valorPorCategoria: { nombre: string; valor: number }[];
+  topProductos: { nombre: string; cantidad: number }[];
+  bajoMinimo: DashboardProductoBajoMinimo[];
+  /* Valor movido por día del período actual (para el sparkline del KPI hero). */
+  sparklineValor: number[];
+}
