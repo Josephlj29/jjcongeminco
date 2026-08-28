@@ -12,7 +12,6 @@
  * acciones (`AccionesOrden`) se comparte entre ambas presentaciones.
  */
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Plus,
@@ -27,12 +26,7 @@ import {
   Hammer,
   ClipboardCheck,
 } from "lucide-react";
-import {
-  puede,
-  type OrdenMantenimientoResumen,
-  type RoleCode,
-  type SituacionOrden,
-} from "@congeminco/shared";
+import { type OrdenMantenimientoResumen, type SituacionOrden } from "@congeminco/shared";
 import {
   useOrdenesMantenimiento,
   useOrdenMantenimientoDetalle,
@@ -46,6 +40,9 @@ import { DialogCulminarOrden } from "@/components/mantenimiento/DialogCulminarOr
 import { DialogReconciliarOrden } from "@/components/mantenimiento/DialogReconciliarOrden";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { PageHeader } from "@/components/PageHeader";
+import { usePermiso } from "@/hooks/useYo";
 import { imprimirOrdenMantenimiento } from "@/lib/imprimir-orden-mantenimiento";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,17 +79,6 @@ const SIT_VARIANTE: Record<SituacionOrden, "default" | "secondary" | "success" |
   cerrada: "success",
   anulada: "destructive",
 };
-
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: RoleCode }>;
-    },
-  });
-}
 
 async function pdf(id: string) {
   try {
@@ -242,12 +228,16 @@ function TarjetaOrden({
 }
 
 export default function MantenimientoPage() {
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "requerimientoCrear");
-  const puedeAprobar = puede(yo?.rol ?? null, "requerimientoAprobar");
+  const puedeEscribir = usePermiso("requerimientoCrear");
+  const puedeAprobar = usePermiso("requerimientoAprobar");
 
   const [tab, setTab] = useState<SituacionOrden>("abierta");
-  const { data: ordenes, isLoading } = useOrdenesMantenimiento({ situacion: tab });
+  const {
+    data: ordenes,
+    isLoading,
+    isError: errorOrdenes,
+    refetch,
+  } = useOrdenesMantenimiento({ situacion: tab });
 
   const [crear, setCrear] = useState(false);
   const [editarId, setEditarId] = useState<string | null>(null);
@@ -284,21 +274,18 @@ export default function MantenimientoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mantenimiento</h1>
-          <p className="text-sm text-muted-foreground">
-            Órdenes de trabajo por placa. Los repuestos se consumen del inventario y el admin los
-            ratifica.
-          </p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={() => setCrear(true)} className="w-full sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva orden
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Mantenimiento"
+        descripcion="Órdenes de trabajo por placa. Los repuestos se consumen del inventario y el admin los ratifica."
+        acciones={
+          puedeEscribir && (
+            <Button onClick={() => setCrear(true)} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva orden
+            </Button>
+          )
+        }
+      />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as SituacionOrden)} className="space-y-4">
         <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
@@ -315,6 +302,8 @@ export default function MantenimientoPage() {
                 <Skeleton key={i} className="h-20 md:h-12" />
               ))}
             </div>
+          ) : errorOrdenes ? (
+            <ErrorState onReintentar={() => void refetch()} />
           ) : !ordenes?.length ? (
             <EmptyState
               icon={Hammer}
