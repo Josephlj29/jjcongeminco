@@ -13,11 +13,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Wrench } from "lucide-react";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
+import { Plus, Pencil, Trash2, Wrench } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
-import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import {
   CrearTipoEquipoSchema,
@@ -25,7 +22,6 @@ import {
   type CrearTipoEquipo,
   type ActualizarTipoEquipo,
   type TipoEquipo,
-  puede,
 } from "@congeminco/shared";
 import {
   useTiposEquipo,
@@ -33,17 +29,12 @@ import {
   useActualizarTipoEquipo,
   useEliminarTipoEquipo,
 } from "@/hooks/useTiposEquipo";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -51,20 +42,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-
-/* ─── Hook: rol del usuario actual ─── */
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: import("@congeminco/shared").RoleCode }>;
-    },
-  });
-}
 
 /* ─── Dialog: Crear / Editar tipo de equipo ─── */
 function DialogTipoEquipo({
@@ -156,26 +133,40 @@ function DialogTipoEquipo({
   );
 }
 
+const COLUMNAS: ColumnaDataTable<TipoEquipo>[] = [
+  {
+    id: "codigo",
+    titulo: "Código",
+    celda: (t) => t.Codigo,
+    className: "font-mono text-xs",
+  },
+  {
+    id: "nombre",
+    titulo: "Nombre",
+    celda: (t) => t.Nombre,
+    className: "font-medium",
+  },
+  {
+    id: "descripcion",
+    titulo: "Descripción",
+    celda: (t) => t.Descripcion ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+];
+
 /* ─── Página principal ─── */
 export default function TiposEquipoPage() {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [tipoEditar, setTipoEditar] = useState<TipoEquipo | null>(null);
   const [tipoEliminar, setTipoEliminar] = useState<TipoEquipo | null>(null);
 
-  const { data: tipos, isLoading } = useTiposEquipo();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "productoEscritura");
+  const { data: tipos, isLoading: cargando, isError: error, refetch } = useTiposEquipo();
+  const puedeEscribir = usePermiso("productoEscritura");
   const { mutateAsync: eliminarTipo } = useEliminarTipoEquipo();
-
-  const paginacion = usePaginacion(tipos ?? [], 10);
 
   const abrirNuevo = () => {
     setTipoEditar(null);
-    setMostrarDialog(true);
-  };
-
-  const abrirEditar = (t: TipoEquipo) => {
-    setTipoEditar(t);
     setMostrarDialog(true);
   };
 
@@ -186,98 +177,60 @@ export default function TiposEquipoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tipos de equipo</h1>
-          <p className="text-muted-foreground">
-            Clasificaciones de equipos para asociar a productos compatibles
-          </p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={abrirNuevo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo tipo
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Tipos de equipo"
+        descripcion="Clasificaciones de equipos para asociar a productos compatibles"
+        breadcrumbs={[{ label: "Maestros" }, { label: "Tipos de equipo" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo tipo
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Descripción</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell colSpan={puedeEscribir ? 4 : 3} className="p-0">
-                    <EmptyState
-                      icon={Wrench}
-                      titulo="No hay tipos de equipo registrados"
-                      descripcion="Crea el primer tipo para poder clasificar los equipos y asociarlos a productos."
-                      accion={
-                        puedeEscribir ? (
-                          <Button size="sm" onClick={abrirNuevo}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nuevo tipo
-                          </Button>
-                        ) : undefined
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((t) => (
-                  <TableRow key={t.Id}>
-                    <TableCell className="font-mono text-xs">{t.Codigo}</TableCell>
-                    <TableCell className="font-medium">{t.Nombre}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {t.Descripcion ?? "—"}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="space-x-1 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEditar(t)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setTipoEliminar(t)}
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          {paginacion.totalPaginas > 1 && (
-            <Paginacion
-              pagina={paginacion.pagina}
-              totalPaginas={paginacion.totalPaginas}
-              totalItems={paginacion.totalItems}
-              desde={paginacion.desde}
-              hasta={paginacion.hasta}
-              onPagina={paginacion.setPagina}
-            />
-          )}
-        </div>
-      )}
+      <DataTable
+        columnas={COLUMNAS}
+        datos={tipos}
+        obtenerId={(t) => t.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: Wrench,
+          titulo: "No hay tipos de equipo registrados",
+          descripcion:
+            "Crea el primer tipo para poder clasificar los equipos y asociarlos a productos.",
+          accion: puedeEscribir ? (
+            <Button size="sm" onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo tipo
+            </Button>
+          ) : undefined,
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (t) => {
+                    setTipoEditar(t);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (t) => setTipoEliminar(t),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && <DialogTipoEquipo tipoEquipo={tipoEditar} onClose={cerrarDialog} />}
 
