@@ -13,22 +13,21 @@
  */
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearRequerimientoSchema,
   ORIGEN_REQUERIMIENTO,
-  puede,
   type CrearRequerimiento,
-  type RoleCode,
 } from "@congeminco/shared";
 import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { usePermiso } from "@/hooks/useYo";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,19 +55,6 @@ const ORIGEN_LABEL: Record<string, string> = {
   desgaste_prematuro: "Desgaste prematuro",
 };
 
-/* Rol del usuario actual (para gating de acciones de escritura), igual que el
-   resto de los maestros. */
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: RoleCode }>;
-    },
-  });
-}
-
 export default function RequerimientosPage() {
   const { mutateAsync, isPending } = useCrearRequerimiento();
   const { data: productos } = useSaldos();
@@ -76,8 +62,7 @@ export default function RequerimientosPage() {
   const { data: vehiculos } = useVehiculos();
   const { data: personal } = usePersonal();
 
-  const { data: yo } = useRolActual();
-  const puedeCrear = puede(yo?.rol ?? null, "requerimientoCrear");
+  const puedeCrear = usePermiso("requerimientoCrear");
 
   // Renderizamos UNA sola presentación de las líneas (cards en móvil, tabla en
   // desktop). No con CSS `hidden`: eso dejaría montados dos <input> por campo con
@@ -151,12 +136,10 @@ export default function RequerimientosPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Requerimientos</h1>
-        <p className="text-muted-foreground">
-          Crea solicitudes de materiales asociadas a equipos o vehículos
-        </p>
-      </div>
+      <PageHeader
+        titulo="Requerimientos"
+        descripcion="Crea solicitudes de materiales asociadas a equipos o vehículos"
+      />
 
       {/* Formulario (solo para roles que pueden crear) */}
       {puedeCrear && (
