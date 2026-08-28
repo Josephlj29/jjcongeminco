@@ -707,7 +707,7 @@ function DialogKardex({
                   <TableCell className="text-xs">{fila.NombreUbicacion}</TableCell>
                   <TableCell
                     className={`text-right font-medium ${
-                      fila.Direccion === 1 ? "text-emerald-600" : "text-red-600"
+                      fila.Direccion === 1 ? "text-success" : "text-destructive"
                     }`}
                   >
                     {fila.Direccion === 1 ? "+" : "-"}
