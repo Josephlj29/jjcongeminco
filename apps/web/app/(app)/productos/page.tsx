@@ -516,14 +516,14 @@ function DialogProducto({
                 </span>
               </Label>
               {archivos.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3 md:gap-2">
                   {archivos.map((a, i) => (
                     <div key={a.url} className="relative">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={a.url}
                         alt={`Imagen ${i + 1}`}
-                        className="h-16 w-16 rounded-md border object-cover"
+                        className="h-20 w-20 rounded-md border object-cover md:h-16 md:w-16"
                       />
                       {i === 0 && (
                         <Badge className="absolute -bottom-1 left-0 scale-75" variant="default">
@@ -533,17 +533,17 @@ function DialogProducto({
                       <button
                         type="button"
                         onClick={() => quitarArchivo(i)}
-                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive"
+                        className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive md:h-5 md:w-5"
                         aria-label="Quitar imagen"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5 md:h-3 md:w-3" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
               {archivos.length < MAX_IMAGENES_PRODUCTO && (
-                <label className="flex cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 p-3 text-sm text-muted-foreground hover:border-muted-foreground/50 transition-colors">
+                <label className="flex min-h-[3.5rem] cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground hover:border-muted-foreground/50 transition-colors md:min-h-0 md:p-3">
                   Agregar imágenes
                   <input
                     type="file"
