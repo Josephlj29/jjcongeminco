@@ -9,16 +9,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Users } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Plus, Pencil, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearPersonalSchema,
   ActualizarPersonalSchema,
-  puede,
   type CrearPersonal,
   type PersonalConDetalle,
-  type RoleCode,
 } from "@congeminco/shared";
 import {
   usePersonal,
@@ -28,10 +25,10 @@ import {
   useEliminarPersonal,
 } from "@/hooks/usePersonal";
 import { useCargos } from "@/hooks/useCargos";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { DialogEliminar } from "@/components/DialogEliminar";
-import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,32 +41,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: RoleCode }>;
-    },
-  });
-}
 
 const SIN_USUARIO = "__none__";
 
@@ -208,17 +185,51 @@ function DialogPersonal({
   );
 }
 
+const COLUMNAS: ColumnaDataTable<PersonalConDetalle>[] = [
+  {
+    id: "nombre",
+    titulo: "Nombre",
+    celda: (p) => p.NombreCompleto,
+    className: "font-medium",
+  },
+  {
+    id: "dni",
+    titulo: "DNI",
+    celda: (p) => p.Dni ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+  {
+    id: "cargo",
+    titulo: "Cargo",
+    celda: (p) => p.NombreCargo ?? "—",
+    className: "text-sm",
+  },
+  {
+    id: "acceso",
+    titulo: "Acceso",
+    celda: (p) =>
+      p.NombreUsuario ? (
+        <Badge variant="secondary">{p.NombreUsuario}</Badge>
+      ) : (
+        <span className="text-xs text-muted-foreground">Sin login</span>
+      ),
+  },
+];
+
 export default function PersonalPage() {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [editar, setEditar] = useState<PersonalConDetalle | null>(null);
   const [eliminarP, setEliminarP] = useState<PersonalConDetalle | null>(null);
 
-  const { data: personal, isLoading } = usePersonal();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "catalogoAdmin");
+  const { data: personal, isLoading: cargando, isError: error, refetch } = usePersonal();
+  const puedeEscribir = usePermiso("catalogoAdmin");
   const { mutateAsync: eliminar } = useEliminarPersonal();
 
-  const paginacion = usePaginacion(personal ?? [], 10);
+  const abrirNuevo = () => {
+    setEditar(null);
+    setMostrarDialog(true);
+  };
 
   const cerrar = () => {
     setMostrarDialog(false);
@@ -227,122 +238,59 @@ export default function PersonalPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Personal</h1>
-          <p className="text-muted-foreground">
-            Registro del personal que solicita materiales (con su cargo).
-          </p>
-        </div>
-        {puedeEscribir && (
-          <Button
-            onClick={() => {
-              setEditar(null);
-              setMostrarDialog(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo personal
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Personal"
+        descripcion="Registro del personal que solicita materiales (con su cargo)."
+        breadcrumbs={[{ label: "Maestros" }, { label: "Personal" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo personal
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>DNI</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Acceso</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell colSpan={puedeEscribir ? 5 : 4} className="p-0">
-                    <EmptyState
-                      icon={Users}
-                      titulo="No hay personal registrado"
-                      descripcion="Crea al primer personal para poder asignarlo como solicitante."
-                      accion={
-                        puedeEscribir ? (
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setEditar(null);
-                              setMostrarDialog(true);
-                            }}
-                          >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nuevo personal
-                          </Button>
-                        ) : undefined
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((p) => (
-                  <TableRow key={p.Id}>
-                    <TableCell className="font-medium">{p.NombreCompleto}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.Dni ?? "—"}</TableCell>
-                    <TableCell className="text-sm">{p.NombreCargo ?? "—"}</TableCell>
-                    <TableCell>
-                      {p.NombreUsuario ? (
-                        <Badge variant="secondary">{p.NombreUsuario}</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Sin login</span>
-                      )}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="space-x-1 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditar(p);
-                            setMostrarDialog(true);
-                          }}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setEliminarP(p)}
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          {paginacion.totalPaginas > 1 && (
-            <Paginacion
-              pagina={paginacion.pagina}
-              totalPaginas={paginacion.totalPaginas}
-              totalItems={paginacion.totalItems}
-              desde={paginacion.desde}
-              hasta={paginacion.hasta}
-              onPagina={paginacion.setPagina}
-            />
-          )}
-        </div>
-      )}
+      <DataTable
+        columnas={COLUMNAS}
+        datos={personal}
+        obtenerId={(p) => p.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: Users,
+          titulo: "No hay personal registrado",
+          descripcion: "Crea al primer personal para poder asignarlo como solicitante.",
+          accion: puedeEscribir ? (
+            <Button size="sm" onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo personal
+            </Button>
+          ) : undefined,
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (p) => {
+                    setEditar(p);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (p) => setEliminarP(p),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && <DialogPersonal persona={editar} onClose={cerrar} />}
 
