@@ -3,12 +3,17 @@
  *
  * PATCH  /api/categorias/:id — actualiza una categoría (rol: catalogoAdmin = admin)
  * DELETE /api/categorias/:id — soft-delete (Estado=false). Bloquea si tiene
- *   dependientes (productos o subcategorías) vía FnContarDependencias('categoria').
+ *   dependientes (productos o subcategorías) vía FnEliminarConDependencias('categoria').
  */
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-auth";
+import {
+  autenticarRequest,
+  mapearErrorNegocio,
+  respuestaError,
+  respuestaErrorBD,
+} from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ActualizarCategoriaSchema, puede } from "@congeminco/shared";
 
@@ -66,30 +71,22 @@ export async function DELETE(
   const { id } = await params;
   const supabase = await crearClienteServidor();
 
-  const { data: deps, error: depsError } = await supabase
+  const { data: resultado, error: dbError } = await supabase
     .schema("inv")
-    .rpc("FnContarDependencias", { PEntidad: "categoria", PId: id });
-
-  if (depsError) {
-    return NextResponse.json({ error: depsError.message }, { status: 500 });
-  }
-
-  const depData = deps as { puedeEliminar: boolean } | null;
-  if (depData && depData.puedeEliminar === false) {
-    return NextResponse.json(
-      { error: "No se puede eliminar: tiene productos o subcategorías.", dependencias: deps },
-      { status: 409 },
-    );
-  }
-
-  const { error: dbError } = await supabase
-    .schema("inv")
-    .from("T_Categoria")
-    .update({ Estado: false })
-    .eq("Id", id);
+    .rpc("FnEliminarConDependencias", { PEntidad: "categoria", PId: id });
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    return mapearErrorNegocio(dbError);
+  }
+  const res = resultado as { ok: boolean; dependencias?: unknown };
+  if (!res?.ok) {
+    return NextResponse.json(
+      {
+        error: "No se puede eliminar: tiene productos o subcategorías.",
+        dependencias: res?.dependencias,
+      },
+      { status: 409 },
+    );
   }
 
   return new NextResponse(null, { status: 204 });

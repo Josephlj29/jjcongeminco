@@ -7,7 +7,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, mapearErrorNegocio, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { ActualizarPersonalSchema, puede } from "@congeminco/shared";
 
@@ -63,29 +63,22 @@ export async function DELETE(
   const { id } = await params;
   const supabase = await crearClienteServidor();
 
-  const { data: deps, error: depsError } = await supabase
+  const { data: resultado, error: dbError } = await supabase
     .schema("inv")
-    .rpc("FnContarDependencias", { PEntidad: "personal", PId: id });
-
-  if (depsError) {
-    return NextResponse.json({ error: depsError.message }, { status: 500 });
-  }
-  const depData = deps as { puedeEliminar: boolean } | null;
-  if (depData && depData.puedeEliminar === false) {
-    return NextResponse.json(
-      { error: "No se puede eliminar: es solicitante de requerimientos.", dependencias: deps },
-      { status: 409 },
-    );
-  }
-
-  const { error: dbError } = await supabase
-    .schema("inv")
-    .from("T_Personal")
-    .update({ Estado: false })
-    .eq("Id", id);
+    .rpc("FnEliminarConDependencias", { PEntidad: "personal", PId: id });
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    return mapearErrorNegocio(dbError);
+  }
+  const res = resultado as { ok: boolean; dependencias?: unknown };
+  if (!res?.ok) {
+    return NextResponse.json(
+      {
+        error: "No se puede eliminar: es solicitante de requerimientos.",
+        dependencias: res?.dependencias,
+      },
+      { status: 409 },
+    );
   }
   return new NextResponse(null, { status: 204 });
 }
