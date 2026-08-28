@@ -11,15 +11,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, FolderTree } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Plus, Pencil, Trash2, FolderTree } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearCategoriaSchema,
   ActualizarCategoriaSchema,
-  puede,
   type CrearCategoria,
-  type RoleCode,
 } from "@congeminco/shared";
 import {
   useCategoriasMaestro,
@@ -28,10 +25,10 @@ import {
   useEliminarCategoria,
   type CategoriaMaestro,
 } from "@/hooks/useCategoriasMaestro";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { DialogEliminar } from "@/components/DialogEliminar";
-import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,32 +40,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: RoleCode }>;
-    },
-  });
-}
 
 const SIN_PADRE = "__none__";
 
@@ -190,24 +167,45 @@ function DialogCategoria({
   );
 }
 
+const COLUMNAS: ColumnaDataTable<CategoriaMaestro>[] = [
+  {
+    id: "codigo",
+    titulo: "Código",
+    celda: (c) => c.Codigo,
+    className: "font-mono text-xs",
+  },
+  {
+    id: "nombre",
+    titulo: "Nombre",
+    celda: (c) => c.Nombre,
+    className: "font-medium",
+  },
+  {
+    id: "familiaPadre",
+    titulo: "Familia padre",
+    celda: (c) => c.NombreCategoriaPadre ?? "—",
+    className: "text-sm text-muted-foreground",
+  },
+  {
+    id: "descripcion",
+    titulo: "Descripción",
+    celda: (c) => c.Descripcion ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+];
+
 export default function CategoriasPage() {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [catEditar, setCatEditar] = useState<CategoriaMaestro | null>(null);
   const [catEliminar, setCatEliminar] = useState<CategoriaMaestro | null>(null);
 
-  const { data: categorias, isLoading } = useCategoriasMaestro();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "catalogoAdmin");
+  const { data: categorias, isLoading: cargando, isError: error, refetch } = useCategoriasMaestro();
+  const puedeEscribir = usePermiso("catalogoAdmin");
   const { mutateAsync: eliminar } = useEliminarCategoria();
-
-  const paginacion = usePaginacion(categorias ?? [], 10);
 
   const abrirNuevo = () => {
     setCatEditar(null);
-    setMostrarDialog(true);
-  };
-  const abrirEditar = (c: CategoriaMaestro) => {
-    setCatEditar(c);
     setMostrarDialog(true);
   };
   const cerrar = () => {
@@ -217,102 +215,59 @@ export default function CategoriasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Categorías y familias</h1>
-          <p className="text-muted-foreground">
-            Clasificación jerárquica de los productos (familia → categoría).
-          </p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={abrirNuevo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva categoría
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Categorías y familias"
+        descripcion="Clasificación jerárquica de los productos (familia → categoría)."
+        breadcrumbs={[{ label: "Maestros" }, { label: "Categorías" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva categoría
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Familia padre</TableHead>
-                <TableHead>Descripción</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell colSpan={puedeEscribir ? 5 : 4} className="p-0">
-                    <EmptyState
-                      icon={FolderTree}
-                      titulo="No hay categorías registradas"
-                      descripcion="Crea la primera familia o categoría para clasificar los productos."
-                      accion={
-                        puedeEscribir ? (
-                          <Button size="sm" onClick={abrirNuevo}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nueva categoría
-                          </Button>
-                        ) : undefined
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((c) => (
-                  <TableRow key={c.Id}>
-                    <TableCell className="font-mono text-xs">{c.Codigo}</TableCell>
-                    <TableCell className="font-medium">{c.Nombre}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {c.NombreCategoriaPadre ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {c.Descripcion ?? "—"}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="space-x-1 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEditar(c)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setCatEliminar(c)}
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          {paginacion.totalPaginas > 1 && (
-            <Paginacion
-              pagina={paginacion.pagina}
-              totalPaginas={paginacion.totalPaginas}
-              totalItems={paginacion.totalItems}
-              desde={paginacion.desde}
-              hasta={paginacion.hasta}
-              onPagina={paginacion.setPagina}
-            />
-          )}
-        </div>
-      )}
+      <DataTable
+        columnas={COLUMNAS}
+        datos={categorias}
+        obtenerId={(c) => c.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: FolderTree,
+          titulo: "No hay categorías registradas",
+          descripcion: "Crea la primera familia o categoría para clasificar los productos.",
+          accion: puedeEscribir ? (
+            <Button size="sm" onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva categoría
+            </Button>
+          ) : undefined,
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (c) => {
+                    setCatEditar(c);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (c) => setCatEliminar(c),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && (
         <DialogCategoria categoria={catEditar} categorias={categorias ?? []} onClose={cerrar} />
