@@ -9,37 +9,33 @@
  * - Acciones restringidas por rol (productoEscritura = admin, almacenero)
  */
 import { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, X } from "lucide-react";
-import { DialogEliminar } from "@/components/DialogEliminar";
+import { Plus, Pencil, Trash2, X, Truck } from "lucide-react";
 import { toast } from "sonner";
-import {
-  CrearProveedorSchema,
-  type CrearProveedor,
-  type Proveedor,
-  puede,
-} from "@congeminco/shared";
+import { CrearProveedorSchema, type CrearProveedor, type Proveedor } from "@congeminco/shared";
 import {
   useProveedores,
   useCrearProveedor,
   useActualizarProveedor,
   useEliminarProveedor,
 } from "@/hooks/useProveedores";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
+import { DialogEliminar } from "@/components/DialogEliminar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -47,12 +43,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-
-/* Clase para los <select> nativos (estilo consistente con Input). */
-const SELECT_CLASS =
-  "flex h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring";
 
 const CUENTA_VACIA = {
   Banco: "",
@@ -63,18 +53,6 @@ const CUENTA_VACIA = {
   TitularCuenta: "",
   EsPrincipal: false,
 };
-
-/* ─── Hook: rol del usuario actual ─── */
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: import("@congeminco/shared").RoleCode }>;
-    },
-  });
-}
 
 /* ─── Dialog: Crear / Editar proveedor ─── */
 function DialogProveedor({
@@ -212,23 +190,39 @@ function DialogProveedor({
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-xs">Tipo</Label>
-                        <select
-                          className={SELECT_CLASS}
-                          {...register(`Cuentas.${i}.TipoCuenta` as const)}
-                        >
-                          <option value="corriente">Corriente</option>
-                          <option value="ahorros">Ahorros</option>
-                        </select>
+                        <Controller
+                          control={control}
+                          name={`Cuentas.${i}.TipoCuenta` as const}
+                          render={({ field: f }) => (
+                            <Select value={f.value} onValueChange={f.onChange}>
+                              <SelectTrigger className="h-9">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="corriente">Corriente</SelectItem>
+                                <SelectItem value="ahorros">Ahorros</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Moneda</Label>
-                        <select
-                          className={SELECT_CLASS}
-                          {...register(`Cuentas.${i}.Moneda` as const)}
-                        >
-                          <option value="PEN">Soles</option>
-                          <option value="USD">Dólares</option>
-                        </select>
+                        <Controller
+                          control={control}
+                          name={`Cuentas.${i}.Moneda` as const}
+                          render={({ field: f }) => (
+                            <Select value={f.value} onValueChange={f.onChange}>
+                              <SelectTrigger className="h-9">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="PEN">Soles</SelectItem>
+                                <SelectItem value="USD">Dólares</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
                       </div>
                     </div>
                   </div>
@@ -263,14 +257,16 @@ function DialogProveedor({
                         {...register(`Cuentas.${i}.TitularCuenta` as const)}
                       />
                     </div>
-                    <label className="flex h-9 items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4"
-                        {...register(`Cuentas.${i}.EsPrincipal` as const)}
-                      />
-                      Cuenta principal
-                    </label>
+                    <Controller
+                      control={control}
+                      name={`Cuentas.${i}.EsPrincipal` as const}
+                      render={({ field: f }) => (
+                        <label className="flex h-9 items-center gap-2 text-sm">
+                          <Checkbox checked={f.value} onCheckedChange={f.onChange} />
+                          Cuenta principal
+                        </label>
+                      )}
+                    />
                   </div>
                 </div>
               ))
@@ -291,26 +287,47 @@ function DialogProveedor({
   );
 }
 
+const COLUMNAS: ColumnaDataTable<Proveedor>[] = [
+  { id: "nombre", titulo: "Nombre", celda: (p) => p.Nombre, className: "font-medium" },
+  { id: "ruc", titulo: "RUC", celda: (p) => p.Ruc ?? "—", className: "font-mono text-xs" },
+  {
+    id: "contacto",
+    titulo: "Contacto",
+    celda: (p) => p.Contacto ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+  {
+    id: "telefono",
+    titulo: "Teléfono",
+    celda: (p) => p.Telefono ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+  {
+    id: "cuentas",
+    titulo: "Cuentas",
+    celda: (p) =>
+      p.Cuentas?.length ? (
+        <Badge variant="secondary">{p.Cuentas.length}</Badge>
+      ) : (
+        <span className="text-xs text-muted-foreground">—</span>
+      ),
+  },
+];
+
 /* ─── Página principal ─── */
 export default function ProveedoresPage() {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [proveedorEditar, setProveedorEditar] = useState<Proveedor | null>(null);
   const [proveedorEliminar, setProveedorEliminar] = useState<Proveedor | null>(null);
 
-  const { data: proveedores, isLoading } = useProveedores();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "productoEscritura");
+  const { data: proveedores, isLoading: cargando, isError: error, refetch } = useProveedores();
+  const puedeEscribir = usePermiso("productoEscritura");
   const { mutateAsync: eliminarProveedor } = useEliminarProveedor();
-
-  const paginacion = usePaginacion(proveedores ?? [], 10);
 
   const abrirNuevo = () => {
     setProveedorEditar(null);
-    setMostrarDialog(true);
-  };
-
-  const abrirEditar = (p: Proveedor) => {
-    setProveedorEditar(p);
     setMostrarDialog(true);
   };
 
@@ -321,97 +338,59 @@ export default function ProveedoresPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Proveedores</h1>
-          <p className="text-muted-foreground">Administra los proveedores de la empresa</p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={abrirNuevo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo proveedor
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Proveedores"
+        descripcion="Administra los proveedores de la empresa"
+        breadcrumbs={[{ label: "Maestros" }, { label: "Proveedores" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo proveedor
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>RUC</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Cuentas</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={puedeEscribir ? 6 : 5}
-                    className="py-10 text-center text-muted-foreground"
-                  >
-                    No hay proveedores registrados.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((p) => (
-                  <TableRow key={p.Id}>
-                    <TableCell className="font-medium">{p.Nombre}</TableCell>
-                    <TableCell className="font-mono text-xs">{p.Ruc ?? "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {p.Contacto ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {p.Telefono ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      {p.Cuentas?.length ? (
-                        <Badge variant="secondary">{p.Cuentas.length}</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="space-x-1 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEditar(p)}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setProveedorEliminar(p)}
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          <Paginacion
-            pagina={paginacion.pagina}
-            totalPaginas={paginacion.totalPaginas}
-            totalItems={paginacion.totalItems}
-            desde={paginacion.desde}
-            hasta={paginacion.hasta}
-            onPagina={paginacion.setPagina}
-          />
-        </div>
-      )}
+      <DataTable
+        columnas={COLUMNAS}
+        datos={proveedores}
+        obtenerId={(p) => p.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: Truck,
+          titulo: "No hay proveedores registrados",
+          descripcion: "Crea el primer proveedor para registrar compras.",
+          accion: puedeEscribir ? (
+            <Button size="sm" onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo proveedor
+            </Button>
+          ) : undefined,
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (p) => {
+                    setProveedorEditar(p);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (p) => setProveedorEliminar(p),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && <DialogProveedor proveedor={proveedorEditar} onClose={cerrarDialog} />}
 
