@@ -13,11 +13,30 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { X, Download } from "lucide-react";
+import {
+  X,
+  Download,
+  TrendingUp,
+  TrendingDown,
+  Scale,
+  Wallet,
+  Package,
+  AlertTriangle,
+  Repeat,
+  Zap,
+  Percent,
+} from "lucide-react";
+import { toast } from "sonner";
 import { useCategorias, useProveedores } from "@/hooks/useCatalogo";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { useProductos } from "@/hooks/useProductos";
 import { exportarCsv } from "@/lib/csv";
+import { exportarExcel } from "@/lib/exportar-xlsx";
+import { PageHeader } from "@/components/PageHeader";
+import { ErrorState } from "@/components/ErrorState";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { Combobox } from "@/components/Combobox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +47,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -114,29 +139,53 @@ function useReporteValorizado(idCategoria: string, soloBajoMinimo: boolean, habi
   });
 }
 
-/* KPI compacto para las filas de indicadores de cada pestaña. */
-function KpiMini({
-  titulo,
-  valor,
-  acento,
-}: {
-  titulo: string;
-  valor: string;
-  acento?: "positivo" | "negativo";
-}) {
+/**
+ * Datos listos para exportar (mismos {filas, columnas} para CSV y Excel).
+ * Se arma una sola vez por pestaña y lo consumen ambos formatos.
+ */
+interface ExportDataset {
+  nombreArchivo: string;
+  nombreHoja: string;
+  columnas: { key: string; label: string }[];
+  filas: Record<string, unknown>[];
+}
+
+/**
+ * Menú "Exportar" reutilizable (CSV / Excel) sobre un mismo ExportDataset.
+ * `dataset` es una fábrica: se evalúa al hacer clic para tomar los datos frescos.
+ */
+function ExportarMenu({ dataset }: { dataset: () => ExportDataset }) {
+  const exportarComoExcel = async () => {
+    const d = dataset();
+    try {
+      await exportarExcel(d.nombreArchivo, [
+        { nombre: d.nombreHoja, columnas: d.columnas, filas: d.filas },
+      ]);
+    } catch {
+      toast.error("No se pudo exportar a Excel");
+    }
+  };
+
   return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{titulo}</p>
-        <p
-          className={`text-xl font-bold ${
-            acento === "positivo" ? "text-emerald-600" : acento === "negativo" ? "text-red-600" : ""
-          }`}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Download className="mr-1 h-3.5 w-3.5" />
+          Exportar
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => {
+            const d = dataset();
+            exportarCsv(d.filas, d.columnas, d.nombreArchivo);
+          }}
         >
-          {valor}
-        </p>
-      </CardContent>
-    </Card>
+          CSV
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => void exportarComoExcel()}>Excel</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -182,13 +231,24 @@ export default function ReportesPage() {
   const { data: vehiculos } = useVehiculos();
   const { data: productos } = useProductos();
 
-  const { data: movimientos, isLoading: cargandoMov } = useReporteMovimientos(filtros, buscarMov);
-  const { data: valorizado, isLoading: cargandoVal } = useReporteValorizado(
-    catValorizado,
-    soloBajoMinimo,
-    buscarVal,
-  );
-  const { data: recambios, isLoading: cargandoRec } = useReporteRecambios(recFiltros, buscarRec);
+  const {
+    data: movimientos,
+    isLoading: cargandoMov,
+    isError: errorMov,
+    refetch: refetchMov,
+  } = useReporteMovimientos(filtros, buscarMov);
+  const {
+    data: valorizado,
+    isLoading: cargandoVal,
+    isError: errorVal,
+    refetch: refetchVal,
+  } = useReporteValorizado(catValorizado, soloBajoMinimo, buscarVal);
+  const {
+    data: recambios,
+    isLoading: cargandoRec,
+    isError: errorRec,
+    refetch: refetchRec,
+  } = useReporteRecambios(recFiltros, buscarRec);
 
   const kpisRec = useMemo(() => {
     const rows = recambios ?? [];
@@ -303,8 +363,20 @@ export default function ReportesPage() {
     return chips;
   }, [filtros, categorias, productos, proveedores, equipos, vehiculos]);
 
-  const exportarMovimientos = () => {
-    const filas = (movimientos ?? []).map((m) => ({
+  /* Datasets de exportación: mismos {filas, columnas} para CSV y Excel. */
+  const datasetMovimientos = (): ExportDataset => ({
+    nombreArchivo: "reporte-movimientos",
+    nombreHoja: "Movimientos",
+    columnas: [
+      { key: "Fecha", label: "Fecha" },
+      { key: "Tipo", label: "Tipo" },
+      { key: "Producto", label: "Producto" },
+      { key: "Ubicacion", label: "Ubicación" },
+      { key: "Placa", label: "Placa" },
+      { key: "Cantidad", label: "Cantidad" },
+      { key: "Valor", label: "Valor (S/)" },
+    ],
+    filas: (movimientos ?? []).map((m) => ({
       Fecha: new Date(m.FechaMovimiento).toLocaleDateString("es-PE"),
       Tipo: TIPO_LABEL[m.TipoDocumento] ?? m.TipoDocumento,
       Producto: m.NombreProducto,
@@ -312,24 +384,22 @@ export default function ReportesPage() {
       Placa: m.Placa ?? "",
       Cantidad: m.CantidadConSigno,
       Valor: m.ValorMovimiento.toFixed(2),
-    }));
-    exportarCsv(
-      filas,
-      [
-        { key: "Fecha", label: "Fecha" },
-        { key: "Tipo", label: "Tipo" },
-        { key: "Producto", label: "Producto" },
-        { key: "Ubicacion", label: "Ubicación" },
-        { key: "Placa", label: "Placa" },
-        { key: "Cantidad", label: "Cantidad" },
-        { key: "Valor", label: "Valor (S/)" },
-      ],
-      "reporte-movimientos",
-    );
-  };
+    })),
+  });
 
-  const exportarValorizado = () => {
-    const filas = (valorizado ?? []).map((p) => ({
+  const datasetValorizado = (): ExportDataset => ({
+    nombreArchivo: "reporte-valorizado",
+    nombreHoja: "Valorizado",
+    columnas: [
+      { key: "Sku", label: "SKU" },
+      { key: "Producto", label: "Producto" },
+      { key: "Categoria", label: "Categoría" },
+      { key: "Stock", label: "Stock" },
+      { key: "CostoPromedio", label: "Costo promedio (S/)" },
+      { key: "ValorTotal", label: "Valor total (S/)" },
+      { key: "BajoMinimo", label: "Bajo mínimo" },
+    ],
+    filas: (valorizado ?? []).map((p) => ({
       Sku: p.Sku,
       Producto: p.NombreProducto,
       Categoria: p.NombreCategoria,
@@ -337,24 +407,23 @@ export default function ReportesPage() {
       CostoPromedio: p.CostoPromedio.toFixed(2),
       ValorTotal: p.ValorTotal.toFixed(2),
       BajoMinimo: p.BajoMinimo ? "Sí" : "No",
-    }));
-    exportarCsv(
-      filas,
-      [
-        { key: "Sku", label: "SKU" },
-        { key: "Producto", label: "Producto" },
-        { key: "Categoria", label: "Categoría" },
-        { key: "Stock", label: "Stock" },
-        { key: "CostoPromedio", label: "Costo promedio (S/)" },
-        { key: "ValorTotal", label: "Valor total (S/)" },
-        { key: "BajoMinimo", label: "Bajo mínimo" },
-      ],
-      "reporte-valorizado",
-    );
-  };
+    })),
+  });
 
-  const exportarRecambios = () => {
-    const filas = (recambios ?? []).map((r) => ({
+  const datasetRecambios = (): ExportDataset => ({
+    nombreArchivo: "reporte-recambios",
+    nombreHoja: "Recambios",
+    columnas: [
+      { key: "Destino", label: "Equipo / Placa" },
+      { key: "Producto", label: "Producto" },
+      { key: "Sku", label: "SKU" },
+      { key: "Fecha", label: "Fecha" },
+      { key: "Origen", label: "Origen" },
+      { key: "Dias", label: "Días desde anterior" },
+      { key: "Promedio", label: "Promedio días" },
+      { key: "Acelerado", label: "Acelerado" },
+    ],
+    filas: (recambios ?? []).map((r) => ({
       Destino: r.TargetNombre,
       Producto: r.NombreProducto,
       Sku: r.Sku,
@@ -363,29 +432,12 @@ export default function ReportesPage() {
       Dias: r.DiasDesdeAnterior ?? "",
       Promedio: r.PromedioDiasPar ?? "",
       Acelerado: r.Acelerado ? "Sí" : "No",
-    }));
-    exportarCsv(
-      filas,
-      [
-        { key: "Destino", label: "Equipo / Placa" },
-        { key: "Producto", label: "Producto" },
-        { key: "Sku", label: "SKU" },
-        { key: "Fecha", label: "Fecha" },
-        { key: "Origen", label: "Origen" },
-        { key: "Dias", label: "Días desde anterior" },
-        { key: "Promedio", label: "Promedio días" },
-        { key: "Acelerado", label: "Acelerado" },
-      ],
-      "reporte-recambios",
-    );
-  };
+    })),
+  });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Reportes</h1>
-        <p className="text-muted-foreground">Analiza movimientos y stock valorizado</p>
-      </div>
+      <PageHeader titulo="Reportes" descripcion="Analiza movimientos y stock valorizado" />
 
       <Tabs defaultValue="movimientos" className="space-y-6">
         <TabsList>
@@ -455,33 +507,30 @@ export default function ReportesPage() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="space-y-1">
                   <Label>Producto</Label>
-                  <Select onValueChange={setFiltro("idProducto")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {productos?.map((p) => (
-                        <SelectItem key={p.IdProducto} value={p.IdProducto}>
-                          {p.Sku} — {p.NombreProducto}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Combobox
+                    opciones={(productos ?? []).map((p) => ({
+                      value: p.IdProducto,
+                      label: p.NombreProducto,
+                      codigo: p.Sku,
+                    }))}
+                    value={filtros.idProducto || null}
+                    onChange={(v) => setFiltro("idProducto")(v ?? "")}
+                    placeholder="Todos..."
+                    buscarPlaceholder="Buscar producto..."
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Proveedor</Label>
-                  <Select onValueChange={setFiltro("idProveedor")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {proveedores?.map((p) => (
-                        <SelectItem key={p.Id} value={p.Id}>
-                          {p.Nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Combobox
+                    opciones={(proveedores ?? []).map((p) => ({
+                      value: p.Id,
+                      label: p.Nombre,
+                    }))}
+                    value={filtros.idProveedor || null}
+                    onChange={(v) => setFiltro("idProveedor")(v ?? "")}
+                    placeholder="Todos..."
+                    buscarPlaceholder="Buscar proveedor..."
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Equipo</Label>
@@ -557,6 +606,8 @@ export default function ReportesPage() {
                     <Skeleton key={i} className="h-10" />
                   ))}
                 </div>
+              ) : errorMov ? (
+                <ErrorState onReintentar={() => void refetchMov()} />
               ) : !movimientos?.length ? (
                 <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
                   No se encontraron movimientos con esos filtros.
@@ -565,20 +616,23 @@ export default function ReportesPage() {
                 <div className="space-y-6">
                   {/* KPI cards */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <KpiMini
+                    <KpiCard
                       titulo="Total entradas"
                       valor={moneda(kpisMov.entradas)}
-                      acento="positivo"
+                      icono={TrendingUp}
+                      tono="success"
                     />
-                    <KpiMini
+                    <KpiCard
                       titulo="Total salidas"
                       valor={moneda(kpisMov.salidas)}
-                      acento="negativo"
+                      icono={TrendingDown}
+                      tono="destructive"
                     />
-                    <KpiMini
+                    <KpiCard
                       titulo="Valor neto"
                       valor={moneda(kpisMov.neto)}
-                      acento={kpisMov.neto >= 0 ? "positivo" : "negativo"}
+                      icono={Scale}
+                      tono={kpisMov.neto >= 0 ? "default" : "destructive"}
                     />
                   </div>
 
@@ -594,10 +648,7 @@ export default function ReportesPage() {
 
                   {/* Tabla con subtotales por tipo */}
                   <div className="flex justify-end">
-                    <Button variant="outline" size="sm" onClick={exportarMovimientos}>
-                      <Download className="mr-1 h-3.5 w-3.5" />
-                      Exportar CSV
-                    </Button>
+                    <ExportarMenu dataset={datasetMovimientos} />
                   </div>
                   <div className="overflow-x-auto rounded-lg border">
                     <Table>
@@ -654,11 +705,9 @@ export default function ReportesPage() {
                 </div>
                 <div className="flex items-end pb-0.5">
                   <label className="flex cursor-pointer items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={soloBajoMinimo}
-                      onChange={(e) => setSoloBajoMinimo(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300"
+                      onCheckedChange={(c) => setSoloBajoMinimo(c === true)}
                     />
                     Solo bajo mínimo
                   </label>
@@ -677,6 +726,8 @@ export default function ReportesPage() {
                     <Skeleton key={i} className="h-10" />
                   ))}
                 </div>
+              ) : errorVal ? (
+                <ErrorState onReintentar={() => void refetchVal()} />
               ) : !valorizado?.length ? (
                 <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
                   No se encontraron productos con esos filtros.
@@ -685,12 +736,13 @@ export default function ReportesPage() {
                 <div className="space-y-6">
                   {/* KPI cards */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <KpiMini titulo="Valor total" valor={moneda(kpisVal.total)} />
-                    <KpiMini titulo="Ítems" valor={String(kpisVal.items)} />
-                    <KpiMini
+                    <KpiCard titulo="Valor total" valor={moneda(kpisVal.total)} icono={Wallet} />
+                    <KpiCard titulo="Ítems" valor={String(kpisVal.items)} icono={Package} />
+                    <KpiCard
                       titulo="Ítems bajo mínimo"
                       valor={String(kpisVal.bajoMinimo)}
-                      acento={kpisVal.bajoMinimo > 0 ? "negativo" : undefined}
+                      icono={AlertTriangle}
+                      tono={kpisVal.bajoMinimo > 0 ? "warning" : "default"}
                     />
                   </div>
 
@@ -705,10 +757,7 @@ export default function ReportesPage() {
                   </Card>
 
                   <div className="flex justify-end">
-                    <Button variant="outline" size="sm" onClick={exportarValorizado}>
-                      <Download className="mr-1 h-3.5 w-3.5" />
-                      Exportar CSV
-                    </Button>
+                    <ExportarMenu dataset={datasetValorizado} />
                   </div>
                   <div className="overflow-x-auto rounded-lg border">
                     <Table>
@@ -783,13 +832,11 @@ export default function ReportesPage() {
                 </div>
               </div>
               <label className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={recFiltros.soloAcelerados}
-                  onChange={(e) =>
-                    setRecFiltros((p) => ({ ...p, soloAcelerados: e.target.checked }))
+                  onCheckedChange={(c) =>
+                    setRecFiltros((p) => ({ ...p, soloAcelerados: c === true }))
                   }
-                  className="h-4 w-4 rounded border-gray-300"
                 />
                 Solo recambios acelerados (prematuros)
               </label>
@@ -810,6 +857,8 @@ export default function ReportesPage() {
                     <Skeleton key={i} className="h-10" />
                   ))}
                 </div>
+              ) : errorRec ? (
+                <ErrorState onReintentar={() => void refetchRec()} />
               ) : !recambios?.length ? (
                 <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
                   No se encontraron recambios con esos filtros.
@@ -817,20 +866,18 @@ export default function ReportesPage() {
               ) : (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <KpiMini titulo="Recambios" valor={String(kpisRec.total)} />
-                    <KpiMini
+                    <KpiCard titulo="Recambios" valor={String(kpisRec.total)} icono={Repeat} />
+                    <KpiCard
                       titulo="Acelerados"
                       valor={String(kpisRec.acelerados)}
-                      acento={kpisRec.acelerados > 0 ? "negativo" : undefined}
+                      icono={Zap}
+                      tono={kpisRec.acelerados > 0 ? "warning" : "default"}
                     />
-                    <KpiMini titulo="% acelerado" valor={`${kpisRec.pct}%`} />
+                    <KpiCard titulo="% acelerado" valor={`${kpisRec.pct}%`} icono={Percent} />
                   </div>
 
                   <div className="flex justify-end">
-                    <Button variant="outline" size="sm" onClick={exportarRecambios}>
-                      <Download className="mr-1 h-3.5 w-3.5" />
-                      Exportar CSV
-                    </Button>
+                    <ExportarMenu dataset={datasetRecambios} />
                   </div>
 
                   <div className="overflow-x-auto rounded-lg border">
@@ -905,7 +952,7 @@ function GrupoMovimiento({
           <TableCell className="font-mono text-xs">{m.Placa ?? "—"}</TableCell>
           <TableCell
             className={`text-right text-xs font-medium ${
-              m.Direccion === 1 ? "text-emerald-600" : "text-red-600"
+              m.Direccion === 1 ? "text-success" : "text-destructive"
             }`}
           >
             {m.Direccion === 1 ? "+" : "-"}
