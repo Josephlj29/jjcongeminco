@@ -27,10 +27,8 @@ import {
   type UseFormSetValue,
   type UseFormRegister,
 } from "react-hook-form";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, History, Info, Package } from "lucide-react";
+import { Plus, Trash2, History, Info, Package, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearDocumentoSchema,
@@ -43,7 +41,10 @@ import { useSaldos } from "@/hooks/useSaldos";
 import { useUbicaciones } from "@/hooks/useCatalogo";
 import { useVehiculos, useEquipos } from "@/hooks/useEquipos";
 import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
+import { fechaCorta, fechaISO } from "@/lib/format";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { DialogHistorialPrecios } from "@/components/productos/DialogHistorialPrecios";
 import { GaleriaProductoDialog } from "@/components/GaleriaProductoDialog";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -78,6 +78,44 @@ const TIPO_LABEL: Record<string, string> = {
   transferencia: "Transferencia",
   ajuste: "Ajuste",
 };
+
+/* Columnas de la tabla "Documentos recientes" (solo lectura). */
+const COLUMNAS_DOCUMENTOS: ColumnaDataTable<DocumentoResumen>[] = [
+  {
+    id: "fecha",
+    titulo: "Fecha",
+    celda: (d) => fechaCorta(d.FechaDocumento),
+    className: "text-xs",
+  },
+  {
+    id: "tipo",
+    titulo: "Tipo",
+    celda: (d) => TIPO_LABEL[d.TipoDocumento] ?? d.TipoDocumento,
+    className: "text-xs capitalize",
+  },
+  {
+    id: "numero",
+    titulo: "N° Documento",
+    celda: (d) => d.NumeroDocumento ?? "—",
+    className: "font-mono text-xs",
+  },
+  {
+    id: "comprobante",
+    titulo: "Comprobante",
+    celda: (d) => d.Comprobante ?? "—",
+    className: "text-xs",
+    ocultarEnMovil: true,
+  },
+  {
+    id: "situacion",
+    titulo: "Situación",
+    celda: (d) => (
+      <Badge variant={d.Estado ? "success" : "destructive"}>
+        {d.Estado ? "Activo" : "Anulado"}
+      </Badge>
+    ),
+  },
+];
 
 /**
  * Próximo N° de documento (preview): correlativo global con relleno (0001, 0002…).
@@ -259,7 +297,7 @@ function LineaDetalle({
               </p>
             )}
             {idProducto && costoPromedio === 0 && !tieneOverride && (
-              <p className="text-[11px] leading-tight text-amber-600">
+              <p className="text-[11px] leading-tight text-warning">
                 Producto sin compras registradas.
               </p>
             )}
@@ -321,7 +359,12 @@ export default function MovimientosPage() {
   const { data: vehiculos } = useVehiculos();
   const { data: equipos } = useEquipos();
   const { data: asociaciones } = useAsociacionesTiposEquipo();
-  const { data: documentos, isLoading: cargandoDocs } = useDocumentos();
+  const {
+    data: documentos,
+    isLoading: cargandoDocs,
+    isError: errorDocs,
+    refetch: refetchDocs,
+  } = useDocumentos();
 
   const [soloCompatibles, setSoloCompatibles] = useState(true);
   const [dialogProducto, setDialogProducto] = useState<{
@@ -335,8 +378,6 @@ export default function MovimientosPage() {
     idProducto: null,
   });
 
-  const paginacion = usePaginacion(documentos ?? [], 10);
-
   const {
     register,
     handleSubmit,
@@ -348,7 +389,7 @@ export default function MovimientosPage() {
   } = useForm<CrearDocumento>({
     resolver: zodResolver(CrearDocumentoSchema),
     defaultValues: {
-      FechaDocumento: new Date().toISOString().split("T")[0],
+      FechaDocumento: fechaISO(new Date()),
       Detalle: [{ IdProducto: "", Cantidad: 1 }],
     },
   });
@@ -423,7 +464,7 @@ export default function MovimientosPage() {
       await mutateAsync(payload);
       toast.success("Documento registrado correctamente");
       reset({
-        FechaDocumento: new Date().toISOString().split("T")[0],
+        FechaDocumento: fechaISO(new Date()),
         Detalle: [{ IdProducto: "", Cantidad: 1 }],
       });
     } catch (e) {
@@ -433,12 +474,10 @@ export default function MovimientosPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Movimientos</h1>
-        <p className="text-muted-foreground">
-          Registra entradas, salidas y transferencias de inventario
-        </p>
-      </div>
+      <PageHeader
+        titulo="Movimientos"
+        descripcion="Registra entradas, salidas y transferencias de inventario"
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* ── Sección: Documento ── */}
@@ -606,7 +645,7 @@ export default function MovimientosPage() {
                   type="checkbox"
                   checked={soloCompatibles}
                   onChange={(e) => setSoloCompatibles(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-input"
                 />
                 Solo productos compatibles con la placa de cada línea
               </label>
@@ -701,58 +740,19 @@ export default function MovimientosPage() {
       {/* Documentos recientes */}
       <div>
         <h2 className="mb-4 text-lg font-semibold">Documentos recientes</h2>
-        {cargandoDocs ? (
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12" />
-            ))}
-          </div>
-        ) : !documentos?.length ? (
-          <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-            No hay documentos registrados aún.
-          </div>
-        ) : (
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>N° Documento</TableHead>
-                  <TableHead>Comprobante</TableHead>
-                  <TableHead>Situación</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginacion.itemsPagina.map((d: DocumentoResumen) => (
-                  <TableRow key={d.Id}>
-                    <TableCell className="text-xs">
-                      {new Date(d.FechaDocumento).toLocaleDateString("es-PE")}
-                    </TableCell>
-                    <TableCell className="text-xs capitalize">
-                      {TIPO_LABEL[d.TipoDocumento] ?? d.TipoDocumento}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{d.NumeroDocumento ?? "—"}</TableCell>
-                    <TableCell className="text-xs">{d.Comprobante ?? "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={d.Estado ? "success" : "destructive"}>
-                        {d.Estado ? "Activo" : "Anulado"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <Paginacion
-              pagina={paginacion.pagina}
-              totalPaginas={paginacion.totalPaginas}
-              totalItems={paginacion.totalItems}
-              desde={paginacion.desde}
-              hasta={paginacion.hasta}
-              onPagina={paginacion.setPagina}
-            />
-          </div>
-        )}
+        <DataTable
+          columnas={COLUMNAS_DOCUMENTOS}
+          datos={documentos}
+          obtenerId={(d) => d.Id}
+          cargando={cargandoDocs}
+          error={errorDocs}
+          onReintentar={() => void refetchDocs()}
+          vacio={{
+            icono: FileText,
+            titulo: "No hay documentos registrados aún",
+            descripcion: "Registra el primer documento con el formulario de arriba.",
+          }}
+        />
       </div>
     </div>
   );
