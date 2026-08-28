@@ -7,16 +7,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, BriefcaseBusiness } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Plus, Pencil, Trash2, BriefcaseBusiness } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearCargoSchema,
   ActualizarCargoSchema,
-  puede,
   type CrearCargo,
   type Cargo,
-  type RoleCode,
 } from "@congeminco/shared";
 import {
   useCargos,
@@ -24,21 +21,13 @@ import {
   useActualizarCargo,
   useEliminarCargo,
 } from "@/hooks/useCargos";
-import { usePaginacion } from "@/hooks/usePaginacion";
-import { Paginacion } from "@/components/Paginacion";
+import { usePermiso } from "@/hooks/useYo";
+import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
+import { PageHeader } from "@/components/PageHeader";
 import { DialogEliminar } from "@/components/DialogEliminar";
-import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -46,18 +35,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-
-function useRolActual() {
-  return useQuery({
-    queryKey: ["yo"],
-    queryFn: async () => {
-      const res = await fetch("/api/yo");
-      if (!res.ok) throw new Error("Sin sesión");
-      return res.json() as Promise<{ rol: RoleCode }>;
-    },
-  });
-}
 
 function DialogCargo({
   cargo,
@@ -138,17 +115,36 @@ function DialogCargo({
   );
 }
 
+const COLUMNAS: ColumnaDataTable<Cargo>[] = [
+  {
+    id: "codigo",
+    titulo: "Código",
+    celda: (c) => c.Codigo,
+    className: "font-mono text-xs",
+  },
+  {
+    id: "nombre",
+    titulo: "Nombre",
+    celda: (c) => c.Nombre,
+    className: "font-medium",
+  },
+  {
+    id: "descripcion",
+    titulo: "Descripción",
+    celda: (c) => c.Descripcion ?? "—",
+    className: "text-sm text-muted-foreground",
+    ocultarEnMovil: true,
+  },
+];
+
 export default function CargosPage() {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [editar, setEditar] = useState<Cargo | null>(null);
   const [eliminarC, setEliminarC] = useState<Cargo | null>(null);
 
-  const { data: cargos, isLoading } = useCargos();
-  const { data: yo } = useRolActual();
-  const puedeEscribir = puede(yo?.rol ?? null, "catalogoAdmin");
+  const { data: cargos, isLoading: cargando, isError: error, refetch } = useCargos();
+  const puedeEscribir = usePermiso("catalogoAdmin");
   const { mutateAsync: eliminar } = useEliminarCargo();
-
-  const paginacion = usePaginacion(cargos ?? [], 10);
 
   const abrirNuevo = () => {
     setEditar(null);
@@ -161,98 +157,59 @@ export default function CargosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Cargos</h1>
-          <p className="text-muted-foreground">
-            Catálogo de cargos del personal (mecánico, operador, jefe de taller…).
-          </p>
-        </div>
-        {puedeEscribir && (
-          <Button onClick={abrirNuevo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo cargo
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        titulo="Cargos"
+        descripcion="Catálogo de cargos del personal (mecánico, operador, jefe de taller…)."
+        breadcrumbs={[{ label: "Maestros" }, { label: "Cargos" }]}
+        acciones={
+          puedeEscribir && (
+            <Button onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo cargo
+            </Button>
+          )
+        }
+      />
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-12" />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Descripción</TableHead>
-                {puedeEscribir && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!paginacion.itemsPagina.length ? (
-                <TableRow>
-                  <TableCell colSpan={puedeEscribir ? 4 : 3} className="p-0">
-                    <EmptyState
-                      icon={BriefcaseBusiness}
-                      titulo="No hay cargos registrados"
-                      descripcion="Crea el primer cargo para clasificar al personal."
-                      accion={
-                        puedeEscribir ? (
-                          <Button size="sm" onClick={abrirNuevo}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nuevo cargo
-                          </Button>
-                        ) : undefined
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginacion.itemsPagina.map((c) => (
-                  <TableRow key={c.Id}>
-                    <TableCell className="font-mono text-xs">{c.Codigo}</TableCell>
-                    <TableCell className="font-medium">{c.Nombre}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {c.Descripcion ?? "—"}
-                    </TableCell>
-                    {puedeEscribir && (
-                      <TableCell className="text-right space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setEditar(c); setMostrarDialog(true); }}>
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setEliminarC(c)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
-                          Eliminar
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          {paginacion.totalPaginas > 1 && (
-            <Paginacion
-              pagina={paginacion.pagina}
-              totalPaginas={paginacion.totalPaginas}
-              totalItems={paginacion.totalItems}
-              desde={paginacion.desde}
-              hasta={paginacion.hasta}
-              onPagina={paginacion.setPagina}
-            />
-          )}
-        </div>
-      )}
+      <DataTable
+        columnas={COLUMNAS}
+        datos={cargos}
+        obtenerId={(c) => c.Id}
+        cargando={cargando}
+        error={error}
+        onReintentar={() => void refetch()}
+        vacio={{
+          icono: BriefcaseBusiness,
+          titulo: "No hay cargos registrados",
+          descripcion: "Crea el primer cargo para clasificar al personal.",
+          accion: puedeEscribir ? (
+            <Button size="sm" onClick={abrirNuevo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo cargo
+            </Button>
+          ) : undefined,
+        }}
+        acciones={
+          puedeEscribir
+            ? [
+                {
+                  label: "Editar",
+                  icono: Pencil,
+                  onClick: (c) => {
+                    setEditar(c);
+                    setMostrarDialog(true);
+                  },
+                },
+                {
+                  label: "Eliminar",
+                  icono: Trash2,
+                  variante: "destructiva",
+                  onClick: (c) => setEliminarC(c),
+                },
+              ]
+            : undefined
+        }
+      />
 
       {mostrarDialog && <DialogCargo cargo={editar} onClose={cerrar} />}
 
