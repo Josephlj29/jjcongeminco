@@ -26,6 +26,7 @@ import {
   Tags,
   History,
   Package,
+  Camera,
 } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
@@ -509,16 +510,31 @@ function DialogProducto({
                   </div>
                 )}
                 {archivos.length < MAX_IMAGENES_PRODUCTO && (
-                  <label className="flex min-h-[3.5rem] cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:min-h-0 md:p-3">
-                    Agregar imágenes
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={agregarArchivos}
-                    />
-                  </label>
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
+                    <label className="flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:min-h-0 md:p-3">
+                      <ImageIcon className="h-4 w-4 shrink-0" />
+                      Agregar imágenes
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={agregarArchivos}
+                      />
+                    </label>
+                    {/* capture abre la cámara directo en Android/iOS; en desktop no aplica. */}
+                    <label className="flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:hidden">
+                      <Camera className="h-4 w-4 shrink-0" />
+                      Tomar foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={agregarArchivos}
+                      />
+                    </label>
+                  </div>
                 )}
                 <p className="text-xs text-muted-foreground">
                   Se suben al crear el producto. También puedes gestionarlas después desde la acción
@@ -632,16 +648,32 @@ function DialogImagenes({
             ))}
 
             {(imagenes?.length ?? 0) < MAX_IMAGENES_PRODUCTO && (
-              <label className="flex cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50">
-                {subiendo ? "Subiendo..." : "Agregar imagen"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleSubir}
-                  disabled={subiendo}
-                />
-              </label>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50">
+                  <ImageIcon className="h-4 w-4 shrink-0" />
+                  {subiendo ? "Subiendo..." : "Agregar imagen"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleSubir}
+                    disabled={subiendo}
+                  />
+                </label>
+                {/* capture abre la cámara directo en Android/iOS; en desktop no aplica. */}
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:hidden">
+                  <Camera className="h-4 w-4 shrink-0" />
+                  {subiendo ? "Subiendo..." : "Tomar foto"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleSubir}
+                    disabled={subiendo}
+                  />
+                </label>
+              </div>
             )}
 
             {(imagenes?.length ?? 0) >= MAX_IMAGENES_PRODUCTO && (
