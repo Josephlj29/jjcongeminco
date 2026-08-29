@@ -18,7 +18,9 @@ export const MAX_IMAGENES_PRODUCTO = 3;
 
 /* ─── Producto ─── */
 export const CrearProductoSchema = z.object({
-  Sku: z.string().min(1).max(50),
+  // Opcional: si el alta no lo trae, la BD lo autogenera como PREFIJO-NNN
+  // a partir del código de la categoría (FnGuardarProducto, migración 0059).
+  Sku: z.string().max(50).optional(),
   Nombre: z.string().min(1).max(200),
   IdCategoria: z.string().uuid(),
   IdUnidadMedida: z.string().uuid(),

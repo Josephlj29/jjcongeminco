@@ -108,6 +108,40 @@ interface ProductoConsolidado {
   EsGeneral: boolean;
 }
 
+/**
+ * Arma el SKU autogenerado: PREFIJO-NNN.
+ * Espeja la lógica del servidor (inv.FnGuardarProducto, migración 0059):
+ * prefijo = código de la categoría sin CAT-/FAM-, saneado y en mayúsculas;
+ * NNN = primer correlativo libre entre los SKUs ya cargados. El servidor
+ * sigue siendo la fuente de verdad y reconfirma el número al guardar (además
+ * considera productos dados de baja, que esta lista no incluye); esto es solo
+ * la previsualización del SKU que se va a asignar.
+ */
+function armarSku(
+  codigoCategoria: string | undefined,
+  skusExistentes: string[],
+): string | null {
+  if (!codigoCategoria) return null;
+  const prefijo = codigoCategoria
+    .replace(/^(CAT|FAM)-/i, "")
+    .replace(/[^A-Za-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toUpperCase();
+  if (!prefijo) return null;
+
+  const ocupados = new Set<number>();
+  for (const sku of skusExistentes) {
+    const s = sku.toUpperCase();
+    if (!s.startsWith(`${prefijo}-`)) continue;
+    const sufijo = Number(s.slice(prefijo.length + 1));
+    if (Number.isInteger(sufijo) && sufijo > 0) ocupados.add(sufijo);
+  }
+  let correlativo = 1;
+  while (ocupados.has(correlativo)) correlativo += 1;
+
+  return `${prefijo}-${String(correlativo).padStart(3, "0")}`;
+}
+
 /* ─── Dialog: Alta / edición de producto ───
    La compatibilidad (general o tipos de equipo) se configura ACÁ, en el alta,
    no en la grilla. */
@@ -181,6 +215,14 @@ function DialogProducto({
   const idCategoria = watch("IdCategoria");
   const idUnidad = watch("IdUnidadMedida");
 
+  // Preview del SKU autogenerado (solo alta). Mismo queryKey que la lista de
+  // la página, así que react-query no dispara un fetch extra.
+  const { data: productosExistentes } = useProductos();
+  const skuArmado = armarSku(
+    categorias?.find((c) => c.Id === idCategoria)?.Codigo,
+    (productosExistentes ?? []).map((p) => p.Sku),
+  );
+
   // Prellenar al abrir (edición) o limpiar (alta).
   useEffect(() => {
     if (!open) return;
@@ -199,7 +241,8 @@ function DialogProducto({
       });
     } else if (!esEdicion) {
       reset({
-        Sku: "",
+        // Sku ausente a propósito: lo autogenera la BD (FnGuardarProducto).
+        Sku: undefined,
         Nombre: "",
         IdCategoria: undefined,
         IdUnidadMedida: undefined,
@@ -325,9 +368,23 @@ function DialogProducto({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="Sku">SKU</Label>
-                <Input id="Sku" placeholder="PROD-001" {...register("Sku")} />
-                {errors.Sku && <p className="text-xs text-destructive">{errors.Sku.message}</p>}
+                <Label>SKU</Label>
+                {esEdicion ? (
+                  <Input readOnly className="bg-muted font-mono" {...register("Sku")} />
+                ) : (
+                  <>
+                    <div className="flex min-h-9 items-center rounded-md border bg-muted px-3 py-1 text-sm">
+                      {skuArmado ? (
+                        <span className="font-mono font-medium">{skuArmado}</span>
+                      ) : (
+                        <span className="text-muted-foreground">Elige una categoría…</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] leading-tight text-muted-foreground">
+                      Se asigna automáticamente al guardar.
+                    </p>
+                  </>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="StockMinimo">Stock mínimo</Label>
