@@ -56,15 +56,14 @@ opcionales y un `Consumo` opcional que se guarda como **borrador** en
 `T_OrdenMantenimientoRepuesto` (+ almacén/proveedor/comprobante en la cabecera).
 El stock se descuenta **al aprobar**, no al registrar (decisión de negocio 2026-09-03).
 
-1. Toda OT nueva nace `consumida` (= "Por aprobar"), con o sin repuestos. El alta NO
-   genera ningún documento de inventario (se verifica que no exista documento con la
-   referencia `OT <NumeroOrden>`).
+1. El alta NO genera ningún documento de inventario (se verifica que no exista
+   documento con la referencia `OT <NumeroOrden>`). Desde 0070 toda OT nueva nace
+   `abierta`; con 0068 nacía `consumida` (ver escenario 4c).
 2. `V_OrdenMantenimientoRepuesto` expone el borrador con costo estimado: compra directa
    al costo declarado, stock al `CostoPromedio` vigente.
 3. `FnActualizarOrdenMantenimiento` acepta el mismo payload con `Consumo` y reemplaza el
-   borrador completo (agregar, subir, bajar, quitar). Quitar todas las líneas deja la OT
-   por aprobar con la cabecera de consumo en NULL. Una OT `abierta` legada que recibe
-   repuestos pasa a `consumida`.
+   borrador completo (agregar, subir, bajar, quitar). Quitar todas las líneas deja la
+   cabecera de consumo en NULL. Desde 0070 editar NO cambia la situación (ver 4c).
 4. Validaciones del borrador: almacén activo, producto activo, cantidad > 0, compra
    directa exige costo > 0 y proveedor + comprobante ("La compra directa requiere
    proveedor y comprobante.").
@@ -103,6 +102,21 @@ que exige la revalidación de rol de las funciones `SECURITY DEFINER`:
    al aplicar 0068 y se cubrió acá.
 5. Se rechaza devolver a abierta una OT `cerrada`, y devolver a abierta o culminar
    una OT legada que ya descontó stock ("ya desconto stock").
+
+### 4c. La orden nace abierta y solo culminar la mueve (migración 0070)
+
+Verificado en el remoto el 2026-09-03, en transacción con ROLLBACK y sesión de `admin`
+simulada. Corrige la regla de alta de 0068, que mandaba toda orden nueva a la bandeja
+del aprobador aunque estuviera a medio cargar:
+
+1. El alta deja la OT en `abierta`, tenga o no repuestos en el borrador.
+2. Editar y AGREGAR repuestos a una `abierta` NO la promueve: sigue `abierta`. En 0068
+   la promovía sola a `consumida`, pisando la decisión de quien carga.
+3. `FnCerrarOrdenMantenimiento` (culminar) es el único paso que la mueve: `consumida`
+   si tiene repuestos, `cerrada` si no. No toca el saldo en ninguno de los dos casos.
+4. Quitar todos los repuestos y culminar la deja `cerrada`.
+5. Aprobar la que quedó `consumida` la cierra y recién ahí baja `T_SaldoStock`,
+   exactamente en la cantidad del borrador.
 
 ### 5. Segregación de funciones
 

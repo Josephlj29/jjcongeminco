@@ -452,13 +452,9 @@ export function DialogOrdenMantenimiento({
         onGuardada?.(final);
       } else {
         const { Situacion } = await crear(payload);
-        // Toda OT nueva nace por aprobar (con o sin repuestos); la BD es la fuente.
-        const final: SituacionOrden = Situacion ?? "consumida";
-        toast.success(
-          consumoData
-            ? "Orden registrada. Pendiente de aprobación: el stock se descuenta al aprobar."
-            : "Orden registrada. Pendiente de aprobación.",
-        );
+        // Toda OT nueva nace ABIERTA (en curso); la BD es la fuente de verdad.
+        const final: SituacionOrden = Situacion ?? "abierta";
+        toast.success('Orden registrada y abierta. Cuando esté lista, usá "Culminar".');
         onGuardada?.(final);
       }
       for (const t of trabajos) {
@@ -492,7 +488,7 @@ export function DialogOrdenMantenimiento({
           <DialogDescription>
             {modoEdicion
               ? "Corrige la cabecera, las tareas y los repuestos. El stock se descuenta al aprobar."
-              : "Registra el trabajo ya realizado: tareas con sus fotos y los repuestos usados. La orden queda pendiente de aprobación."}
+              : "Registra el trabajo realizado: tareas con sus fotos y los repuestos usados. La orden queda abierta y se edita cuanto haga falta; recién al culminarla pasa a aprobación (o se cierra, si no lleva repuestos)."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

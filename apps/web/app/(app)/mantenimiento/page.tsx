@@ -3,12 +3,17 @@
 /**
  * app/(app)/mantenimiento/page.tsx — Órdenes de Trabajo de Mantenimiento (OT)
  *
- * La OT se registra al TERMINAR el trabajo, en un solo paso: tareas con foto
- * opcional de antes/después y repuestos usados como BORRADOR. Toda orden nueva
- * nace "Por aprobar" (con o sin repuestos) y mientras está ahí se sigue editando
- * (cabecera, tareas y repuestos); al aprobar se descuenta el stock y se cierra.
- * Las OTs "Abiertas" son legado (ya no nacen así) y conservan sus acciones hasta
- * que se procesen. Pestañas por situación. Acciones por fila en kebab.
+ * Ciclo de vida de una orden, que es lo que ordena toda esta pantalla:
+ *
+ *   alta      → "Abierta": en curso. Se edita cuanto haga falta (cabecera, tareas
+ *               y repuestos, que se guardan como BORRADOR sin tocar el kardex).
+ *   culminar  → "Por aprobar" si tiene repuestos; "Cerrada" si no tiene, porque
+ *               entonces no hay descuento de stock que aprobar.
+ *   aprobar   → "Cerrada", y recién ahí se descuenta el stock.
+ *   rechazar  → "Anulada". El aprobador también puede devolverla a "Abierta" si
+ *               solo está incompleta, que no es lo mismo que rechazarla.
+ *
+ * Pestañas por situación. Acciones por fila en kebab.
  *
  * Responsive: el mismo dato se presenta como tarjetas apiladas en móvil
  * (`md:hidden`) y como tabla densa en desktop (`hidden md:block`). El menú de
@@ -256,9 +261,9 @@ export default function MantenimientoPage() {
   const puedeEscribir = usePermiso("requerimientoCrear");
   const puedeAprobar = usePermiso("requerimientoAprobar");
 
-  // Toda OT nueva nace "Por aprobar": la pestaña inicial es la bandeja de
-  // aprobación, no el legado "Abiertas".
-  const [tab, setTab] = useState<SituacionOrden>("consumida");
+  // Toda OT nueva nace "Abierta" (en curso): esa es la pestaña donde el usuario
+  // busca lo que acaba de registrar y lo que le falta culminar.
+  const [tab, setTab] = useState<SituacionOrden>("abierta");
   const {
     data: ordenes,
     isLoading,
@@ -335,7 +340,7 @@ export default function MantenimientoPage() {
     <div className="space-y-6">
       <PageHeader
         titulo="Mantenimiento"
-        descripcion="Órdenes de trabajo por placa. Se registran al terminar el trabajo, con fotos por tarea, y quedan pendientes de aprobación; el stock de los repuestos se descuenta al aprobar."
+        descripcion="Órdenes de trabajo por placa, con fotos por tarea. Nacen abiertas y se editan cuanto haga falta; al culminarlas pasan a aprobación si llevan repuestos, o se cierran si no. El stock se descuenta al aprobar."
         acciones={
           puedeEscribir && (
             <Button onClick={() => setCrear(true)} className="w-full sm:w-auto">
@@ -348,10 +353,10 @@ export default function MantenimientoPage() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as SituacionOrden)} className="space-y-4">
         <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
+          <TabsTrigger value="abierta">Abiertas</TabsTrigger>
           <TabsTrigger value="consumida">Por aprobar</TabsTrigger>
           <TabsTrigger value="cerrada">Cerradas</TabsTrigger>
           <TabsTrigger value="anulada">Anuladas</TabsTrigger>
-          <TabsTrigger value="abierta">Abiertas</TabsTrigger>
         </TabsList>
 
         <TabsContent value={tab}>
