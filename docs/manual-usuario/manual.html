@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Manual de Usuario — Sistema de Inventario JJ Congeminco</title>
+<style>
+  :root{
+    --naranja:#E8631A;
+    --naranja-claro:#FDEEE3;
+    --oscuro:#1E2530;
+    --gris:#5b6573;
+    --gris-claro:#eef1f5;
+    --borde:#dde2e9;
+    --verde:#137a4b;
+    --rojo:#c0392b;
+    --azul:#1d4ed8;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:#222;
+    margin:0;
+    font-size:12.5px;
+    line-height:1.6;
+  }
+  /* ---------- PORTADA ---------- */
+  .cover{
+    height:1020px;
+    background:linear-gradient(160deg,#1E2530 0%,#2b3545 55%,#3a2417 100%);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    page-break-after:always;
+    position:relative;
+    padding:60px;
+  }
+  .cover .logo-box{
+    background:#fff;
+    border-radius:20px;
+    padding:28px 42px;
+    margin-bottom:38px;
+    box-shadow:0 12px 40px rgba(0,0,0,.35);
+  }
+  .cover .logo-box img{height:90px;display:block;}
+  .cover h1{
+    font-size:42px;
+    margin:0 0 10px;
+    font-weight:800;
+    letter-spacing:.5px;
+  }
+  .cover h2{
+    font-size:20px;
+    font-weight:400;
+    color:#f0c4a6;
+    margin:0 0 50px;
+  }
+  .cover .pill{
+    display:inline-block;
+    background:var(--naranja);
+    color:#fff;
+    padding:6px 18px;
+    border-radius:30px;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:30px;
+    letter-spacing:1px;
+  }
+  .cover .meta{
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:14px;
+    padding:24px 40px;
+    font-size:15px;
+    line-height:2;
+  }
+  .cover .meta b{color:var(--naranja);}
+  .cover .foot{
+    position:absolute;
+    bottom:40px;
+    font-size:12px;
+    color:#9aa6b6;
+  }
+  /* ---------- ESTRUCTURA GENERAL ---------- */
+  .page{padding:48px 54px;}
+  .page-break{page-break-before:always;}
+  h2.cap{
+    color:var(--naranja);
+    font-size:25px;
+    border-bottom:3px solid var(--naranja);
+    padding-bottom:8px;
+    margin:0 0 6px;
+  }
+  .cap-num{
+    display:inline-block;
+    background:var(--naranja);
+    color:#fff;
+    width:34px;height:34px;
+    line-height:34px;text-align:center;
+    border-radius:8px;
+    font-weight:700;
+    margin-right:10px;
+    font-size:18px;
+  }
+  h3{color:var(--oscuro);font-size:17px;margin:24px 0 6px;}
+  h4{color:var(--naranja);font-size:14px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.5px;}
+  p{margin:6px 0;}
+  ul,ol{margin:6px 0 6px 4px;padding-left:22px;}
+  li{margin:3px 0;}
+  a{color:var(--azul);text-decoration:none;}
+  /* ---------- TABLAS ---------- */
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:11.5px;}
+  th{background:var(--oscuro);color:#fff;text-align:left;padding:8px 10px;font-weight:600;}
+  td{border:1px solid var(--borde);padding:7px 10px;vertical-align:top;}
+  tr:nth-child(even) td{background:#f7f9fb;}
+  .center{text-align:center;}
+  /* ---------- IMAGENES ---------- */
+  figure{margin:16px 0 22px;page-break-inside:avoid;}
+  figure img{
+    width:100%;
+    border:1px solid var(--borde);
+    border-radius:8px;
+    box-shadow:0 4px 14px rgba(0,0,0,.10);
+  }
+  figcaption{
+    font-size:11px;color:var(--gris);
+    text-align:center;margin-top:6px;font-style:italic;
+  }
+  /* ---------- CAJAS ---------- */
+  .box{border-radius:10px;padding:12px 16px;margin:14px 0;page-break-inside:avoid;}
+  .tip{background:#eef7f1;border-left:5px solid var(--verde);}
+  .warn{background:#fdecea;border-left:5px solid var(--rojo);}
+  .info{background:var(--naranja-claro);border-left:5px solid var(--naranja);}
+  .box .t{font-weight:700;display:block;margin-bottom:2px;}
+  .tip .t{color:var(--verde);}
+  .warn .t{color:var(--rojo);}
+  .info .t{color:var(--naranja);}
+  .step{
+    background:var(--gris-claro);
+    border-radius:10px;
+    padding:14px 18px 14px 18px;
+    margin:14px 0;
+  }
+  .step ol{counter-reset:step;list-style:none;padding-left:0;margin:0;}
+  .step ol li{
+    position:relative;
+    padding:6px 0 6px 40px;
+    margin:0;
+    border-bottom:1px dashed #cfd6df;
+  }
+  .step ol li:last-child{border-bottom:none;}
+  .step ol li:before{
+    counter-increment:step;
+    content:counter(step);
+    position:absolute;left:0;top:6px;
+    background:var(--naranja);color:#fff;
+    width:26px;height:26px;border-radius:50%;
+    text-align:center;line-height:26px;font-weight:700;font-size:12px;
+  }
+  .role-tags span{
+    display:inline-block;background:var(--oscuro);color:#fff;
+    border-radius:20px;padding:2px 12px;font-size:11px;margin:2px 4px 2px 0;
+  }
+  .role-tags span.adm{background:#7c3aed;}
+  .role-tags span.ger{background:#0e7490;}
+  .role-tags span.sup{background:#b45309;}
+  .role-tags span.alm{background:#15803d;}
+  /* ---------- TOC ---------- */
+  .toc ol{list-style:none;counter-reset:toc;padding-left:0;}
+  .toc>ol>li{
+    counter-increment:toc;
+    padding:9px 0;border-bottom:1px solid var(--borde);
+    font-size:14px;font-weight:600;color:var(--oscuro);
+  }
+  .toc>ol>li:before{
+    content:counter(toc);
+    background:var(--naranja);color:#fff;
+    display:inline-block;width:26px;height:26px;border-radius:6px;
+    text-align:center;line-height:26px;margin-right:12px;font-size:13px;
+  }
+  .toc ul{list-style:none;padding-left:38px;margin:6px 0 0;}
+  .toc ul li{font-weight:400;font-size:12px;color:var(--gris);padding:2px 0;border:none;}
+  .toc ul li:before{content:"–";color:var(--naranja);margin-right:8px;}
+  .lead{font-size:14px;color:var(--gris);margin-bottom:18px;}
+  .kbd{background:var(--oscuro);color:#fff;border-radius:5px;padding:1px 7px;font-size:11px;font-family:monospace;}
+  .badge-min{background:#fff3cd;color:#92750a;border-radius:6px;padding:1px 8px;font-size:11px;font-weight:600;}
+  .mini-foot{text-align:center;color:#9aa6b6;font-size:10px;margin-top:30px;border-top:1px solid var(--borde);padding-top:8px;}
+</style>
+</head>
+<body>
+
+<!-- ====================== PORTADA ====================== -->
+<div class="cover">
+  <div class="logo-box"><img src="capturas/logo.svg" alt="JJ Congeminco"></div>
+  <div class="pill">MANUAL DE USUARIO</div>
+  <h1>Sistema de Gestión de Inventario</h1>
+  <h2>JJ Congeminco &mdash; Líderes en Soluciones</h2>
+  <div class="meta">
+    Dirigido a: <b>Todos los usuarios del sistema</b><br>
+    Plataforma: <b>inventario.congeminco.com</b><br>
+    Nivel: <b>Usuario principiante</b> &middot; Idioma: Español<br>
+    Versión del documento: <b>1.0</b> &middot; Junio 2026
+  </div>
+  <div class="foot">Documento guía paso a paso · JJ Congeminco © 2026</div>
+</div>
+
+<!-- ====================== INDICE ====================== -->
+<div class="page">
+  <h2 class="cap">Índice de contenidos</h2>
+  <p class="lead">Esta guía te lleva de la mano desde el primer ingreso hasta el uso completo de cada módulo. Puedes leerla en orden o saltar al capítulo que necesites.</p>
+  <div class="toc">
+    <ol>
+      <li>Bienvenida y ¿qué es este sistema?
+        <ul><li>Para qué sirve</li><li>Conceptos en una idea</li><li>Cómo funciona por dentro (simple)</li></ul>
+      </li>
+      <li>Cómo ingresar al sistema (Login)</li>
+      <li>Conociendo la pantalla: el menú y la barra superior</li>
+      <li>Roles y permisos: ¿qué puede hacer cada quién?</li>
+      <li>Dashboard: tu tablero de resumen</li>
+      <li>Saldos: consultar el stock disponible</li>
+      <li>Catálogo de productos</li>
+      <li>Movimientos: entradas, salidas y transferencias</li>
+      <li>Requerimientos: pedir materiales</li>
+      <li>Aprobaciones: revisar y entregar pedidos</li>
+      <li>Mantenimiento: órdenes de trabajo</li>
+      <li>Reportes</li>
+      <li>Importar: carga masiva desde Excel</li>
+      <li>Maestros: configuración del sistema</li>
+      <li>Glosario para principiantes</li>
+      <li>Preguntas frecuentes y consejos</li>
+    </ol>
+  </div>
+  <div class="mini-foot">Manual de Usuario · Sistema de Inventario JJ Congeminco</div>
+</div>
+
+<!-- ====================== CAP 1 ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">1</span>Bienvenida y ¿qué es este sistema?</h2>
+  <p class="lead">¡Te damos la bienvenida! Esta es tu guía para usar el Sistema de Inventario de JJ Congeminco. Está escrita pensando en alguien que recién comienza, con un lenguaje sencillo y directo.</p>
+
+  <h3>¿Para qué sirve?</h3>
+  <p>El sistema te permite saber, en todo momento y de forma ordenada, <b>qué materiales tienes, cuántos hay, dónde están y cuánto valen</b>. Reemplaza los archivos sueltos de Excel y centraliza la información de almacenes, equipos y vehículos de la empresa.</p>
+  <p>Con él puedes:</p>
+  <ul>
+    <li>Registrar la <b>entrada</b> de mercadería que compras.</li>
+    <li>Registrar la <b>salida</b> de materiales cuando se consumen en un vehículo o equipo.</li>
+    <li><b>Transferir</b> productos entre almacenes.</li>
+    <li>Pedir materiales mediante <b>requerimientos</b> y aprobarlos de forma ordenada.</li>
+    <li>Gestionar el <b>mantenimiento</b> de la maquinaria y los repuestos que consume.</li>
+    <li>Ver <b>reportes</b> y un <b>tablero (dashboard)</b> con el estado general.</li>
+  </ul>
+
+  <div class="box info">
+    <span class="t">Idea clave</span>
+    Piensa en el sistema como el "cuaderno oficial" del almacén: cada vez que algo entra o sale, queda anotado. Ese cuaderno nunca se borra, por eso la información siempre es confiable.
+  </div>
+
+  <h3>Cómo funciona por dentro (explicado simple)</h3>
+  <p>El inventario trabaja en tres pasos encadenados. No necesitas memorizarlo, pero ayuda a entender por qué el sistema es tan ordenado:</p>
+  <table>
+    <tr><th>Paso</th><th>Qué es</th><th>En palabras simples</th></tr>
+    <tr><td><b>1. Documento</b></td><td>El comprobante (entrada, salida, transferencia…)</td><td>Es la "boleta" que llenas en pantalla.</td></tr>
+    <tr><td><b>2. Movimiento</b></td><td>El registro histórico</td><td>El cuaderno oficial donde queda anotado para siempre.</td></tr>
+    <tr><td><b>3. Saldo</b></td><td>El stock actual calculado</td><td>El número de "cuánto hay ahora", que se actualiza solo.</td></tr>
+  </table>
+  <div class="box tip">
+    <span class="t">Lo bueno de esto</span>
+    Como cada salida o entrada queda registrada, siempre puedes responder "¿qué pasó con este producto?" revisando su historial (llamado <b>Kardex</b>).
+  </div>
+</div>
+
+<!-- ====================== CAP 2 LOGIN ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">2</span>Cómo ingresar al sistema (Login)</h2>
+  <p class="lead">Para usar el sistema necesitas un correo y una contraseña que te entrega el administrador.</p>
+
+  <div class="step">
+    <ol>
+      <li>Abre tu navegador (Chrome, Edge o Safari) y entra a <b>inventario.congeminco.com</b>.</li>
+      <li>Escribe tu <b>correo electrónico</b> en el primer campo.</li>
+      <li>Escribe tu <b>contraseña</b> en el segundo campo.</li>
+      <li>Haz clic en el botón naranja <b>Ingresar</b>.</li>
+    </ol>
+  </div>
+
+  <figure>
+    <img src="capturas/01-login.png" alt="Pantalla de inicio de sesión">
+    <figcaption>Pantalla de inicio de sesión del Sistema de Inventario JJ Congeminco.</figcaption>
+  </figure>
+
+  <div class="box warn">
+    <span class="t">Si no puedes entrar</span>
+    Verifica que el correo esté bien escrito y que la contraseña respete mayúsculas y minúsculas. Si el problema continúa, contacta al administrador: tu usuario debe estar habilitado para poder operar.
+  </div>
+  <div class="box tip">
+    <span class="t">Consejo de seguridad</span>
+    No compartas tu contraseña. El sistema sabe qué hace cada usuario, así que todo movimiento queda asociado a tu nombre.
+  </div>
+</div>
+
+<!-- ====================== CAP 3 INTERFAZ ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">3</span>Conociendo la pantalla</h2>
+  <p class="lead">Una vez dentro verás siempre la misma estructura. Conocerla te ayudará a moverte rápido.</p>
+
+  <figure>
+    <img src="capturas/02-dashboard.png" alt="Vista general del sistema">
+    <figcaption>Vista general: menú lateral a la izquierda, barra superior y área de contenido.</figcaption>
+  </figure>
+
+  <h3>Las 3 zonas principales</h3>
+  <table>
+    <tr><th>Zona</th><th>Dónde está</th><th>Para qué sirve</th></tr>
+    <tr><td><b>Menú lateral</b></td><td>Izquierda (fondo oscuro)</td><td>Acceso a todos los módulos: Dashboard, Saldos, Catálogo, Movimientos, etc.</td></tr>
+    <tr><td><b>Barra superior</b></td><td>Arriba</td><td>Muestra en qué sección estás, el botón de tema claro/oscuro y tu menú de usuario.</td></tr>
+    <tr><td><b>Área de contenido</b></td><td>Centro</td><td>Es donde trabajas: formularios, tablas y tarjetas de cada módulo.</td></tr>
+  </table>
+
+  <h3>El menú de usuario</h3>
+  <p>Al hacer clic en el círculo con tus iniciales (arriba a la derecha) verás tu nombre, tu correo, tu rol y la opción <b>Cerrar sesión</b>.</p>
+  <figure>
+    <img src="capturas/19-menu-usuario.png" alt="Menú de usuario">
+    <figcaption>Menú de usuario: muestra tu identidad, tu rol y el botón para salir.</figcaption>
+  </figure>
+  <div class="box tip">
+    <span class="t">Tema claro u oscuro</span>
+    El botón con forma de sol/luna en la barra superior cambia entre fondo claro y oscuro, según tu comodidad visual.
+  </div>
+</div>
+
+<!-- ====================== CAP 4 ROLES ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">4</span>Roles y permisos</h2>
+  <p class="lead">No todos los usuarios ven lo mismo. El sistema asigna un <b>rol</b> a cada persona, y ese rol decide qué módulos puede ver y qué acciones puede hacer.</p>
+
+  <h3>Los 4 roles</h3>
+  <table>
+    <tr><th>Rol</th><th>Perfil típico</th><th>Qué hace principalmente</th></tr>
+    <tr><td><b>Admin</b></td><td>Administrador del sistema</td><td>Todo: configura, importa, crea maestros y opera.</td></tr>
+    <tr><td><b>Gerencia</b></td><td>Jefatura</td><td>Consulta y aprueba; ve reportes. No carga almacén.</td></tr>
+    <tr><td><b>Supervisión</b></td><td>Supervisor de campo</td><td>Registra movimientos, crea y aprueba requerimientos.</td></tr>
+    <tr><td><b>Almacenero</b></td><td>Encargado de almacén</td><td>Operación diaria: saldos, catálogo, movimientos, mantenimiento.</td></tr>
+  </table>
+
+  <h3>¿Qué módulo ve cada rol?</h3>
+  <table>
+    <tr><th>Módulo</th><th class="center">Admin</th><th class="center">Gerencia</th><th class="center">Supervisión</th><th class="center">Almacenero</th></tr>
+    <tr><td>Dashboard</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+    <tr><td>Saldos</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+    <tr><td>Catálogo</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+    <tr><td>Movimientos</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+    <tr><td>Requerimientos</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+    <tr><td>Mantenimiento</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+    <tr><td>Aprobaciones</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+    <tr><td>Reportes</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+    <tr><td>Importar</td><td class="center">✓</td><td class="center">—</td><td class="center">—</td><td class="center">—</td></tr>
+    <tr><td>Maestros</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+    <tr><td>Maestros · Proveedores</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td><td class="center">—</td></tr>
+  </table>
+
+  <div class="box info">
+    <span class="t">Regla de oro: separación de funciones</span>
+    Quien <b>crea</b> un requerimiento <b>no puede aprobarlo</b> él mismo (salvo el Admin). Esto evita errores y asegura un control sano: una persona pide y otra autoriza.
+  </div>
+  <div class="box tip">
+    <span class="t">¿Entraste a una sección y te llevó al Dashboard?</span>
+    Es normal: si tu rol no tiene permiso para ese módulo, el sistema te redirige automáticamente al tablero principal.
+  </div>
+</div>
+
+<!-- ====================== CAP 5 DASHBOARD ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">5</span>Dashboard: tu tablero de resumen</h2>
+  <p class="lead">Es la primera pantalla al entrar. Te da una "foto" rápida del inventario. Es solo de consulta: aquí no se modifica nada.</p>
+
+  <figure>
+    <img src="capturas/02-dashboard.png" alt="Dashboard">
+    <figcaption>Tablero con indicadores, gráficos y la lista de productos bajo mínimo.</figcaption>
+  </figure>
+
+  <h3>Qué información muestra</h3>
+  <table>
+    <tr><th>Indicador</th><th>Qué significa</th></tr>
+    <tr><td><b>Total de productos</b></td><td>Cuántos productos activos hay en el catálogo.</td></tr>
+    <tr><td><b>Valor total inventario</b></td><td>Cuánto vale todo el stock (cantidad × costo promedio), en Soles.</td></tr>
+    <tr><td><b>Bajo mínimo</b></td><td>Cuántos productos están por debajo de su stock mínimo y necesitan reposición.</td></tr>
+    <tr><td><b>Movimientos del período</b></td><td>Cuántas entradas/salidas ocurrieron en el rango elegido.</td></tr>
+  </table>
+
+  <h3>Gráficos y tabla</h3>
+  <ul>
+    <li><b>Entradas vs salidas por día:</b> compara lo que entró y lo que salió.</li>
+    <li><b>Valor por categoría:</b> qué tipo de productos concentra más valor.</li>
+    <li><b>Top productos movidos:</b> los más activos del período.</li>
+    <li><b>Productos bajo mínimo:</b> tabla con SKU, nombre, categoría, mínimo y stock actual.</li>
+  </ul>
+  <div class="box tip">
+    <span class="t">Cambiar el período</span>
+    Arriba a la derecha puedes elegir ver los <b>últimos 7, 30 o 90 días</b>. Todos los números y gráficos se ajustan a ese rango.
+  </div>
+</div>
+
+<!-- ====================== CAP 6 SALDOS ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">6</span>Saldos: consultar el stock disponible</h2>
+  <p class="lead">Es la pantalla más usada en el día a día para responder rápido: <b>"¿cuánto hay de este producto?"</b>. Está pensada también para usar desde el celular en campo.</p>
+
+  <figure>
+    <img src="capturas/03-saldos.png" alt="Saldos">
+    <figcaption>Cada tarjeta muestra el producto, su SKU y la cantidad disponible con su unidad.</figcaption>
+  </figure>
+
+  <h3>Cómo buscar</h3>
+  <div class="step">
+    <ol>
+      <li>Escribe el nombre o el <b>SKU</b> en la barra <span class="kbd">Buscar por nombre o SKU…</span></li>
+      <li>O usa los <b>chips de categoría</b> (Todas, Aceites, Herramientas, Filtros…) para filtrar.</li>
+      <li>Toca una tarjeta para ver el <b>detalle</b>: stock por almacén, costo promedio y equipos compatibles.</li>
+    </ol>
+  </div>
+
+  <div class="box info">
+    <span class="t">El aviso "Bajo mínimo"</span>
+    Si una tarjeta muestra la etiqueta <span class="badge-min">Bajo mínimo</span>, ese producto está por debajo del stock mínimo configurado y conviene reponerlo.
+  </div>
+  <div class="box warn">
+    <span class="t">Importante</span>
+    Saldos es solo para <b>consultar</b>. Para cambiar cantidades debes usar Movimientos, Aprobaciones o Importar.
+  </div>
+</div>
+
+<!-- ====================== CAP 7 CATALOGO ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">7</span>Catálogo de productos</h2>
+  <p class="lead">Aquí vive la lista maestra de todos los materiales. Cada producto tiene su ficha con datos, compatibilidad con equipos e imágenes.</p>
+
+  <figure>
+    <img src="capturas/04-catalogo.png" alt="Catálogo de productos">
+    <figcaption>Listado del catálogo con SKU, nombre, categoría, equipos compatibles y estado de stock.</figcaption>
+  </figure>
+
+  <div class="role-tags">Pueden crear/editar productos: <span class="adm">Admin</span><span class="alm">Almacenero</span></div>
+
+  <h3>Crear un producto nuevo</h3>
+  <div class="step">
+    <ol>
+      <li>Haz clic en el botón naranja <b>+ Nuevo producto</b> (arriba a la derecha).</li>
+      <li>Completa los campos del formulario (ver tabla abajo).</li>
+      <li>Indica <b>a qué equipos aplica</b>: marca "General" o selecciona uno o más tipos de equipo.</li>
+      <li>Guarda. El producto aparecerá en la lista listo para usarse.</li>
+    </ol>
+  </div>
+
+  <figure>
+    <img src="capturas/04b-nuevo-producto.png" alt="Formulario de nuevo producto">
+    <figcaption>Formulario para registrar un producto nuevo.</figcaption>
+  </figure>
+
+  <h3>Significado de cada campo</h3>
+  <table>
+    <tr><th>Campo</th><th>Qué es</th><th>¿Obligatorio?</th></tr>
+    <tr><td><b>SKU</b></td><td>Código único del producto (su "DNI").</td><td>Sí</td></tr>
+    <tr><td><b>Nombre</b></td><td>Descripción comercial del material.</td><td>Sí</td></tr>
+    <tr><td><b>Categoría</b></td><td>Familia a la que pertenece (Aceites, Filtros…).</td><td>Sí</td></tr>
+    <tr><td><b>Unidad de medida</b></td><td>Cómo se cuenta: LT, KG, UND…</td><td>Sí</td></tr>
+    <tr><td><b>Stock mínimo</b></td><td>Cantidad de alerta para reponer.</td><td>No (default 0)</td></tr>
+    <tr><td><b>Código del proveedor</b></td><td>Con el que el proveedor identifica el producto al comprar.</td><td>No</td></tr>
+    <tr><td><b>Código de barra</b></td><td>El código de barras del producto, si lo tiene.</td><td>No</td></tr>
+    <tr><td><b>¿A qué equipos aplica?</b></td><td>"General" (todos) o tipos de equipo específicos.</td><td>Sí (uno u otro)</td></tr>
+  </table>
+
+  <div class="box info">
+    <span class="t">Regla "General o por tipos" (nunca ambos)</span>
+    Un producto es <b>General</b> (sirve para cualquier equipo, como grasa multipropósito) <b>o</b> está asignado a <b>uno o más tipos de equipo</b> (como un filtro de grúa). No puede ser las dos cosas a la vez.
+  </div>
+  <div class="box tip">
+    <span class="t">Otras acciones</span>
+    Desde el menú "…" de cada fila puedes <b>Editar</b>, <b>gestionar Imágenes</b> (hasta 3) y ver el <b>Kardex</b> (historial). No se puede eliminar un producto que ya tiene movimientos.
+  </div>
+</div>
+
+<!-- ====================== CAP 8 MOVIMIENTOS ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">8</span>Movimientos: entradas, salidas y transferencias</h2>
+  <p class="lead">Es el corazón operativo: aquí registras todo lo que afecta el stock. Cada movimiento queda guardado para siempre en el historial.</p>
+
+  <div class="role-tags">Pueden registrar: <span class="adm">Admin</span><span class="sup">Supervisión</span><span class="alm">Almacenero</span></div>
+
+  <figure>
+    <img src="capturas/05-movimientos.png" alt="Movimientos">
+    <figcaption>Formulario de documento (cabecera + detalle) y la lista de documentos recientes.</figcaption>
+  </figure>
+
+  <h3>Los tipos de documento</h3>
+  <table>
+    <tr><th>Tipo</th><th>Para qué</th><th>Necesita</th></tr>
+    <tr><td><b>Existencia inicial</b></td><td>Cargar el stock con el que arrancas.</td><td>Almacén destino</td></tr>
+    <tr><td><b>Entrada</b></td><td>Registrar una compra o ingreso.</td><td>Almacén destino</td></tr>
+    <tr><td><b>Salida</b></td><td>Entregar material a un vehículo.</td><td>Origen + <b>placa</b></td></tr>
+    <tr><td><b>Transferencia</b></td><td>Mover stock entre almacenes.</td><td>Origen y destino distintos</td></tr>
+    <tr><td><b>Ajuste</b></td><td>Corregir tras un conteo físico.</td><td>Origen y/o destino</td></tr>
+  </table>
+
+  <h3>Cómo registrar un movimiento</h3>
+  <div class="step">
+    <ol>
+      <li>Elige el <b>Tipo de documento</b> y la <b>fecha</b>.</li>
+      <li>Opcional: completa el <b>N° de documento</b> y el <b>comprobante</b> (factura/guía).</li>
+      <li>Selecciona las <b>ubicaciones</b> (origen/destino según el tipo) y la <b>placa</b> si es salida.</li>
+      <li>En <b>Detalle</b>, haz clic en <b>+ Agregar línea</b> y elige el producto, la cantidad y (si aplica) el costo.</li>
+      <li>Repite por cada producto y luego haz clic en <b>Registrar documento</b>.</li>
+    </ol>
+  </div>
+
+  <h3>Sobre el costo</h3>
+  <ul>
+    <li>En una <b>entrada</b> tú escribes el costo unitario de compra.</li>
+    <li>En una <b>salida</b> el costo se calcula solo: usa el <b>costo promedio</b> del producto (el promedio de lo que costó comprarlo). Solo puede cambiarse a mano desde el historial de precios.</li>
+  </ul>
+
+  <div class="box warn">
+    <span class="t">Reglas que el sistema hace cumplir</span>
+    <ul style="margin-top:4px;">
+      <li>Una <b>salida</b> siempre exige una <b>placa</b> (para saber quién consumió).</li>
+      <li>Una <b>transferencia</b> exige que origen y destino sean <b>distintos</b>.</li>
+      <li>Ninguna salida puede dejar el stock en <b>negativo</b>: si no hay suficiente, el sistema lo bloquea.</li>
+    </ul>
+  </div>
+  <div class="box tip">
+    <span class="t">Filtro inteligente por placa</span>
+    En salidas puedes activar "Solo productos compatibles con esta placa" para ver únicamente los repuestos que sirven a ese vehículo, más los productos generales.
+  </div>
+</div>
+
+<!-- ====================== CAP 9 REQUERIMIENTOS ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">9</span>Requerimientos: pedir materiales</h2>
+  <p class="lead">Un requerimiento es una <b>solicitud formal</b> de materiales para un equipo o vehículo. Es el primer paso antes de sacar algo del almacén con autorización.</p>
+
+  <div class="role-tags">Pueden crear: <span class="adm">Admin</span><span class="sup">Supervisión</span><span class="alm">Almacenero</span></div>
+
+  <figure>
+    <img src="capturas/06-requerimientos.png" alt="Requerimientos">
+    <figcaption>Formulario para crear una solicitud de materiales asociada a un equipo o placa.</figcaption>
+  </figure>
+
+  <h3>Cómo crear un requerimiento</h3>
+  <div class="step">
+    <ol>
+      <li>Elige el <b>Origen</b> del pedido: planificado, presupuestado o desgaste prematuro.</li>
+      <li>Indica la <b>fecha</b> y, si quieres, un <b>N° de requerimiento</b>.</li>
+      <li>Selecciona el <b>solicitante</b> (personal) y el <b>equipo</b> o la <b>placa</b> de destino.</li>
+      <li>Agrega los <b>materiales solicitados</b>: producto, cantidad y notas.</li>
+      <li>Escribe notas generales si hace falta y haz clic en <b>Crear requerimiento</b>.</li>
+    </ol>
+  </div>
+
+  <div class="box info">
+    <span class="t">¿Y después?</span>
+    El requerimiento queda en estado <b>pendiente</b>. <u>Todavía no descuenta stock</u>. La entrega real se decide en el módulo <b>Aprobaciones</b>.
+  </div>
+  <div class="box tip">
+    <span class="t">Equipo o placa</span>
+    Debes indicar al menos uno de los dos: el equipo o la placa que recibirá los materiales.
+  </div>
+</div>
+
+<!-- ====================== CAP 10 APROBACIONES ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">10</span>Aprobaciones: revisar y entregar pedidos</h2>
+  <p class="lead">Es la bandeja donde se <b>autorizan</b> los requerimientos y se ratifican los consumos de mantenimiento.</p>
+
+  <div class="role-tags">Pueden aprobar: <span class="adm">Admin</span><span class="ger">Gerencia</span><span class="sup">Supervisión</span></div>
+
+  <figure>
+    <img src="capturas/07-aprobaciones.png" alt="Aprobaciones">
+    <figcaption>Bandeja de aprobaciones con las pestañas Pendientes, Mantenimiento e Histórico.</figcaption>
+  </figure>
+
+  <h3>Las tres pestañas</h3>
+  <table>
+    <tr><th>Pestaña</th><th>Qué contiene</th></tr>
+    <tr><td><b>Pendientes</b></td><td>Requerimientos por atender o rechazar.</td></tr>
+    <tr><td><b>Mantenimiento</b></td><td>Órdenes de trabajo con repuestos ya consumidos, esperando ratificación.</td></tr>
+    <tr><td><b>Histórico</b></td><td>Lo ya atendido o anulado (solo lectura).</td></tr>
+  </table>
+
+  <h3>Cómo atender (aprobar) un requerimiento</h3>
+  <div class="step">
+    <ol>
+      <li>Haz clic en la fila para abrir el detalle del pedido.</li>
+      <li>Elige el <b>almacén de origen</b> de donde saldrá el material.</li>
+      <li>Por cada línea, indica la <b>cantidad a entregar</b> (puede ser entrega parcial; 0 = no entregar esa línea).</li>
+      <li>Elige el modo: <b>stock</b> (sale del almacén) o <b>compra directa</b> (se compra al momento).</li>
+      <li>Confirma. El sistema genera la salida, descuenta el stock y marca el pedido como <b>atendido</b>.</li>
+    </ol>
+  </div>
+
+  <div class="box info">
+    <span class="t">Compra directa</span>
+    Si no hay stock, puedes marcar una línea como "compra": el sistema registra a la vez la entrada de compra y la salida. En ese caso debes indicar proveedor, comprobante y costo.
+  </div>
+  <div class="box warn">
+    <span class="t">Rechazar</span>
+    También puedes <b>rechazar</b> un requerimiento (con motivo). Pasará al estado <b>anulado</b> y no descontará stock. Recuerda: no puedes aprobar un pedido que tú mismo creaste (salvo Admin).
+  </div>
+  <p>Además, desde aquí puedes <b>generar el PDF</b> de cada solicitud para imprimir o archivar.</p>
+</div>
+
+<!-- ====================== CAP 11 MANTENIMIENTO ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">11</span>Mantenimiento: órdenes de trabajo</h2>
+  <p class="lead">Gestiona las <b>Órdenes de Trabajo (OT)</b> por placa: servicios preventivos o correctivos y los repuestos que se consumen.</p>
+
+  <div class="role-tags">Pueden crear OT: <span class="adm">Admin</span><span class="sup">Supervisión</span><span class="alm">Almacenero</span></div>
+
+  <figure>
+    <img src="capturas/08-mantenimiento.png" alt="Mantenimiento">
+    <figcaption>Listado de órdenes de trabajo organizado por estado.</figcaption>
+  </figure>
+
+  <h3>Estados de una orden</h3>
+  <table>
+    <tr><th>Estado</th><th>Significa</th></tr>
+    <tr><td><b>Abierta</b></td><td>Creada, todavía sin consumir repuestos.</td></tr>
+    <tr><td><b>Por aprobar</b></td><td>Ya consumió repuestos; espera ratificación en Aprobaciones.</td></tr>
+    <tr><td><b>Cerrada</b></td><td>Aprobada o cerrada sin repuestos.</td></tr>
+    <tr><td><b>Anulada</b></td><td>Cancelada o rechazada.</td></tr>
+  </table>
+
+  <h3>Crear una orden de trabajo</h3>
+  <div class="step">
+    <ol>
+      <li>Haz clic en <b>+ Nueva orden</b>.</li>
+      <li>Elige el <b>tipo</b> (preventivo/correctivo), la <b>fecha</b> y el <b>turno</b>.</li>
+      <li>Selecciona la <b>placa</b> y el <b>mecánico responsable</b> (obligatorios).</li>
+      <li>Opcional: registra el <b>kilometraje</b> y el N° de orden.</li>
+      <li>Describe los <b>trabajos realizados</b> y guarda con <b>Crear orden</b>.</li>
+    </ol>
+  </div>
+
+  <figure>
+    <img src="capturas/08b-mantenimiento-nueva-orden.png" alt="Nueva orden de trabajo">
+    <figcaption>Formulario de una nueva orden de trabajo.</figcaption>
+  </figure>
+
+  <div class="box info">
+    <span class="t">Consumir → reconciliar</span>
+    Cuando registras los <b>repuestos consumidos</b>, el stock baja de inmediato para no frenar el taller. Luego, un aprobador <b>ratifica</b> el consumo en Aprobaciones. Si lo rechaza, el sistema <b>devuelve</b> el stock automáticamente.
+  </div>
+</div>
+
+<!-- ====================== CAP 12 REPORTES ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">12</span>Reportes</h2>
+  <p class="lead">Herramienta de análisis para gerencia y supervisión. Permite filtrar la información y exportarla a Excel/CSV.</p>
+
+  <figure>
+    <img src="capturas/09-reportes.png" alt="Reportes">
+    <figcaption>Pantalla de reportes con filtros por fecha, producto, categoría, proveedor, equipo y placa.</figcaption>
+  </figure>
+
+  <h3>Los tres reportes</h3>
+  <table>
+    <tr><th>Reporte</th><th>Qué responde</th></tr>
+    <tr><td><b>Movimientos</b></td><td>¿Qué entró y salió en un período? Muestra valor de entradas, salidas y neto.</td></tr>
+    <tr><td><b>Valorizado</b></td><td>¿Cuánto vale mi inventario hoy? Stock × costo promedio, por categoría.</td></tr>
+    <tr><td><b>Recambios</b></td><td>¿Qué repuestos se cambian más seguido de lo normal? (desgaste prematuro).</td></tr>
+  </table>
+
+  <h3>Cómo generar un reporte</h3>
+  <div class="step">
+    <ol>
+      <li>Elige la pestaña del reporte que necesitas.</li>
+      <li>Ajusta los <b>filtros</b> (fechas, categoría, producto, etc.).</li>
+      <li>Haz clic en <b>Generar reporte</b>.</li>
+      <li>Revisa los indicadores y la tabla; usa <b>Exportar CSV</b> para descargarlo.</li>
+    </ol>
+  </div>
+  <div class="box tip">
+    <span class="t">Botón Limpiar</span>
+    Si te equivocas con los filtros, usa <b>Limpiar</b> para reiniciarlos y empezar de nuevo.
+  </div>
+</div>
+
+<!-- ====================== CAP 13 IMPORTAR ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">13</span>Importar: carga masiva desde Excel</h2>
+  <p class="lead">Permite cargar muchos productos o saldos de una sola vez usando un archivo <b>Excel (.xlsx)</b>. Disponible solo para el <b>Admin</b>.</p>
+
+  <figure>
+    <img src="capturas/10-importar.png" alt="Importar">
+    <figcaption>Pantalla de importación con las pestañas Productos y Saldos, y los códigos de referencia.</figcaption>
+  </figure>
+
+  <div class="box warn">
+    <span class="t">Validación "todo o nada"</span>
+    Si una sola fila tiene un error, <b>no se aplica nada</b> y el sistema te muestra el detalle fila por fila. Así nunca queda una carga a medias.
+  </div>
+
+  <h3>Pasos recomendados</h3>
+  <div class="step">
+    <ol>
+      <li>Haz clic en <b>Descargar plantilla</b> para tener el formato correcto.</li>
+      <li>Llena el Excel usando los <b>códigos válidos</b> que se muestran abajo (categorías, unidades, tipos de equipo).</li>
+      <li>Elige qué hacer si el SKU ya existe: <b>Solo crear</b> o <b>Crear y actualizar</b>.</li>
+      <li>Haz clic para <b>seleccionar el archivo .xlsx</b> y súbelo.</li>
+      <li>Revisa el <b>resultado</b>: creados, actualizados y errores. Corrige y reintenta si hace falta.</li>
+    </ol>
+  </div>
+
+  <h3>Columnas para importar Productos</h3>
+  <table>
+    <tr><th>Columna</th><th>Obligatorio</th><th>Significado</th></tr>
+    <tr><td>Sku</td><td class="center">Sí</td><td>Código único</td></tr>
+    <tr><td>Nombre</td><td class="center">Sí</td><td>Descripción</td></tr>
+    <tr><td>CodigoCategoria</td><td class="center">Sí</td><td>Debe existir en maestros</td></tr>
+    <tr><td>CodigoUnidad</td><td class="center">Sí</td><td>LT, KG, UND…</td></tr>
+    <tr><td>EsGeneral</td><td class="center">Sí</td><td>sí / no</td></tr>
+    <tr><td>TiposEquipo</td><td class="center">Si no es general</td><td>Códigos separados por ";"</td></tr>
+    <tr><td>StockMinimo</td><td class="center">No</td><td>Número ≥ 0</td></tr>
+    <tr><td>CodigoBarra</td><td class="center">No</td><td>Opcional</td></tr>
+    <tr><td>CodigoProductoProveedor</td><td class="center">No</td><td>Opcional</td></tr>
+  </table>
+
+  <div class="box info">
+    <span class="t">Saldos iniciales</span>
+    La pestaña <b>Saldos</b> carga cantidades por almacén. En modo "Existencia inicial" arranca el stock desde cero; en modo "Recuento" ajusta la diferencia tras una toma de inventario. Requiere una <b>fecha de corte</b>.
+  </div>
+</div>
+
+<!-- ====================== CAP 14 MAESTROS ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">14</span>Maestros: configuración del sistema</h2>
+  <p class="lead">Los "maestros" son los catálogos base que alimentan al resto del sistema: categorías, personal, almacenes, equipos, etc. Configurarlos bien hace que todo lo demás funcione ordenado.</p>
+
+  <div class="role-tags">Acceso general: <span class="adm">Admin</span><span class="ger">Gerencia</span><span class="sup">Supervisión</span></div>
+
+  <h3>14.1 Categorías y familias</h3>
+  <p>Clasifican los productos de forma jerárquica (familia → categoría). Ej.: la familia "Lubricantes" agrupa "Aceites" y "Grasas".</p>
+  <figure>
+    <img src="capturas/11-maestros-categorias.png" alt="Categorías">
+    <figcaption>Listado de categorías y familias con su código, nombre y familia padre.</figcaption>
+  </figure>
+
+  <h3>14.2 Personal</h3>
+  <p>Registro de las personas que solicitan materiales o actúan como mecánicos. Cada uno tiene un cargo y, opcionalmente, un usuario de acceso.</p>
+  <figure>
+    <img src="capturas/12-maestros-personal.png" alt="Personal">
+    <figcaption>Personal registrado con su DNI, cargo y estado de acceso.</figcaption>
+  </figure>
+
+  <h3>14.3 Cargos</h3>
+  <p>Catálogo de puestos (Mecánico, Operador, Jefe de taller…) que se asignan al personal.</p>
+  <figure>
+    <img src="capturas/13-maestros-cargos.png" alt="Cargos">
+    <figcaption>Listado de cargos disponibles.</figcaption>
+  </figure>
+</div>
+
+<div class="page page-break">
+  <h3>14.4 Proveedores</h3>
+  <p>Empresas a las que se compra. Cada proveedor puede tener varias cuentas bancarias para los pagos. <span class="role-tags"><span class="adm">Admin</span><span class="alm">Almacenero</span></span></p>
+  <figure>
+    <img src="capturas/14-maestros-proveedores.png" alt="Proveedores">
+    <figcaption>Maestro de proveedores.</figcaption>
+  </figure>
+
+  <h3>14.5 Almacenes</h3>
+  <p>Las ubicaciones físicas donde se guarda el stock (almacén central, proyecto, etc.). Un mismo producto puede estar en varios almacenes.</p>
+  <figure>
+    <img src="capturas/15-maestros-almacenes.png" alt="Almacenes">
+    <figcaption>Listado de almacenes y ubicaciones con su tipo y dirección.</figcaption>
+  </figure>
+
+  <h3>14.6 Equipos</h3>
+  <p>Las máquinas y equipos de la empresa (grúas, cisternas, volquetes…). Se asocian a un tipo de equipo para definir qué repuestos les sirven.</p>
+  <figure>
+    <img src="capturas/16-maestros-equipos.png" alt="Equipos">
+    <figcaption>Maestro de equipos con su código, nombre y tipo.</figcaption>
+  </figure>
+</div>
+
+<div class="page page-break">
+  <h3>14.7 Vehículos</h3>
+  <p>Las placas que consumen materiales en salidas y mantenimiento. Cada placa se vincula a un equipo.</p>
+  <figure>
+    <img src="capturas/17-maestros-vehiculos.png" alt="Vehículos">
+    <figcaption>Maestro de vehículos: placa, modelo y equipo asignado.</figcaption>
+  </figure>
+
+  <h3>14.8 Tipos de equipo</h3>
+  <p>Clasificaciones (Camión, Grúa, Cisterna…) que sirven para definir la <b>compatibilidad de repuestos</b>. Los productos se asocian a estos tipos o se marcan como "General".</p>
+  <figure>
+    <img src="capturas/18-maestros-tipos-equipo.png" alt="Tipos de equipo">
+    <figcaption>Maestro de tipos de equipo.</figcaption>
+  </figure>
+
+  <h3>Acciones comunes en todos los maestros</h3>
+  <div class="step">
+    <ol>
+      <li>Para agregar: botón <b>+ Nuevo…</b> arriba a la derecha.</li>
+      <li>Para modificar: botón <b>Editar</b> en la fila.</li>
+      <li>Para borrar: botón <b>Eliminar</b> en la fila.</li>
+    </ol>
+  </div>
+  <div class="box warn">
+    <span class="t">No se puede borrar todo</span>
+    Si un registro está siendo usado (por ejemplo, una categoría con productos), el sistema impide eliminarlo para no romper la información.
+  </div>
+</div>
+
+<!-- ====================== CAP 15 GLOSARIO ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">15</span>Glosario para principiantes</h2>
+  <p class="lead">Las palabras que más verás en el sistema, explicadas de forma sencilla.</p>
+  <table>
+    <tr><th>Término</th><th>Qué significa</th></tr>
+    <tr><td><b>SKU</b></td><td>Código único interno de un producto, como su "DNI". Se usa para buscar e importar.</td></tr>
+    <tr><td><b>Stock mínimo</b></td><td>Cantidad límite: si el stock cae por debajo, el sistema avisa "Bajo mínimo" para reponer.</td></tr>
+    <tr><td><b>Costo promedio</b></td><td>Precio medio del producto. Sube cuando entra mercadería; las salidas se valorizan a ese promedio.</td></tr>
+    <tr><td><b>Kardex</b></td><td>Historial cronológico de entradas y salidas de un producto, con su saldo.</td></tr>
+    <tr><td><b>Almacén / Ubicación</b></td><td>Lugar físico donde está el stock (central, proyecto…).</td></tr>
+    <tr><td><b>Categoría / Familia</b></td><td>Agrupación de productos (aceites, filtros…). Puede ser jerárquica.</td></tr>
+    <tr><td><b>Unidad de medida</b></td><td>Cómo se cuenta el producto: litros (LT), kilos (KG), unidades (UND)…</td></tr>
+    <tr><td><b>Registro histórico</b></td><td>El listado oficial de todos los movimientos; nunca se borra y es la "verdad" del inventario.</td></tr>
+    <tr><td><b>Documento de inventario</b></td><td>La "boleta" (entrada, salida, transferencia…) que genera movimientos.</td></tr>
+    <tr><td><b>Placa</b></td><td>Vehículo identificado por su matrícula; obligatoria en salidas.</td></tr>
+    <tr><td><b>Tipo de equipo</b></td><td>Clasificación de máquinas (camión, grúa…) para saber qué repuestos son compatibles.</td></tr>
+    <tr><td><b>Producto general</b></td><td>Repuesto válido para cualquier equipo (tornillos, grasa multipropósito…).</td></tr>
+    <tr><td><b>Requerimiento</b></td><td>Pedido formal de materiales antes de sacarlos del almacén.</td></tr>
+    <tr><td><b>Orden de trabajo (OT)</b></td><td>Registro de un mantenimiento a una placa, con trabajos y repuestos.</td></tr>
+    <tr><td><b>Compra directa</b></td><td>Cuando no hay stock: se registra entrada de compra + salida a la vez.</td></tr>
+  </table>
+</div>
+
+<!-- ====================== CAP 16 FAQ ====================== -->
+<div class="page page-break">
+  <h2 class="cap"><span class="cap-num">16</span>Preguntas frecuentes y consejos</h2>
+
+  <h3>Preguntas frecuentes</h3>
+  <h4>No veo un módulo que otra persona sí ve</h4>
+  <p>Es por tu rol. Cada rol tiene módulos distintos (ver Capítulo 4). Si necesitas acceso, pídeselo al administrador.</p>
+
+  <h4>Quiero descontar stock, ¿dónde lo hago?</h4>
+  <p>En <b>Movimientos</b> (salida directa) o en <b>Aprobaciones</b> (al atender un requerimiento). Nunca desde Saldos, que es solo consulta.</p>
+
+  <h4>El sistema no me deja registrar una salida</h4>
+  <p>Revisa que: (1) hayas elegido una <b>placa</b>, y (2) que haya <b>stock suficiente</b>. El sistema bloquea salidas que dejarían el stock en negativo.</p>
+
+  <h4>Creé un requerimiento pero no descontó stock</h4>
+  <p>Es correcto: el requerimiento solo pide. El descuento ocurre cuando alguien lo <b>atiende</b> en Aprobaciones.</p>
+
+  <h4>¿Por qué no puedo aprobar mi propio pedido?</h4>
+  <p>Por la regla de separación de funciones: quien pide no autoriza (salvo el Admin). Es un control para evitar errores.</p>
+
+  <h3>Consejos para trabajar mejor</h3>
+  <div class="box tip">
+    <span class="t">Buenas prácticas</span>
+    <ul style="margin-top:4px;">
+      <li>Mantén los <b>maestros</b> actualizados (categorías, almacenes, placas): todo lo demás depende de ellos.</li>
+      <li>Define un <b>stock mínimo</b> realista en cada producto para que las alertas sean útiles.</li>
+      <li>Registra los movimientos <b>el mismo día</b> en que ocurren para que los saldos siempre reflejen la realidad.</li>
+      <li>Usa el <b>comprobante</b> (factura/guía) en las entradas: facilita auditorías y reportes.</li>
+      <li>Revisa el <b>Dashboard</b> al iniciar el día para ver qué está bajo mínimo.</li>
+    </ul>
+  </div>
+
+  <div class="box info">
+    <span class="t">¿Necesitas ayuda?</span>
+    Ante cualquier duda o si algo no funciona como esperas, contacta al administrador del sistema. Recuerda que cada acción queda registrada con tu usuario, así que trabaja con confianza: siempre se puede rastrear y corregir.
+  </div>
+
+  <div class="mini-foot">
+    Manual de Usuario · Sistema de Gestión de Inventario JJ Congeminco · Versión 1.0 · Junio 2026<br>
+    Guía para todos los usuarios
+  </div>
+</div>
+
+</body>
+</html>
