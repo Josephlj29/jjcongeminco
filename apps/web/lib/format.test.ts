@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { moneda, numero, fechaISO, fechaCorta, porcentaje } from "./format";
+import { moneda, numero, fechaISO, fechaCorta, fechaHora, hoyLima, porcentaje } from "./format";
 
 describe("moneda", () => {
   it("formatea con símbolo S/ y 2 decimales", () => {
@@ -14,9 +14,46 @@ describe("numero", () => {
   });
 });
 
-describe("fechaISO", () => {
+describe("fechaISO (día calendario en hora de Lima)", () => {
   it("devuelve YYYY-MM-DD", () => {
     expect(fechaISO(new Date("2026-08-28T12:00:00Z"))).toBe("2026-08-28");
+  });
+
+  /* Regresión del bug de un día: Lima es UTC−5, así que entre las 19:00 y 23:59
+     hora Lima el instante ya cayó en el día siguiente en UTC. `toISOString()`
+     devolvía ese día siguiente y contaminaba FechaOrden/FechaRequerimiento y el
+     N° de orden (que se arma desde la fecha). */
+  it("a las 20:30 de Lima sigue siendo el MISMO día, no el siguiente", () => {
+    // 2026-09-04T01:30Z === 2026-09-03 20:30 en Lima
+    const instante = new Date("2026-09-04T01:30:00Z");
+    expect(instante.toISOString().split("T")[0]).toBe("2026-09-04"); // lo que fallaba
+    expect(fechaISO(instante)).toBe("2026-09-03"); // lo correcto
+  });
+
+  it("a las 00:30 de Lima ya es el día nuevo", () => {
+    // 2026-09-03T05:30Z === 2026-09-03 00:30 en Lima
+    expect(fechaISO(new Date("2026-09-03T05:30:00Z"))).toBe("2026-09-03");
+  });
+
+  it("no adelanta el día justo antes de medianoche en Lima", () => {
+    // 2026-09-04T04:59Z === 2026-09-03 23:59 en Lima
+    expect(fechaISO(new Date("2026-09-04T04:59:00Z"))).toBe("2026-09-03");
+  });
+
+  it("hoyLima devuelve formato YYYY-MM-DD", () => {
+    expect(hoyLima()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("fechaCorta / fechaHora fijadas a Lima", () => {
+  it("no corren el día por la zona del dispositivo", () => {
+    // 20:30 de Lima: el día mostrado debe ser 03, no 04.
+    expect(fechaCorta(new Date("2026-09-04T01:30:00Z"))).toBe("03/09/2026");
+  });
+
+  it("muestra la hora de Lima, no UTC", () => {
+    // toLocaleString intercala coma entre fecha y hora ("03/09/2026, 20:30").
+    expect(fechaHora(new Date("2026-09-04T01:30:00Z"))).toMatch(/^03\/09\/2026,? 20:30$/);
   });
 });
 

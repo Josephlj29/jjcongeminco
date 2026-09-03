@@ -31,6 +31,7 @@ import { usePersonal } from "@/hooks/usePersonal";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePermiso } from "@/hooks/useYo";
 import { crearClienteNavegador } from "@/lib/supabase/client";
+import { hoyLima } from "@/lib/format";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
@@ -92,7 +93,7 @@ export default function RequerimientosPage() {
   } = useForm<CrearRequerimiento>({
     resolver: zodResolver(CrearRequerimientoSchema),
     defaultValues: {
-      FechaRequerimiento: new Date().toISOString().split("T")[0],
+      FechaRequerimiento: hoyLima(),
       IdsPersonalSolicitante: [],
       Detalle: [{ IdProducto: "", Cantidad: 1 }],
     },
@@ -220,7 +221,7 @@ export default function RequerimientosPage() {
       Object.values(fotos).forEach((f) => URL.revokeObjectURL(f.url));
       setFotos({});
       reset({
-        FechaRequerimiento: new Date().toISOString().split("T")[0],
+        FechaRequerimiento: hoyLima(),
         IdsPersonalSolicitante: [],
         Detalle: [{ IdProducto: "", Cantidad: 1 }],
       });

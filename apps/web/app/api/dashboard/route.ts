@@ -21,6 +21,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { fechaISO } from "@/lib/format";
 import {
   puedeVerModulo,
   MODULOS,
@@ -29,9 +30,8 @@ import {
   type ResumenDashboard,
 } from "@congeminco/shared";
 
-function iso(d: Date): string {
-  return d.toISOString().split("T")[0];
-}
+/* Día calendario en hora de Lima (ver lib/format.ts y migración 0065). */
+const iso = fechaISO;
 
 export async function GET(request: NextRequest) {
   const { usuario, error } = await autenticarRequest();

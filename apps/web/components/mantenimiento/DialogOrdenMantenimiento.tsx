@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { hoyLima } from "@/lib/format";
 import {
   CrearOrdenMantenimientoSchema,
   TIPO_MANTENIMIENTO,
@@ -151,7 +152,7 @@ export function DialogOrdenMantenimiento({
           Trabajos: [],
         }
       : {
-          FechaOrden: new Date().toISOString().split("T")[0],
+          FechaOrden: hoyLima(),
           IdsPersonal: [],
           Trabajos: [],
         },
@@ -468,9 +469,9 @@ export function DialogOrdenMantenimiento({
                 <EditorConsumoRepuestos estado={consumo} onChange={setConsumo} />
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Si los repuestos ya se usaron, registralos acá y la orden queda lista
-                  para aprobación en un solo paso. También podés hacerlo después desde
-                  la acción &quot;Consumir repuestos&quot;.
+                  Si los repuestos ya se usaron, registralos acá y la orden queda lista para
+                  aprobación en un solo paso. También podés hacerlo después desde la acción
+                  &quot;Consumir repuestos&quot;.
                 </p>
               )}
             </div>
