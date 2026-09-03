@@ -23,6 +23,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Congeminco — Inventario",
   description: "Sistema de inventario JJ Congeminco",
+  // Icono del acceso directo: Android toma el manifest; iOS, el apple-touch-icon.
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Congeminco",
+    statusBarStyle: "default",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

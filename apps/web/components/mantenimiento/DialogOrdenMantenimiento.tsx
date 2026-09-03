@@ -23,7 +23,15 @@ import {
   useOrdenesMantenimiento,
   useCrearOrdenMantenimiento,
   useActualizarOrdenMantenimiento,
+  useConsumirRepuestos,
 } from "@/hooks/useOrdenesMantenimiento";
+import {
+  EditorConsumoRepuestos,
+  CONSUMO_INICIAL,
+  consumoVacio,
+  validarConsumo,
+  type ConsumoState,
+} from "@/components/mantenimiento/EditorConsumoRepuestos";
 import { useVehiculos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
 import {
@@ -105,13 +113,20 @@ export function DialogOrdenMantenimiento({
   const modoEdicion = !!orden;
   const { mutateAsync: crear, isPending: creando } = useCrearOrdenMantenimiento();
   const { mutateAsync: actualizar, isPending: act } = useActualizarOrdenMantenimiento();
+  const { mutateAsync: consumir, isPending: consumiendo } = useConsumirRepuestos();
   const { data: vehiculos } = useVehiculos();
   const { data: personal } = usePersonal();
-  const isPending = creando || act;
+  const isPending = creando || act || consumiendo;
 
   const [trabajos, setTrabajos] = useState<string[]>(
     orden && orden.Trabajos.length ? orden.Trabajos.map((t) => t.Descripcion) : [""],
   );
+
+  // Consumo de repuestos opcional en el ALTA: se registra encadenado tras crear
+  // la OT (dos requests; si el consumo falla, la OT queda 'abierta' y se
+  // reintenta desde la acción "Consumir repuestos").
+  const [conConsumo, setConConsumo] = useState(false);
+  const [consumo, setConsumo] = useState<ConsumoState>({ ...CONSUMO_INICIAL });
 
   const {
     register,
@@ -166,13 +181,42 @@ export function DialogOrdenMantenimiento({
       .filter(Boolean)
       .map((Descripcion, i) => ({ Secuencia: i + 1, Descripcion }));
     const payload = { ...data, Trabajos: trabajosLimpios };
+
+    // Validar el consumo ANTES de crear la OT: con el checkbox activo, un
+    // consumo vacío o a medias es un error visible — no se crea nada (evita
+    // OTs sin consumo "en silencio" por un typo en la cantidad).
+    let consumoData = null;
+    if (!modoEdicion && conConsumo) {
+      if (consumoVacio(consumo)) {
+        toast.error(
+          "Marcaste 'Consumir repuestos ahora' sin repuestos: agrega al menos uno o desmarca la opción.",
+        );
+        return;
+      }
+      consumoData = validarConsumo(consumo);
+      if (!consumoData) return;
+    }
+
     try {
       if (modoEdicion) {
         await actualizar({ id: orden.Id, data: payload });
         toast.success("Orden actualizada correctamente");
       } else {
-        await crear(payload);
-        toast.success("Orden creada correctamente");
+        const { Id } = await crear(payload);
+        if (consumoData) {
+          // La OT ya existe: un fallo acá NO la revierte (dos transacciones).
+          try {
+            await consumir({ id: Id, data: consumoData });
+            toast.success("Orden creada y repuestos consumidos. Pendiente de aprobación.");
+          } catch (e) {
+            toast.warning(
+              `Orden creada, pero el consumo falló: ${(e as Error).message}. ` +
+                `Reintenta desde la acción "Consumir repuestos".`,
+            );
+          }
+        } else {
+          toast.success("Orden creada correctamente");
+        }
       }
       onClose();
     } catch (e) {
@@ -417,12 +461,45 @@ export function DialogOrdenMantenimiento({
             <Input id="Observaciones" placeholder="Opcional" {...register("Observaciones")} />
           </div>
 
+          {/* Consumo de repuestos en el mismo alta (opcional): ahorra el paso
+              posterior de "Consumir repuestos", que sigue disponible igual. */}
+          {!modoEdicion && (
+            <div className="space-y-3 rounded-md border p-3">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={conConsumo}
+                  onChange={(e) => setConConsumo(e.target.checked)}
+                />
+                Consumir repuestos ahora (opcional)
+              </label>
+              {conConsumo ? (
+                <EditorConsumoRepuestos estado={consumo} onChange={setConsumo} />
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Si los repuestos ya se usaron, registralos acá y la orden queda lista
+                  para aprobación en un solo paso. También podés hacerlo después desde
+                  la acción &quot;Consumir repuestos&quot;.
+                </p>
+              )}
+            </div>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Guardando..." : modoEdicion ? "Guardar cambios" : "Crear orden"}
+              {consumiendo
+                ? "Consumiendo repuestos..."
+                : isPending
+                  ? "Guardando..."
+                  : modoEdicion
+                    ? "Guardar cambios"
+                    : conConsumo && !consumoVacio(consumo)
+                      ? "Crear orden y consumir"
+                      : "Crear orden"}
             </Button>
           </DialogFooter>
         </form>

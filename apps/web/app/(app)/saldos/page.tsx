@@ -9,7 +9,7 @@
  * stock mínimo, stock POR UBICACIÓN (fetch lazy) y tipos de equipo compatibles.
  */
 import { memo, useCallback, useMemo, useState } from "react";
-import { Search, Package, AlertTriangle, Boxes } from "lucide-react";
+import { Search, AlertTriangle, Boxes } from "lucide-react";
 import type { ProductoStockConsolidado } from "@congeminco/shared";
 import { useSaldos, useSaldosPorUbicacion } from "@/hooks/useSaldos";
 import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
@@ -36,31 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-function ImagenProducto({ url, size }: { url: string | null; size: number }) {
-  if (url) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={url}
-        alt=""
-        className="shrink-0 rounded-md border object-cover"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-  return (
-    <div
-      className="flex shrink-0 items-center justify-center rounded-md border bg-muted"
-      style={{ width: size, height: size }}
-    >
-      <Package
-        className="text-muted-foreground"
-        style={{ width: size * 0.45, height: size * 0.45 }}
-      />
-    </div>
-  );
-}
 
 /* ── Detalle (contenido del Sheet) ── */
 function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
@@ -179,12 +154,26 @@ const TarjetaSaldo = memo(function TarjetaSaldo({
   onSelect: (p: ProductoStockConsolidado) => void;
 }) {
   return (
-    <button
-      type="button"
+    // div con rol de botón (no <button>): la miniatura interna es un botón
+    // propio (ImagenAmpliable) y anidar <button> dentro de <button> es inválido.
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(producto)}
-      className="flex min-h-[68px] items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(producto);
+        }
+      }}
+      className="flex min-h-[68px] cursor-pointer items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50"
     >
-      <ImagenProducto url={producto.UrlImagenPrincipal} size={56} />
+      <ImagenAmpliable
+        url={producto.UrlImagenPrincipal}
+        size={56}
+        nombre={producto.NombreProducto}
+        alt={producto.NombreProducto}
+      />
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium leading-tight">{producto.NombreProducto}</p>
         <p className="font-mono text-xs text-muted-foreground">{producto.Sku}</p>
@@ -198,7 +187,7 @@ const TarjetaSaldo = memo(function TarjetaSaldo({
         <p className="text-2xl font-bold leading-none">{producto.StockTotal}</p>
         <p className="text-[11px] text-muted-foreground">{producto.CodigoUnidad}</p>
       </div>
-    </button>
+    </div>
   );
 });
 

@@ -895,7 +895,7 @@ export default function ReportesPage() {
                       </TableHeader>
                       <TableBody>
                         {recambios.map((r) => (
-                          <TableRow key={`${r.IdRequerimiento}-${r.IdProducto}`}>
+                          <TableRow key={r.IdDetalle}>
                             <TableCell className="text-sm">{r.TargetNombre}</TableCell>
                             <TableCell className="text-sm font-medium">
                               {r.NombreProducto}

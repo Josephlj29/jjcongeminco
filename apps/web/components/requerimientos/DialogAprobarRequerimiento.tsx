@@ -282,6 +282,7 @@ export function DialogAprobarRequerimiento({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Producto</TableHead>
+                    <TableHead className="w-24">Placa</TableHead>
                     <TableHead className="w-20 text-right">Solic.</TableHead>
                     <TableHead className="w-20 text-right">Atend.</TableHead>
                     {puedeActuar ? (
@@ -301,6 +302,9 @@ export function DialogAprobarRequerimiento({
                         <TableCell>
                           <p className="font-medium leading-tight">{l.NombreProducto}</p>
                           <p className="font-mono text-xs text-muted-foreground">{l.Sku}</p>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {l.Placa ?? req.Placa ?? "—"}
                         </TableCell>
                         <TableCell className="text-right">{l.Cantidad}</TableCell>
                         <TableCell className="text-right">

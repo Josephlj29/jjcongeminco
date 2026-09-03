@@ -543,12 +543,8 @@ function DialogProducto({
                   <div className="flex flex-wrap gap-3 md:gap-2">
                     {archivos.map((a, i) => (
                       <div key={a.url} className="relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={a.url}
-                          alt={`Imagen ${i + 1}`}
-                          className="h-20 w-20 rounded-md border object-cover md:h-16 md:w-16"
-                        />
+                        {/* Miniatura ampliable (doble clic / mantener presionado). */}
+                        <ImagenAmpliable url={a.url} size={72} alt={`Imagen ${i + 1}`} />
                         {i === 0 && (
                           <Badge className="absolute -bottom-1 left-0 scale-75" variant="default">
                             Principal

@@ -14,6 +14,7 @@ const ORIGEN: Record<string, string> = {
 };
 const SITUACION: Record<string, string> = {
   pendiente: "Pendiente",
+  parcial: "Parcial",
   atendido: "Atendido",
   anulado: "Anulado",
 };

@@ -282,6 +282,7 @@ export interface ProductoStockConsolidado {
   CostoPromedio: number;
   UrlImagenPrincipal: string | null;
   EsGeneral: boolean;
+  CodigoProductoProveedor: string | null;
 }
 
 /* Salida de la vista inv.V_SaldoStock_PorUbicacion */
@@ -368,6 +369,9 @@ export interface ReporteRecambio {
   DiasDesdeAnterior: number | null;
   PromedioDiasPar: number | null;
   Acelerado: boolean;
+  /* Id de la línea de detalle: key estable (el mismo producto puede ir en
+     varias líneas del mismo requerimiento, una por placa). */
+  IdDetalle: string;
 }
 
 /* Salida de la vista inv.V_MovimientoStock_Kardex */

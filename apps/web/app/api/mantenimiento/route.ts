@@ -9,7 +9,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError } from "@/lib/api-auth";
+import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
   CrearOrdenMantenimientoSchema,
@@ -125,7 +125,9 @@ export async function POST(request: NextRequest) {
     .rpc("FnRegistrarOrdenMantenimiento", { POrden: parsed.data });
 
   if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+    // Los RAISE EXCEPTION de negocio (p. ej. "Asigna al menos un personal")
+    // salen como 409 legibles, no como 500 opacos.
+    return mapearErrorNegocio(dbError);
   }
 
   return NextResponse.json({ Id: data }, { status: 201 });

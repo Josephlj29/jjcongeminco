@@ -56,6 +56,9 @@ export function ProductoCombobox({
         value: p.IdProducto,
         label: p.NombreProducto,
         codigo: p.Sku,
+        // El filtro del Combobox busca sobre codigo+label+descripcion:
+        // poner acá el código de proveedor lo hace buscable.
+        descripcion: p.CodigoProductoProveedor ?? undefined,
       })),
     [productos],
   );
@@ -66,7 +69,7 @@ export function ProductoCombobox({
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      buscarPlaceholder="Buscar por nombre o SKU..."
+      buscarPlaceholder="Buscar por nombre, SKU o cód. proveedor..."
       className="h-auto min-h-10 px-3 py-2"
       renderSeleccion={(o) => {
         const p = porId.get(o.value);
@@ -87,10 +90,13 @@ export function ProductoCombobox({
             <ImagenProducto url={p?.UrlImagenPrincipal ?? null} size={32} />
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-sm">{o.label}</span>
-              <span className="text-xs text-muted-foreground">{o.codigo}</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {o.codigo}
+                {o.descripcion ? ` · Prov: ${o.descripcion}` : ""}
+              </span>
             </div>
             <span className="shrink-0 font-mono text-xs text-muted-foreground">
-              {p?.StockTotal}
+              {p?.StockTotal} {p?.CodigoUnidad}
             </span>
             <Check className={cn("h-4 w-4 shrink-0", seleccionada ? "opacity-100" : "opacity-0")} />
           </>

@@ -3,10 +3,12 @@
 /**
  * components/ImagenAmpliable.tsx
  *
- * Miniatura de imagen con dos interacciones:
+ * Miniatura de imagen con tres interacciones:
  *  - Hover (desktop): muestra un preview flotante más grande en un portal a
  *    document.body (no lo recortan tablas, sheets ni contenedores con overflow).
  *  - Doble clic: abre un lightbox a pantalla con zoom (clic alterna 1x / 2x).
+ *  - Mantener presionado (táctil, ~600 ms): abre el mismo lightbox — dblclick
+ *    no es fiable en móvil (double-tap-to-zoom de Safari/Android).
  *
  * Si no hay URL, renderiza un placeholder estático sin interacción.
  * Render del portal/lightbox solo ocurre client-side (compatible con Workers).
@@ -27,6 +29,9 @@ interface ImagenAmpliableProps {
 }
 
 const PREVIEW = 224; // w-56 / h-56
+// Por debajo del umbral del reconocedor nativo de iOS (~500 ms), que si gana
+// emite pointercancel y el nuestro nunca dispara.
+const LONG_PRESS_MS = 450;
 
 export function ImagenAmpliable({ url, size, alt = "", nombre, className }: ImagenAmpliableProps) {
   const [hover, setHover] = React.useState(false);
@@ -34,6 +39,19 @@ export function ImagenAmpliable({ url, size, alt = "", nombre, className }: Imag
   const [lightbox, setLightbox] = React.useState(false);
   const [zoom, setZoom] = React.useState(false);
   const ref = React.useRef<HTMLButtonElement>(null);
+
+  // Long-press táctil: timer que abre el lightbox; se cancela si el dedo se
+  // mueve (scroll) o se levanta antes.
+  const pressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressOrigenRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  const cancelarPress = () => {
+    if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+    pressTimerRef.current = null;
+    pressOrigenRef.current = null;
+  };
+
+  React.useEffect(() => cancelarPress, []);
 
   // Sin imagen → placeholder estático, sin interacción.
   if (!url) {
@@ -81,13 +99,41 @@ export function ImagenAmpliable({ url, size, alt = "", nombre, className }: Imag
           setZoom(false);
           setLightbox(true);
         }}
+        onPointerDown={(e) => {
+          if (e.pointerType !== "touch") return;
+          pressOrigenRef.current = { x: e.clientX, y: e.clientY };
+          pressTimerRef.current = setTimeout(() => {
+            cancelarPress();
+            setZoom(false);
+            setLightbox(true);
+          }, LONG_PRESS_MS);
+        }}
+        onPointerMove={(e) => {
+          const o = pressOrigenRef.current;
+          if (!o) return;
+          // El dedo se movió (scroll): no es long-press.
+          if (Math.abs(e.clientX - o.x) > 10 || Math.abs(e.clientY - o.y) > 10) cancelarPress();
+        }}
+        onPointerUp={cancelarPress}
+        onPointerCancel={cancelarPress}
+        onPointerLeave={cancelarPress}
+        // El long-press nativo sobre la imagen (menú contextual en Android)
+        // acá significa "ampliar": siempre suprimido en la miniatura.
+        onContextMenu={(e) => e.preventDefault()}
+        // La miniatura es "zona de imagen": el click simple NO burbujea al
+        // contenedor padre (Sheet/fila clicable). Evita dos bugs: el doble
+        // clic que abría y cerraba el Sheet, y el click fantasma post
+        // long-press que disparaba el onClick del padre.
+        onClick={(e) => e.stopPropagation()}
         className={cn(
-          "group relative shrink-0 cursor-zoom-in overflow-hidden rounded-md border",
+          "group relative shrink-0 cursor-zoom-in select-none overflow-hidden rounded-md border",
           className,
         )}
-        style={{ width: size, height: size }}
+        // WebkitTouchCallout: iOS no dispara contextmenu; sin esto el callout
+        // nativo de imagen ("Guardar imagen…") gana y cancela nuestro gesto.
+        style={{ width: size, height: size, WebkitTouchCallout: "none" }}
         title="Doble clic para ampliar"
-        aria-label="Ampliar imagen (doble clic)"
+        aria-label="Ampliar imagen (doble clic o mantener presionado)"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

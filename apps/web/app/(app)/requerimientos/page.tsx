@@ -13,7 +13,7 @@
  */
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearRequerimientoSchema,
@@ -88,10 +88,18 @@ export default function RequerimientosPage() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, insert } = useFieldArray({
     control,
     name: "Detalle",
   });
+
+  /* Duplicar línea: mismo producto/cantidad/notas, placa a elegir. Es el camino
+     para pedir un material a VARIAS placas: una línea por placa, cada una con
+     su cantidad (el ledger y los reportes atribuyen consumo por placa). */
+  const duplicarLinea = (idx: number) => {
+    const linea = watch(`Detalle.${idx}`);
+    insert(idx + 1, { ...linea, IdVehiculo: undefined });
+  };
 
   const origenSeleccionado = watch("Origen");
   const placaDefault = watch("IdVehiculo");
@@ -283,19 +291,11 @@ export default function RequerimientosPage() {
 
               {/* Detalle */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div>
                   <h3 className="text-sm font-medium">Materiales solicitados</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      append({ IdProducto: "", Cantidad: 1, IdVehiculo: placaDefault })
-                    }
-                  >
-                    <Plus className="mr-1 h-3 w-3" />
-                    Agregar línea
-                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    ¿El mismo material para otra placa? Duplicá la línea y elegí la placa.
+                  </p>
                 </div>
 
                 {/* Una sola presentación montada a la vez (ver nota de isMobile). */}
@@ -308,16 +308,28 @@ export default function RequerimientosPage() {
                           <span className="text-xs font-medium text-muted-foreground">
                             Línea {idx + 1}
                           </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-11 w-11 text-muted-foreground hover:text-destructive"
-                            onClick={() => fields.length > 1 && remove(idx)}
-                            disabled={fields.length === 1}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-11 w-11 text-muted-foreground"
+                              title="Duplicar línea (misma cantidad, otra placa)"
+                              onClick={() => duplicarLinea(idx)}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-11 w-11 text-muted-foreground hover:text-destructive"
+                              onClick={() => fields.length > 1 && remove(idx)}
+                              disabled={fields.length === 1}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Producto</Label>
@@ -359,6 +371,18 @@ export default function RequerimientosPage() {
                         </div>
                       </Card>
                     ))}
+                    {/* Agregar línea al pie: el flujo natural es terminar una
+                       línea y pedir la siguiente sin volver arriba. */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        append({ IdProducto: "", Cantidad: 1, IdVehiculo: placaDefault })
+                      }
+                      className="flex min-h-[3rem] w-full cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-3 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar línea
+                    </button>
                   </div>
                 ) : (
                   /* Desktop: tabla */
@@ -370,7 +394,7 @@ export default function RequerimientosPage() {
                           <TableHead className="w-44">Placa</TableHead>
                           <TableHead className="w-28">Cantidad</TableHead>
                           <TableHead className="w-48">Notas (opt.)</TableHead>
-                          <TableHead className="w-12"></TableHead>
+                          <TableHead className="w-20"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -406,21 +430,45 @@ export default function RequerimientosPage() {
                               />
                             </TableCell>
                             <TableCell>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                onClick={() => fields.length > 1 && remove(idx)}
-                                disabled={fields.length === 1}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex items-center">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground"
+                                  title="Duplicar línea (misma cantidad, otra placa)"
+                                  onClick={() => duplicarLinea(idx)}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  onClick={() => fields.length > 1 && remove(idx)}
+                                  disabled={fields.length === 1}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
+                    {/* Agregar línea al pie: el flujo natural es terminar una
+                       línea y pedir la siguiente sin volver arriba. */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        append({ IdProducto: "", Cantidad: 1, IdVehiculo: placaDefault })
+                      }
+                      className="flex w-full cursor-pointer items-center justify-center gap-2 border-t border-dashed p-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar línea
+                    </button>
                   </div>
                 )}
                 {detalleErrorMsg && <p className="text-xs text-destructive">{detalleErrorMsg}</p>}
