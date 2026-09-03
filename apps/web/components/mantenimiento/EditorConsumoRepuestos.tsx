@@ -11,7 +11,8 @@
  */
 import { toast } from "sonner";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
-import type { ConsumirRepuestos } from "@congeminco/shared";
+import { PASO_CANTIDAD, type ConsumirRepuestos } from "@congeminco/shared";
+import { InputCantidad } from "@/components/InputCantidad";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useUbicaciones } from "@/hooks/useUbicaciones";
 import { useProveedores } from "@/hooks/useProveedores";
@@ -35,16 +36,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/* La cantidad es `number | null`, no string: el texto que se tipea vive dentro
+   de InputCantidad, así que guardarlo también acá sería un espejo con pérdida y
+   volverían los Number("") = 0 y Number("abc") = NaN que había que atajar en
+   cada uso. null = vacío o a medio escribir. */
 export type LineaConsumoState = {
   idProducto: string | null;
-  cantidad: string;
+  cantidad: number | null;
   modo: "stock" | "compra";
   costo: string;
 };
 
 export const LINEA_CONSUMO_VACIA: LineaConsumoState = {
   idProducto: null,
-  cantidad: "1",
+  cantidad: 1,
   modo: "stock",
   costo: "",
 };
@@ -65,7 +70,7 @@ export const CONSUMO_INICIAL: ConsumoState = {
 
 /** true si el usuario no cargó ningún repuesto (consumo opcional en el alta). */
 export function consumoVacio(estado: ConsumoState): boolean {
-  return !estado.lineas.some((l) => l.idProducto && Number(l.cantidad) > 0);
+  return !estado.lineas.some((l) => l.idProducto && (l.cantidad ?? 0) > 0);
 }
 
 /**
@@ -79,12 +84,12 @@ export function validarConsumo(estado: ConsumoState): ConsumirRepuestos | null {
   }
   // Una línea con producto elegido pero cantidad inválida es un error visible,
   // no algo que se descarta en silencio (perdería consumo sin que se note).
-  const aMedias = estado.lineas.some((l) => l.idProducto && !(Number(l.cantidad) > 0));
+  const aMedias = estado.lineas.some((l) => l.idProducto && !((l.cantidad ?? 0) > 0));
   if (aMedias) {
     toast.error("Hay repuestos con cantidad vacía o inválida: complétalos o quítalos.");
     return null;
   }
-  const lineasValidas = estado.lineas.filter((l) => l.idProducto && Number(l.cantidad) > 0);
+  const lineasValidas = estado.lineas.filter((l) => l.idProducto && (l.cantidad ?? 0) > 0);
   if (!lineasValidas.length) {
     toast.error("Agrega al menos un repuesto con cantidad.");
     return null;
@@ -106,7 +111,8 @@ export function validarConsumo(estado: ConsumoState): ConsumirRepuestos | null {
     Comprobante: hayCompra ? estado.comprobante.trim() : undefined,
     Lineas: lineasValidas.map((l) => ({
       IdProducto: l.idProducto as string,
-      Cantidad: Number(l.cantidad),
+      // El filtro de arriba ya garantizó > 0.
+      Cantidad: l.cantidad as number,
       Modo: l.modo,
       Costo: l.modo === "compra" ? Number(l.costo) : undefined,
     })),
@@ -136,7 +142,7 @@ export function EditorConsumoRepuestos({
     patch({ lineas: lineas.map((l, idx) => (idx === i ? { ...l, ...p } : l)) });
 
   const total = lineas.reduce((acc, l) => {
-    const cant = Number(l.cantidad) || 0;
+    const cant = l.cantidad ?? 0;
     if (l.modo === "compra") return acc + cant * (Number(l.costo) || 0);
     const prod = productos?.find((p) => p.IdProducto === l.idProducto);
     return acc + cant * (prod?.CostoPromedio ?? 0);
@@ -156,8 +162,8 @@ export function EditorConsumoRepuestos({
       <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
         <p className="text-xs leading-tight">
-          El stock se descuenta al <strong>aprobar</strong> la orden; hasta entonces esta lista
-          es un borrador editable. Si el repuesto no está en almacén, usa{" "}
+          El stock se descuenta al <strong>aprobar</strong> la orden; hasta entonces esta lista es
+          un borrador editable. Si el repuesto no está en almacén, usa{" "}
           <strong>compra directa</strong> en la línea.
         </p>
       </div>
@@ -183,7 +189,7 @@ export function EditorConsumoRepuestos({
             de Table ya desborda con scroll, pero sin un ancho mínimo el navegador
             comprime las celdas en vez de desbordar, y la cantidad se queda sin
             lugar. Con el mínimo, en pantalla chica se arrastra de costado y cada
-            campo conserva su ancho útil. */}
+            campo conserva su ancho util. */}
         <Table className="min-w-[680px]">
           <TableHeader>
             <TableRow>
@@ -205,19 +211,18 @@ export function EditorConsumoRepuestos({
                   />
                 </TableCell>
                 <TableCell className="align-top">
-                  <div className="flex items-center gap-1.5">
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.001"
-                      className="h-9"
-                      value={l.cantidad}
-                      onChange={(e) => setLinea(i, { cantidad: e.target.value })}
-                    />
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {productos?.find((p) => p.IdProducto === l.idProducto)?.CodigoUnidad ?? ""}
-                    </span>
-                  </div>
+                  {/* La unidad ya la muestra InputCantidad en el eco, así que
+                      acá no va el <span> que la repetía al costado. */}
+                  <InputCantidad
+                    className="h-9"
+                    value={l.cantidad}
+                    onChange={(n) => setLinea(i, { cantidad: n })}
+                    min={PASO_CANTIDAD}
+                    unidad={
+                      productos?.find((p) => p.IdProducto === l.idProducto)?.CodigoUnidad ??
+                      undefined
+                    }
+                  />
                 </TableCell>
                 <TableCell className="align-top">
                   <Select

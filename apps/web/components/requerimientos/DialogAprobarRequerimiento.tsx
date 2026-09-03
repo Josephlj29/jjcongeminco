@@ -50,6 +50,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
+import { InputCantidad } from "@/components/InputCantidad";
 import { DialogCatalogarProducto } from "@/components/requerimientos/DialogCatalogarProducto";
 import { fechaCorta, moneda } from "@/lib/format";
 import type { RequerimientoDetalleLinea } from "@congeminco/shared";
@@ -66,7 +67,9 @@ function restanteDe(l: RequerimientoDetalleLinea): number {
   return Math.max(0, l.Cantidad - l.CantidadAtendida);
 }
 
-type EstadoLinea = { cantidad: string; modo: "stock" | "compra"; costo: string };
+/* La cantidad es `number | null` (el texto lo maneja InputCantidad). null = el
+   campo está vacío o a medio escribir. */
+type EstadoLinea = { cantidad: number | null; modo: "stock" | "compra"; costo: string };
 
 export function DialogAprobarRequerimiento({
   idRequerimiento,
@@ -104,7 +107,7 @@ export function DialogAprobarRequerimiento({
         // parcial ya se entregó parte, y solo resta lo pendiente. Las líneas NO
         // catalogadas arrancan en 0: primero hay que registrar el producto.
         init[l.Id] = {
-          cantidad: l.IdProducto === null ? "0" : String(restanteDe(l)),
+          cantidad: l.IdProducto === null ? 0 : restanteDe(l),
           modo: "stock",
           costo: "",
         };
@@ -127,17 +130,23 @@ export function DialogAprobarRequerimiento({
   const setLinea = (id: string, patch: Partial<EstadoLinea>) =>
     setLineas((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
 
-  // Cantidad numérica efectiva por línea (clamp 0..restante).
-  const cantNum = (restante: number, st?: EstadoLinea) =>
-    Math.max(0, Math.min(restante, Number(st?.cantidad) || 0));
+  /* Cantidad efectiva de una línea. Antes esto RECORTABA a 0..restante, así que
+     escribir 9 sobre un pendiente de 5 entregaba 5 y la pantalla seguía
+     mostrando 9: el aprobador nunca se enteraba. Ahora se toma tal cual, el
+     campo avisa el máximo y `hayExcedida` bloquea el botón de aprobar. */
+  const cantDe = (st?: EstadoLinea) => st?.cantidad ?? 0;
 
   const hayCompra = (req?.Detalle ?? []).some(
-    (l) => lineas[l.Id]?.modo === "compra" && cantNum(restanteDe(l), lineas[l.Id]) > 0,
+    (l) => lineas[l.Id]?.modo === "compra" && cantDe(lineas[l.Id]) > 0,
   );
+
+  /* Alguna línea pide más que su pendiente. La BD también lo rechaza, pero con
+     esto no se llega a enviar. */
+  const hayExcedida = (req?.Detalle ?? []).some((l) => cantDe(lineas[l.Id]) > restanteDe(l));
 
   const total = (req?.Detalle ?? []).reduce((acc, l) => {
     const st = lineas[l.Id];
-    const cant = cantNum(restanteDe(l), st);
+    const cant = cantDe(st);
     if (cant <= 0) return acc;
     const costo = st?.modo === "compra" ? Number(st.costo) || 0 : l.CostoPromedio;
     return acc + cant * costo;
@@ -154,7 +163,7 @@ export function DialogAprobarRequerimiento({
       const st = lineas[l.Id];
       return {
         IdDetalle: l.Id,
-        Cantidad: cantNum(restanteDe(l), st),
+        Cantidad: cantDe(st),
         Modo: st?.modo ?? "stock",
         Costo: st?.modo === "compra" ? Number(st.costo) || undefined : undefined,
       };
@@ -162,6 +171,11 @@ export function DialogAprobarRequerimiento({
 
     if (!payload.some((l) => l.Cantidad > 0)) {
       toast.error("Indica al menos una cantidad a entregar.");
+      return;
+    }
+    // Respaldo del botón deshabilitado: nunca se entrega más que lo pendiente.
+    if (hayExcedida) {
+      toast.error("Hay líneas con más cantidad que la pendiente: corregilas antes de entregar.");
       return;
     }
     // Defensa en profundidad (la UI deshabilita el input y la BD lo rechaza igual):
@@ -363,19 +377,23 @@ export function DialogAprobarRequerimiento({
                         {puedeActuar ? (
                           <>
                             <TableCell>
-                              <Input
-                                type="number"
+                              {/* Entregar "un cuarto de lo pendiente" es EL caso
+                                  donde sacaban la calculadora: acá se escribe
+                                  1/4 o 20/4 directo. min 0 porque 0 significa
+                                  no entregar esta línea. */}
+                              <InputCantidad
+                                className="h-8"
+                                value={st?.cantidad ?? null}
+                                onChange={(n) => setLinea(l.Id, { cantidad: n })}
                                 min={0}
                                 max={restanteDe(l)}
+                                etiquetaMax="pendiente"
                                 disabled={restanteDe(l) === 0 || l.IdProducto === null}
                                 title={
                                   l.IdProducto === null
                                     ? "Registra el producto en el catálogo primero"
                                     : undefined
                                 }
-                                className="h-8"
-                                value={st?.cantidad ?? ""}
-                                onChange={(e) => setLinea(l.Id, { cantidad: e.target.value })}
                               />
                             </TableCell>
                             <TableCell>
@@ -524,7 +542,11 @@ export function DialogAprobarRequerimiento({
                 <Button variant="outline" onClick={() => setRechazar(true)} disabled={aprobando}>
                   Rechazar
                 </Button>
-                <Button onClick={onAprobar} disabled={aprobando || !idUbicacion || sinAlmacenes}>
+                <Button
+                  onClick={onAprobar}
+                  disabled={aprobando || !idUbicacion || sinAlmacenes || hayExcedida}
+                  title={hayExcedida ? "Hay líneas que piden más que lo pendiente." : undefined}
+                >
                   {aprobando ? "Generando salida..." : "Aprobar y entregar"}
                 </Button>
               </>
@@ -540,9 +562,7 @@ export function DialogAprobarRequerimiento({
             // La siembra usa seededRef y no re-siembra tras el refetch: habilitar
             // la entrega de la línea recién catalogada con su saldo pendiente.
             if (lineaACatalogar) {
-              setLinea(lineaACatalogar.Id, {
-                cantidad: String(restanteDe(lineaACatalogar)),
-              });
+              setLinea(lineaACatalogar.Id, { cantidad: restanteDe(lineaACatalogar) });
             }
           }}
         />

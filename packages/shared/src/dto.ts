@@ -16,6 +16,38 @@ export const SITUACION_REQUERIMIENTO = ["pendiente", "parcial", "atendido", "anu
 /* Máximo de imágenes por producto (regla de aplicación, no de BD). */
 export const MAX_IMAGENES_PRODUCTO = 3;
 
+/* ─── Precisión numérica (espeja la escala de las columnas de la BD) ───
+   TODA columna de cantidad es NUMERIC(14,3) y toda columna de costo es
+   NUMERIC(14,4). Postgres redondea a la escala EN SILENCIO al insertar, así que
+   sin estos topes un 0.0004 entra como 0.000, viola el CHECK de mayor a cero y
+   el usuario recibe el texto crudo del constraint.
+
+   Viven acá y no en apps/web a propósito: el redondeo del cliente y el
+   `multipleOf` del schema tienen que salir del MISMO número o derivan. */
+export const DECIMALES_CANTIDAD = 3;
+export const PASO_CANTIDAD = 0.001;
+export const DECIMALES_COSTO = 4;
+export const PASO_COSTO = 0.0001;
+/* Tope de NUMERIC(14,3) y NUMERIC(14,4): 14 dígitos en total. Sin esto, un
+   número mayor sale como un 22003 (numeric field overflow) crudo. */
+export const MAX_CANTIDAD = 99999999999.999;
+export const MAX_COSTO = 9999999999.9999;
+
+/* Cantidad y costo con la precisión de la BD. Fábricas y no literales sueltos
+   para que los ~7 campos no se separen entre sí con el tiempo. Los mensajes van
+   en español porque los de zod salen en inglés ("Number must be a multiple of"). */
+const zCantidad = (mensajeVacio = "Indica la cantidad.") =>
+  z
+    .number({ required_error: mensajeVacio, invalid_type_error: mensajeVacio })
+    .multipleOf(PASO_CANTIDAD, { message: `Máximo ${DECIMALES_CANTIDAD} decimales.` })
+    .max(MAX_CANTIDAD, { message: "La cantidad es demasiado grande." });
+
+const zCosto = () =>
+  z
+    .number({ invalid_type_error: "Indica el costo." })
+    .multipleOf(PASO_COSTO, { message: `Máximo ${DECIMALES_COSTO} decimales.` })
+    .max(MAX_COSTO, { message: "El costo es demasiado grande." });
+
 /* ─── Producto ─── */
 export const CrearProductoSchema = z.object({
   // Opcional: si el alta no lo trae, la BD lo autogenera como PREFIJO-NNN
@@ -24,7 +56,7 @@ export const CrearProductoSchema = z.object({
   Nombre: z.string().min(1).max(200),
   IdCategoria: z.string().uuid(),
   IdUnidadMedida: z.string().uuid(),
-  StockMinimo: z.number().nonnegative().default(0),
+  StockMinimo: zCantidad("Indica el stock mínimo.").nonnegative().default(0),
   CodigoBarra: z.string().max(50).optional(),
   // Código del producto en el proveedor (el que se brinda al comprar). Distinto
   // del código de barras.
@@ -54,8 +86,8 @@ export type ActualizarProducto = z.infer<typeof ActualizarProductoSchema>;
 /* ─── Documento de inventario (cabecera + detalle) ─── */
 export const DetalleDocumentoSchema = z.object({
   IdProducto: z.string().uuid(),
-  Cantidad: z.number().positive(),
-  CostoUnitario: z.number().nonnegative().optional(),
+  Cantidad: zCantidad().positive(),
+  CostoUnitario: zCosto().nonnegative().optional(),
   IdVehiculo: z.string().uuid().optional(),
   Notas: z.string().max(300).optional(),
 });
@@ -247,7 +279,7 @@ export const DetalleRequerimientoSchema = z
     IdProducto: z.string().uuid().optional(),
     DescripcionLibre: z.string().trim().min(3).max(200).optional(),
     UrlFotoLibre: z.string().url().max(500).optional(),
-    Cantidad: z.number().positive(),
+    Cantidad: zCantidad().positive(),
     IdVehiculo: z.string().uuid().optional(),
     Notas: z.string().max(300).optional(),
   })
@@ -287,9 +319,10 @@ export const MODO_ENTREGA = ["stock", "compra"] as const;
 
 export const LineaEntregaSchema = z.object({
   IdDetalle: z.string().uuid(),
-  Cantidad: z.number().nonnegative(),
+  // nonnegative y no positive: 0 significa "no entregar esta línea".
+  Cantidad: zCantidad().nonnegative(),
   Modo: z.enum(MODO_ENTREGA).default("stock"),
-  Costo: z.number().positive().optional(),
+  Costo: zCosto().positive().optional(),
 });
 
 export const AtenderRequerimientoSchema = z
@@ -341,9 +374,9 @@ export type Turno = (typeof TURNO)[number];
    por línea. Mismo contrato en el alta y en la edición (reemplaza el borrador). */
 export const LineaConsumoSchema = z.object({
   IdProducto: z.string().uuid(),
-  Cantidad: z.number().positive(),
+  Cantidad: zCantidad().positive(),
   Modo: z.enum(MODO_ENTREGA).default("stock"),
-  Costo: z.number().positive().optional(),
+  Costo: zCosto().positive().optional(),
 });
 
 export const ConsumirRepuestosSchema = z

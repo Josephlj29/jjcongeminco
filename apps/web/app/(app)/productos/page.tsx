@@ -15,7 +15,7 @@
  * - Acciones restringidas por rol (productoEscritura)
  */
 import { useState, useMemo, useEffect } from "react";
-import { useForm, type DefaultValues } from "react-hook-form";
+import { Controller, useForm, type DefaultValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Plus,
@@ -30,6 +30,7 @@ import {
   Eraser,
 } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
+import { InputCantidad } from "@/components/InputCantidad";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { DataTable, type ColumnaDataTable, type AccionFila } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
@@ -221,6 +222,7 @@ function DialogProducto({
     reset,
     getValues,
     clearErrors,
+    control,
     formState: { errors },
   } = useForm<CrearProducto>({
     resolver: zodResolver(CrearProductoSchema),
@@ -425,11 +427,21 @@ function DialogProducto({
               </div>
               <div className="space-y-1">
                 <Label htmlFor="StockMinimo">Stock mínimo</Label>
-                <Input
-                  id="StockMinimo"
-                  type="number"
-                  min={0}
-                  {...register("StockMinimo", { valueAsNumber: true })}
+                {/* Sin atajos: acá no se piden fracciones de envase, pero el
+                    campo comparte el parseo (acepta 1,5 y 100/4). */}
+                <Controller
+                  control={control}
+                  name="StockMinimo"
+                  render={({ field: f }) => (
+                    <InputCantidad
+                      id="StockMinimo"
+                      value={f.value ?? null}
+                      onChange={(n) => f.onChange(n ?? 0)}
+                      onBlur={f.onBlur}
+                      min={0}
+                      atajos={false}
+                    />
+                  )}
                 />
               </div>
             </div>

@@ -3,6 +3,13 @@ import {
   ActualizarOrdenMantenimientoSchema,
   CrearDocumentoSchema,
   CrearOrdenMantenimientoSchema,
+  DECIMALES_CANTIDAD,
+  DetalleRequerimientoSchema,
+  LineaConsumoSchema,
+  LineaEntregaSchema,
+  MAX_CANTIDAD,
+  PASO_CANTIDAD,
+  PASO_COSTO,
   SITUACION_REQUERIMIENTO,
 } from "./dto";
 
@@ -150,5 +157,66 @@ describe("CrearOrdenMantenimientoSchema", () => {
     });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.Consumo?.Lineas).toHaveLength(1);
+  });
+});
+
+/* Precisión de cantidades y costos.
+   Antes de esto, un 0.0004 pasaba la validación, Postgres lo redondeaba a 0.000
+   al insertarlo en NUMERIC(14,3), eso violaba el CHECK de mayor a cero y el
+   usuario terminaba viendo el texto crudo del constraint. */
+describe("precisión de cantidad y costo", () => {
+  it("el paso se deriva de los decimales declarados", () => {
+    expect(PASO_CANTIDAD).toBe(10 ** -DECIMALES_CANTIDAD);
+  });
+
+  const linea = (Cantidad: number) => ({ IdProducto: UUID, Cantidad });
+
+  it("acepta hasta 3 decimales en la cantidad", () => {
+    for (const c of [1, 0.5, 0.25, 0.333, 1234.5]) {
+      expect(DetalleRequerimientoSchema.safeParse(linea(c)).success).toBe(true);
+    }
+  });
+
+  it("rechaza más de 3 decimales en vez de dejar que la BD redondee callada", () => {
+    for (const c of [0.3333, 1.23456789, 0.0004]) {
+      expect(DetalleRequerimientoSchema.safeParse(linea(c)).success).toBe(false);
+    }
+  });
+
+  it("rechaza una cantidad que desborda NUMERIC(14,3)", () => {
+    expect(DetalleRequerimientoSchema.safeParse(linea(MAX_CANTIDAD)).success).toBe(true);
+    expect(DetalleRequerimientoSchema.safeParse(linea(1e12)).success).toBe(false);
+  });
+
+  it("aplica la misma regla al detalle de documento y al consumo de la OT", () => {
+    expect(CrearDocumentoSchema.safeParse({
+      TipoDocumento: "entrada",
+      FechaDocumento: "2026-09-03",
+      IdUbicacionDestino: UUID,
+      Detalle: [linea(0.25)],
+    }).success).toBe(true);
+    expect(CrearDocumentoSchema.safeParse({
+      TipoDocumento: "entrada",
+      FechaDocumento: "2026-09-03",
+      IdUbicacionDestino: UUID,
+      Detalle: [linea(0.2555)],
+    }).success).toBe(false);
+
+    expect(LineaConsumoSchema.safeParse(linea(0.125)).success).toBe(true);
+    expect(LineaConsumoSchema.safeParse(linea(0.1255)).success).toBe(false);
+  });
+
+  it("la línea de entrega sigue aceptando exactamente 0 (no entregar)", () => {
+    const entrega = (Cantidad: number) => ({ IdDetalle: UUID, Cantidad });
+    expect(LineaEntregaSchema.safeParse(entrega(0)).success).toBe(true);
+    expect(LineaEntregaSchema.safeParse(entrega(2.5)).success).toBe(true);
+    expect(LineaEntregaSchema.safeParse(entrega(2.5001)).success).toBe(false);
+  });
+
+  it("el costo admite 4 decimales y rechaza 5", () => {
+    const conCosto = (Costo: number) => ({ IdDetalle: UUID, Cantidad: 1, Modo: "compra", Costo });
+    expect(PASO_COSTO).toBe(0.0001);
+    expect(LineaEntregaSchema.safeParse(conCosto(12.3456)).success).toBe(true);
+    expect(LineaEntregaSchema.safeParse(conCosto(12.34567)).success).toBe(false);
   });
 });

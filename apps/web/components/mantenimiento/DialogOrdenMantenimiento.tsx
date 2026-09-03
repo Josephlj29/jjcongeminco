@@ -137,7 +137,7 @@ function consumoDesdeOrden(orden: OrdenMantenimientoConDetalle | null): ConsumoS
     comprobante: orden.ComprobanteCompra ?? "",
     lineas: orden.Repuestos.map((r) => ({
       idProducto: r.IdProducto,
-      cantidad: String(r.Cantidad),
+      cantidad: r.Cantidad,
       modo: r.Modo,
       costo: r.CostoUnitarioCompra === null ? "" : String(r.CostoUnitarioCompra),
     })),
@@ -481,7 +481,7 @@ export function DialogOrdenMantenimiento({
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       {/* max-w-4xl: adentro va la tabla de repuestos, de 5 columnas. Con 2xl no
-          entraba y las celdas se comprimían hasta tapar la cantidad. */}
+          entraba y las celdas se comprimian hasta tapar la cantidad. */}
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>

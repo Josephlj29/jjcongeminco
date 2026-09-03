@@ -20,6 +20,7 @@
  */
 import { useCallback, useMemo, useState } from "react";
 import {
+  Controller,
   useForm,
   useFieldArray,
   useWatch,
@@ -33,6 +34,7 @@ import { Plus, Trash2, History, Info, Package, FileText, Eraser } from "lucide-r
 import { toast } from "sonner";
 import {
   CrearDocumentoSchema,
+  PASO_CANTIDAD,
   TIPO_DOCUMENTO,
   type CrearDocumento,
   type ProductoStockConsolidado,
@@ -46,6 +48,7 @@ import { fechaCorta, fechaISO } from "@/lib/format";
 import { useBorradorFormulario } from "@/hooks/useBorradorFormulario";
 import { AvisoBorrador } from "@/components/AvisoBorrador";
 import { useYo } from "@/hooks/useYo";
+import { InputCantidad } from "@/components/InputCantidad";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
@@ -226,13 +229,21 @@ function LineaDetalle({
         {errorProducto && <p className="mt-1 text-xs text-destructive">{errorProducto}</p>}
       </TableCell>
       <TableCell className="align-top">
-        <Input
-          type="number"
-          min={1}
-          className="h-9"
-          {...register(`Detalle.${index}.Cantidad`, {
-            valueAsNumber: true,
-          })}
+        {/* Acepta fracciones y operaciones (1/4, 20/4). El mínimo es un paso y
+            no 1: el min={1} anterior hacía imposible mover medio litro. */}
+        <Controller
+          control={control}
+          name={`Detalle.${index}.Cantidad`}
+          render={({ field: f }) => (
+            <InputCantidad
+              className="h-9"
+              value={f.value ?? null}
+              onChange={(n) => f.onChange(n ?? undefined)}
+              onBlur={f.onBlur}
+              min={PASO_CANTIDAD}
+              unidad={producto?.CodigoUnidad}
+            />
+          )}
         />
       </TableCell>
       <TableCell className="align-top">
@@ -688,7 +699,7 @@ export default function MovimientosPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-64">Producto</TableHead>
-                    <TableHead className="w-24">Cantidad</TableHead>
+                    <TableHead className="w-32">Cantidad</TableHead>
                     <TableHead className="w-56">
                       {esSalida ? "Costo (valorización)" : "Costo unit. (opt.)"}
                     </TableHead>

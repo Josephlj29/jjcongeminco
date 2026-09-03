@@ -176,3 +176,28 @@ Pruebas por flujo y casuística (happy / borde / error / RBAC). Cada caso indica
 | UI-04 | PDF de solicitud | happy | abre documento imprimible con líneas | manual |
 | UI-05 | Logo sin fondo en login/sidebar/PDF | happy | se ve correcto | manual |
 | UI-06 | Maestro categorías sin duplicados | regресión | jerarquía limpia | manual |
+
+## 13. Cantidades con fracciones (`lib/cantidad.ts`, `components/InputCantidad.tsx`)
+
+El operario consume "un cuarto de balde" y antes dividía con la calculadora del
+celular. El campo acepta la operación escrita; la escala es la de la BD
+(`NUMERIC(14,3)`, 3 decimales) y el schema la exige con `multipleOf`.
+
+| ID | Caso | Tipo | Acción | Esperado | Método |
+|----|------|------|--------|----------|--------|
+| CANT-01 | Fracción en requerimiento | happy | escribir `1/4` en una línea | eco `= 0.25`, se guarda `0.250` | manual |
+| CANT-02 | División en repuestos de OT | happy | escribir `20/4` | queda 5 al salir del campo | manual |
+| CANT-03 | Número mixto y coma decimal | happy | `1 1/2` y `1,5` | ambos quedan 1.5 | manual |
+| CANT-04 | Precedencia | borde | `2+3*4` | 14, no 20 | unit |
+| CANT-05 | Espacio entre dígitos | error | `20 4` | se rechaza, NO se convierte en 204 | unit |
+| CANT-06 | Expresión a medio escribir | borde | tipear `1/` y esperar | sin error en rojo; al escribir `4` aparece `= 0.25` | manual |
+| CANT-07 | Decimal menor a 1 | regresión | pedir `0.5` en un requerimiento | se acepta (antes el `min={1}` lo impedía) | manual |
+| CANT-08 | Sub-escala | error | escribir `0.0004` | error de mínimo en pantalla, sin 409 con texto de constraint | manual |
+| CANT-09 | Más de 3 decimales al servidor | error | POST con `Cantidad: 0.3333` | 400 `Máximo 3 decimales.` (antes la BD redondeaba callada) | unit |
+| CANT-10 | Entrega mayor al pendiente | error | pendiente 5, escribir 9 | error `Máximo 5 (pendiente)`, Aprobar deshabilitado, nada se envía | manual |
+| CANT-11 | Entrega parcial con fracción | happy | pendiente 5, escribir `2.5` | requerimiento queda `parcial`, `CantidadAtendida = 2.500` | manual |
+| CANT-12 | Atajos en celular | happy | abrir el desplegable, tocar `+⅙` | queda 0.167 y el teclado no se cierra | manual |
+| CANT-13 | Fracción libre sin teclado | happy | usar la tecla `/` del desplegable y escribir 1/7 | queda 0.143 | manual |
+| CANT-14 | Enter en cantidad | regresión | Enter dentro del campo | confirma sin enviar el formulario (antes lo enviaba) | manual |
+| CANT-15 | Borrar línea del medio | regresión | 3 líneas, borrar la primera | las restantes muestran los valores corridos correctos | manual |
+| CANT-16 | Ruido de fórmula al importar | borde | celda `0.3000000000000004` | importa como `0.300`, sin filas con error | manual |

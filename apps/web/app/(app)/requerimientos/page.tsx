@@ -15,7 +15,7 @@
  * como tabla en desktop (`hidden md:block`). Ambas escriben el mismo fieldArray.
  */
 import { useState, type ChangeEvent } from "react";
-import { useForm, useFieldArray, type DefaultValues } from "react-hook-form";
+import { Controller, useForm, useFieldArray, type DefaultValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, Check, Copy, Eraser, ImageIcon, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import {
   CrearRequerimientoSchema,
   ORIGEN_REQUERIMIENTO,
   ORIGEN_REQUERIMIENTO_LABEL,
+  PASO_CANTIDAD,
   type CrearRequerimiento,
 } from "@congeminco/shared";
 import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
@@ -34,6 +35,7 @@ import { useBorradorFormulario } from "@/hooks/useBorradorFormulario";
 import { AvisoBorrador } from "@/components/AvisoBorrador";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { hoyLima } from "@/lib/format";
+import { InputCantidad } from "@/components/InputCantidad";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
@@ -424,6 +426,40 @@ export default function RequerimientosPage() {
     );
   };
 
+  /* Cantidad por línea — reutilizada en tarjeta (móvil) y celda (desktop).
+     Acepta fracciones y operaciones (1/4, 20/4, 1 1/2): en obra se pide "un
+     cuarto de balde" y antes había que dividir con la calculadora del celular.
+     El mínimo es un paso, no 1: antes el min={1} del input numérico hacía
+     imposible pedir medio litro, aunque el schema y la BD lo aceptan. */
+  const renderCampoCantidad = (idx: number) => {
+    const errLinea = errors.Detalle?.[idx];
+    const idProducto = watch(`Detalle.${idx}.IdProducto`);
+    const unidad = productos?.find((p) => p.IdProducto === idProducto)?.CodigoUnidad;
+    return (
+      <>
+        <Controller
+          control={control}
+          name={`Detalle.${idx}.Cantidad`}
+          render={({ field: f }) => (
+            <InputCantidad
+              className="h-9"
+              value={f.value ?? null}
+              // undefined y no null: el schema pide un number, y así el mensaje
+              // es "Indica la cantidad" en vez de "se esperaba number".
+              onChange={(n) => f.onChange(n ?? undefined)}
+              onBlur={f.onBlur}
+              min={PASO_CANTIDAD}
+              unidad={unidad}
+            />
+          )}
+        />
+        {errLinea?.Cantidad && (
+          <p className="text-xs text-destructive">{errLinea.Cantidad.message}</p>
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -625,15 +661,7 @@ export default function RequerimientosPage() {
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
                             <Label className="text-xs">Cantidad</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              inputMode="numeric"
-                              className="h-9"
-                              {...register(`Detalle.${idx}.Cantidad`, {
-                                valueAsNumber: true,
-                              })}
-                            />
+                            {renderCampoCantidad(idx)}
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Notas (opcional)</Label>
@@ -667,7 +695,7 @@ export default function RequerimientosPage() {
                         <TableRow>
                           <TableHead>Producto</TableHead>
                           <TableHead className="w-48">Placa</TableHead>
-                          <TableHead className="w-28">Cantidad</TableHead>
+                          <TableHead className="w-32">Cantidad</TableHead>
                           <TableHead className="w-48">Notas (opt.)</TableHead>
                           <TableHead className="w-20"></TableHead>
                         </TableRow>
@@ -679,16 +707,7 @@ export default function RequerimientosPage() {
                               {renderCampoProducto(idx, field.id, true)}
                             </TableCell>
                             <TableCell className="align-top">{renderSelectPlaca(idx)}</TableCell>
-                            <TableCell className="align-top">
-                              <Input
-                                type="number"
-                                min={1}
-                                className="h-9"
-                                {...register(`Detalle.${idx}.Cantidad`, {
-                                  valueAsNumber: true,
-                                })}
-                              />
-                            </TableCell>
+                            <TableCell className="align-top">{renderCampoCantidad(idx)}</TableCell>
                             <TableCell className="align-top">
                               <Input
                                 className="h-9"

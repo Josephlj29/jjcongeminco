@@ -14,7 +14,12 @@
 import { useRef, useState } from "react";
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, Download, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import { type ReporteImportacion } from "@congeminco/shared";
+import {
+  DECIMALES_CANTIDAD,
+  DECIMALES_COSTO,
+  type ReporteImportacion,
+} from "@congeminco/shared";
+import { redondear } from "@/lib/cantidad";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +54,16 @@ import {
 } from "@/lib/xlsx-cliente";
 
 /* ---------- piezas compartidas ---------- */
+
+/**
+ * Ajusta una celda a la escala de la BD conservando el null.
+ * Excel arrastra ruido de coma flotante en las fórmulas (0.1+0.2 sale
+ * 0.30000000000000004) y los schemas interactivos exigen la escala exacta. Se
+ * normaliza acá y no en `celdaANumero`, que es compartida y laxa a propósito.
+ */
+function redondearCelda(n: number | null, decimales: number): number | null {
+  return n === null ? null : redondear(n, decimales);
+}
 
 function ZonaArchivo({
   archivo,
@@ -232,7 +247,9 @@ function TabProductos() {
         CodigoUnidad: String(r.CodigoUnidad ?? "").trim(),
         EsGeneral: celdaABool(r.EsGeneral),
         TiposEquipo: celdaALista(r.TiposEquipo),
-        StockMinimo: celdaANumero(r.StockMinimo) ?? undefined,
+        // Redondeo a la escala de la BD: una celda con ruido de fórmula
+        // (0.3000000000000004) entra normalizada en vez de rechazar la fila.
+        StockMinimo: redondearCelda(celdaANumero(r.StockMinimo), DECIMALES_CANTIDAD) ?? undefined,
         CodigoBarra: String(r.CodigoBarra ?? "").trim() || undefined,
         CodigoProductoProveedor: String(r.CodigoProductoProveedor ?? "").trim() || undefined,
       }));
@@ -356,11 +373,11 @@ function TabSaldos() {
         Fila: i + 2,
         CodigoUbicacion: String(r.CodigoUbicacion ?? "").trim(),
         Sku: String(r.Sku ?? "").trim(),
-        Cantidad: celdaANumero(r.Cantidad),
+        Cantidad: redondearCelda(celdaANumero(r.Cantidad), DECIMALES_CANTIDAD),
         CostoUnitario:
           r.CostoUnitario === "" || r.CostoUnitario == null
             ? undefined
-            : celdaANumero(r.CostoUnitario),
+            : redondearCelda(celdaANumero(r.CostoUnitario), DECIMALES_COSTO),
       }));
 
       const res = await fetch("/api/importaciones/saldos-iniciales", {
