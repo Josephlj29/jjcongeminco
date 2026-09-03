@@ -11,6 +11,13 @@ import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import type { RequerimientoConDetalle } from "@congeminco/shared";
 
+interface FilaSolicitante {
+  Id: string;
+  IdPersonal: string;
+  Orden: number;
+  T_Personal: { NombreCompleto: string; T_Cargo: { Nombre: string } | null } | null;
+}
+
 interface FilaHeader {
   Id: string;
   NumeroRequerimiento: string | null;
@@ -19,21 +26,22 @@ interface FilaHeader {
   Situacion: RequerimientoConDetalle["Situacion"];
   IdEquipo: string | null;
   IdVehiculo: string | null;
-  IdPersonalSolicitante: string | null;
   Notas: string | null;
   IdDocumentoInventario: string | null;
   T_Equipo: { Codigo: string; Nombre: string } | null;
   T_Vehiculo: { Placa: string } | null;
-  T_Personal: { NombreCompleto: string; T_Cargo: { Nombre: string } | null } | null;
+  T_RequerimientoPersonal: FilaSolicitante[] | null;
 }
 
 interface FilaDetalle {
   Id: string;
-  IdProducto: string;
+  IdProducto: string | null;
   Cantidad: number;
   CantidadAtendida: number;
   Notas: string | null;
   IdVehiculo: string | null;
+  DescripcionLibre: string | null;
+  UrlFotoLibre: string | null;
   T_Producto: { Nombre: string; Sku: string; CostoPromedio: number } | null;
   T_Vehiculo: { Placa: string } | null;
 }
@@ -49,7 +57,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     .schema("inv")
     .from("T_Requerimiento")
     .select(
-      "Id, NumeroRequerimiento, FechaRequerimiento, Origen, Situacion, IdEquipo, IdVehiculo, IdPersonalSolicitante, Notas, IdDocumentoInventario, T_Equipo(Codigo, Nombre), T_Vehiculo(Placa), T_Personal(NombreCompleto, T_Cargo(Nombre))",
+      "Id, NumeroRequerimiento, FechaRequerimiento, Origen, Situacion, IdEquipo, IdVehiculo, Notas, IdDocumentoInventario, T_Equipo(Codigo, Nombre), T_Vehiculo(Placa), T_RequerimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
     )
     .eq("Id", id)
     .eq("Estado", true)
@@ -66,7 +74,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     .schema("inv")
     .from("T_RequerimientoDetalle")
     .select(
-      "Id, IdProducto, Cantidad, CantidadAtendida, Notas, IdVehiculo, T_Producto(Nombre, Sku, CostoPromedio), T_Vehiculo(Placa)",
+      "Id, IdProducto, Cantidad, CantidadAtendida, Notas, IdVehiculo, DescripcionLibre, UrlFotoLibre, T_Producto(Nombre, Sku, CostoPromedio), T_Vehiculo(Placa)",
     )
     .eq("IdRequerimiento", id)
     .eq("Estado", true);
@@ -88,15 +96,23 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     NombreEquipo: h.T_Equipo ? `${h.T_Equipo.Codigo} — ${h.T_Equipo.Nombre}` : null,
     IdVehiculo: h.IdVehiculo,
     Placa: h.T_Vehiculo?.Placa ?? null,
-    IdPersonalSolicitante: h.IdPersonalSolicitante,
-    NombreSolicitante: h.T_Personal?.NombreCompleto ?? null,
-    CargoSolicitante: h.T_Personal?.T_Cargo?.Nombre ?? null,
+    // PostgREST no ordena embeds anidados: se ordena en cliente por Orden.
+    Solicitantes: (h.T_RequerimientoPersonal ?? [])
+      .slice()
+      .sort((a, b) => a.Orden - b.Orden)
+      .map((s) => ({
+        Id: s.Id,
+        IdPersonal: s.IdPersonal,
+        NombreCompleto: s.T_Personal?.NombreCompleto ?? null,
+        Cargo: s.T_Personal?.T_Cargo?.Nombre ?? null,
+        Orden: Number(s.Orden),
+      })),
     Notas: h.Notas,
     IdDocumentoInventario: h.IdDocumentoInventario,
     Detalle: lineas.map((l) => ({
       Id: l.Id,
       IdProducto: l.IdProducto,
-      NombreProducto: l.T_Producto?.Nombre ?? "—",
+      NombreProducto: l.T_Producto?.Nombre ?? l.DescripcionLibre ?? "—",
       Sku: l.T_Producto?.Sku ?? "—",
       Cantidad: Number(l.Cantidad),
       CantidadAtendida: Number(l.CantidadAtendida),
@@ -104,6 +120,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       IdVehiculo: l.IdVehiculo,
       Placa: l.T_Vehiculo?.Placa ?? null,
       Notas: l.Notas,
+      DescripcionLibre: l.DescripcionLibre,
+      UrlFotoLibre: l.UrlFotoLibre,
     })),
   };
 

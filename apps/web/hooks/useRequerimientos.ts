@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   AtenderRequerimiento,
+  CrearProducto,
   CrearRequerimiento,
   RequerimientoConDetalle,
   SituacionRequerimiento,
@@ -91,6 +92,40 @@ export function useAtenderRequerimiento() {
       // "reportes" cubre los gráficos de dashboard y reportes.
       void qc.invalidateQueries({ queryKey: ["saldos"] });
       void qc.invalidateQueries({ queryKey: ["reportes"] });
+    },
+  });
+}
+
+/* Catalogar una línea NO catalogada al momento de entregar: registra el producto
+   (SKU autogenerado, foto de la solicitud como imagen principal) y vincula la línea. */
+export function useCatalogarLinea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      idRequerimiento,
+      idDetalle,
+      data,
+    }: {
+      idRequerimiento: string;
+      idDetalle: string;
+      data: CrearProducto;
+    }) => {
+      const res = await fetch(
+        `/api/requerimientos/${idRequerimiento}/detalle/${idDetalle}/catalogar`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+      if (!res.ok) throw new Error(await leerError(res));
+      return res.json() as Promise<{ IdProducto: string }>;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["requerimientos"] });
+      // El catálogo ganó un producto nuevo (con imagen principal).
+      void qc.invalidateQueries({ queryKey: ["productos"] });
+      void qc.invalidateQueries({ queryKey: ["saldos"] });
     },
   });
 }

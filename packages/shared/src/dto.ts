@@ -227,12 +227,26 @@ export type ActualizarVehiculo = z.infer<typeof ActualizarVehiculoSchema>;
 export const ORIGEN_REQUERIMIENTO = ["planificado", "presupuestado", "desgaste_prematuro"] as const;
 export type OrigenRequerimiento = (typeof ORIGEN_REQUERIMIENTO)[number];
 
-export const DetalleRequerimientoSchema = z.object({
-  IdProducto: z.string().uuid(),
-  Cantidad: z.number().positive(),
-  IdVehiculo: z.string().uuid().optional(),
-  Notas: z.string().max(300).optional(),
-});
+/* Línea de requerimiento: producto del catálogo XOR producto NUEVO no catalogado
+   (DescripcionLibre + máx 1 foto opcional). Al entregar, la línea libre exige
+   registrarse en el catálogo primero (FnCatalogarLineaRequerimiento). */
+export const DetalleRequerimientoSchema = z
+  .object({
+    IdProducto: z.string().uuid().optional(),
+    DescripcionLibre: z.string().trim().min(3).max(200).optional(),
+    UrlFotoLibre: z.string().url().max(500).optional(),
+    Cantidad: z.number().positive(),
+    IdVehiculo: z.string().uuid().optional(),
+    Notas: z.string().max(300).optional(),
+  })
+  .refine((l) => !!l.IdProducto !== !!l.DescripcionLibre, {
+    message: "Cada línea lleva un producto del catálogo O la descripción del producto nuevo.",
+    path: ["IdProducto"],
+  })
+  .refine((l) => !l.UrlFotoLibre || !!l.DescripcionLibre, {
+    message: "La foto solo aplica a líneas de producto nuevo.",
+    path: ["UrlFotoLibre"],
+  });
 
 export const CrearRequerimientoSchema = z
   .object({
@@ -241,7 +255,9 @@ export const CrearRequerimientoSchema = z
     NumeroRequerimiento: z.string().max(40).optional(),
     IdEquipo: z.string().uuid().optional(),
     IdVehiculo: z.string().uuid().optional(),
-    IdPersonalSolicitante: z.string().uuid().optional(),
+    // Solicitantes múltiples (T_RequerimientoPersonal). Vacío = sin solicitante
+    // (los requerimientos generados por una OT heredan el personal de la OT).
+    IdsPersonalSolicitante: z.array(z.string().uuid()).default([]),
     Notas: z.string().max(500).optional(),
     Detalle: z.array(DetalleRequerimientoSchema).min(1),
   })

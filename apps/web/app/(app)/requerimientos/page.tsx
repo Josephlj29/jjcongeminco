@@ -6,14 +6,17 @@
  * Funcionalidades:
  * - Formulario para crear requerimiento (origen: planificado/presupuestado/desgaste_prematuro)
  * - Debe apuntar a equipo O vehículo (placa)
+ * - Cada línea es producto del catálogo O producto NUEVO no catalogado
+ *   (DescripcionLibre + máx 1 foto opcional que se sube a Storage al enviar)
  *
  * Responsive: el formulario colapsa a 1 columna en móvil; el detalle de
  * materiales se presenta como una tarjeta por línea en móvil (`md:hidden`) y
  * como tabla en desktop (`hidden md:block`). Ambas escriben el mismo fieldArray.
  */
+import { useState, type ChangeEvent } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Copy } from "lucide-react";
+import { Camera, Check, Copy, ImageIcon, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearRequerimientoSchema,
@@ -26,7 +29,9 @@ import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePermiso } from "@/hooks/useYo";
+import { crearClienteNavegador } from "@/lib/supabase/client";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
+import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,8 +51,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 const ORIGEN_LABEL: Record<string, string> = {
   planificado: "Planificado",
@@ -79,11 +93,13 @@ export default function RequerimientosPage() {
     watch,
     control,
     reset,
+    clearErrors,
     formState: { errors },
   } = useForm<CrearRequerimiento>({
     resolver: zodResolver(CrearRequerimientoSchema),
     defaultValues: {
       FechaRequerimiento: new Date().toISOString().split("T")[0],
+      IdsPersonalSolicitante: [],
       Detalle: [{ IdProducto: "", Cantidad: 1 }],
     },
   });
@@ -93,16 +109,84 @@ export default function RequerimientosPage() {
     name: "Detalle",
   });
 
+  /* Foto local por línea "nuevo" (máx 1). Clave = field.id del useFieldArray:
+     es estable frente a insert/remove/duplicar, a diferencia del índice, así
+     que la foto sigue a SU línea aunque se eliminen líneas anteriores. La URL
+     es un objectURL local (preview); recién se sube a Storage en el submit. */
+  const [fotos, setFotos] = useState<Record<string, { file: File; url: string }>>({});
+
+  const agregarFoto = (fieldId: string, e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite volver a elegir el mismo archivo
+    if (!file) return;
+    const anterior = fotos[fieldId];
+    if (anterior) URL.revokeObjectURL(anterior.url);
+    const url = URL.createObjectURL(file);
+    setFotos((prev) => ({ ...prev, [fieldId]: { file, url } }));
+  };
+
+  const quitarFoto = (fieldId: string) => {
+    const foto = fotos[fieldId];
+    if (!foto) return;
+    URL.revokeObjectURL(foto.url);
+    setFotos((prev) => {
+      const rest = { ...prev };
+      delete rest[fieldId];
+      return rest;
+    });
+  };
+
+  /* Modo de la línea derivado de RHF (sin estado paralelo por índice): la línea
+     es "nuevo" si DescripcionLibre !== undefined (al activar el modo se setea ""
+     y al volver a catálogo se setea undefined). RHF mueve los valores junto con
+     la fila en insert/remove, así que el modo nunca se desalinea con el índice. */
+  const esLineaNueva = (idx: number) => watch(`Detalle.${idx}.DescripcionLibre`) !== undefined;
+
+  const cambiarModoLinea = (idx: number, nuevo: boolean) => {
+    if (nuevo === esLineaNueva(idx)) return;
+    if (nuevo) {
+      setValue(`Detalle.${idx}.IdProducto`, undefined);
+      setValue(`Detalle.${idx}.DescripcionLibre`, "");
+    } else {
+      const fieldId = fields[idx]?.id;
+      if (fieldId) quitarFoto(fieldId);
+      setValue(`Detalle.${idx}.DescripcionLibre`, undefined);
+      setValue(`Detalle.${idx}.UrlFotoLibre`, undefined);
+      setValue(`Detalle.${idx}.IdProducto`, "");
+    }
+    // Los errores del modo anterior (uuid/min(3)/XOR) ya no aplican.
+    clearErrors(`Detalle.${idx}`);
+  };
+
   /* Duplicar línea: mismo producto/cantidad/notas, placa a elegir. Es el camino
      para pedir un material a VARIAS placas: una línea por placa, cada una con
-     su cantidad (el ledger y los reportes atribuyen consumo por placa). */
+     su cantidad (el ledger y los reportes atribuyen consumo por placa).
+     Si la línea es "nuevo" se copia la descripción pero NO la foto: las fotos
+     se indexan por field.id y la línea insertada recibe un id nuevo. */
   const duplicarLinea = (idx: number) => {
     const linea = watch(`Detalle.${idx}`);
-    insert(idx + 1, { ...linea, IdVehiculo: undefined });
+    insert(idx + 1, { ...linea, IdVehiculo: undefined, UrlFotoLibre: undefined });
+  };
+
+  /* Eliminar línea: además de sacarla del fieldArray, libera el objectURL de su
+     foto local (si tenía) para no fugar blobs. */
+  const eliminarLinea = (idx: number) => {
+    if (fields.length === 1) return;
+    const fieldId = fields[idx]?.id;
+    if (fieldId) quitarFoto(fieldId);
+    remove(idx);
   };
 
   const origenSeleccionado = watch("Origen");
   const placaDefault = watch("IdVehiculo");
+  const idsSolicitante = watch("IdsPersonalSolicitante") ?? [];
+
+  const toggleSolicitante = (id: string) => {
+    const next = idsSolicitante.includes(id)
+      ? idsSolicitante.filter((x) => x !== id)
+      : [...idsSolicitante, id];
+    setValue("IdsPersonalSolicitante", next, { shouldValidate: true });
+  };
   // El refine de Detalle (path:["Detalle"]) puede quedar en .message o en .root.message.
   const detalleErrorMsg =
     errors.Detalle?.message ??
@@ -110,10 +194,40 @@ export default function RequerimientosPage() {
 
   const onSubmit = async (data: CrearRequerimiento) => {
     try {
-      await mutateAsync(data);
+      /* Payload limpio por modo: catálogo no lleva DescripcionLibre/UrlFotoLibre;
+         nuevo no lleva IdProducto (undefined — JSON lo omite, "" rompería el XOR). */
+      const detalle = data.Detalle.map((l) =>
+        l.DescripcionLibre !== undefined
+          ? { ...l, IdProducto: undefined }
+          : { ...l, DescripcionLibre: undefined, UrlFotoLibre: undefined },
+      );
+
+      /* Subir la foto local de cada línea "nuevo" ANTES del POST. Si una subida
+         falla, la línea viaja sin foto (warning), no se bloquea el requerimiento. */
+      for (const [i, linea] of detalle.entries()) {
+        if (linea.DescripcionLibre === undefined) continue;
+        const foto = fotos[fields[i]?.id ?? ""];
+        if (!foto) continue;
+        const supabase = crearClienteNavegador();
+        const ruta = `solicitudes/${crypto.randomUUID()}-${foto.file.name}`;
+        const { data: up, error } = await supabase.storage
+          .from("requerimientos")
+          .upload(ruta, foto.file, { upsert: false });
+        if (error || !up) {
+          toast.warning(`No se pudo subir la foto de la línea ${i + 1}; se envía sin foto.`);
+          continue;
+        }
+        const { data: pub } = supabase.storage.from("requerimientos").getPublicUrl(up.path);
+        linea.UrlFotoLibre = pub.publicUrl;
+      }
+
+      await mutateAsync({ ...data, Detalle: detalle });
       toast.success("Requerimiento creado correctamente");
+      Object.values(fotos).forEach((f) => URL.revokeObjectURL(f.url));
+      setFotos({});
       reset({
         FechaRequerimiento: new Date().toISOString().split("T")[0],
+        IdsPersonalSolicitante: [],
         Detalle: [{ IdProducto: "", Cantidad: 1 }],
       });
     } catch (e) {
@@ -141,6 +255,113 @@ export default function RequerimientosPage() {
       </SelectContent>
     </Select>
   );
+
+  /* Campo Producto por línea — reutilizado en tarjeta (móvil) y celda (desktop).
+     Toggle Catálogo|Nuevo (mismo patrón visual del Stock|Compra de aprobación) y
+     debajo el combobox del catálogo O el input de descripción + 1 foto opcional. */
+  const renderCampoProducto = (idx: number, fieldId: string) => {
+    const nueva = esLineaNueva(idx);
+    const foto = fotos[fieldId];
+    const errLinea = errors.Detalle?.[idx];
+    return (
+      <div className="space-y-2">
+        <div className="flex rounded-md border p-0.5 text-xs">
+          <button
+            type="button"
+            onClick={() => cambiarModoLinea(idx, false)}
+            className={`flex-1 rounded px-2 py-1 ${
+              !nueva ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            }`}
+          >
+            Catálogo
+          </button>
+          <button
+            type="button"
+            onClick={() => cambiarModoLinea(idx, true)}
+            className={`flex-1 rounded px-2 py-1 ${
+              nueva ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            }`}
+          >
+            Nuevo
+          </button>
+        </div>
+
+        {nueva ? (
+          <>
+            <Input
+              className="h-9"
+              placeholder="Describe el producto urgente..."
+              {...register(`Detalle.${idx}.DescripcionLibre`)}
+            />
+            {foto ? (
+              <div className="relative w-fit">
+                {/* Miniatura ampliable; el X va como hermano absoluto (ImagenAmpliable
+                    renderiza un <button>: no se puede anidar otro button adentro). */}
+                <ImagenAmpliable
+                  url={foto.url}
+                  size={48}
+                  alt="Foto del producto nuevo"
+                  nombre={watch(`Detalle.${idx}.DescripcionLibre`) || undefined}
+                />
+                <button
+                  type="button"
+                  onClick={() => quitarFoto(fieldId)}
+                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive"
+                  aria-label="Quitar foto"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              /* Máx 1 foto: con foto puesta, estos botones desaparecen. */
+              <div className="flex gap-2">
+                {/* capture abre la cámara directo en Android/iOS; en desktop no aplica. */}
+                <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/70 hover:text-foreground md:hidden">
+                  <Camera className="h-3.5 w-3.5 shrink-0" />
+                  Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => agregarFoto(fieldId, e)}
+                  />
+                </label>
+                <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/70 hover:text-foreground">
+                  <ImageIcon className="h-3.5 w-3.5 shrink-0" />
+                  Archivo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => agregarFoto(fieldId, e)}
+                  />
+                </label>
+              </div>
+            )}
+          </>
+        ) : (
+          <ProductoCombobox
+            productos={productos ?? []}
+            value={watch(`Detalle.${idx}.IdProducto`) || null}
+            onChange={(v) =>
+              setValue(`Detalle.${idx}.IdProducto`, v ?? "", {
+                shouldValidate: true,
+              })
+            }
+          />
+        )}
+
+        {errLinea?.DescripcionLibre && (
+          <p className="text-xs text-destructive">{errLinea.DescripcionLibre.message}</p>
+        )}
+        {/* El refine XOR del schema reporta en path IdProducto. */}
+        {errLinea?.IdProducto && (
+          <p className="text-xs text-destructive">{errLinea.IdProducto.message}</p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-8">
@@ -199,29 +420,51 @@ export default function RequerimientosPage() {
                 </div>
               </div>
 
-              {/* Solicitante (personal) */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label>Solicitante</Label>
-                  <Select
-                    value={watch("IdPersonalSolicitante") ?? ""}
-                    onValueChange={(v) =>
-                      setValue("IdPersonalSolicitante", v, { shouldValidate: true })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="¿Quién lo solicita?" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {personal?.map((p) => (
-                        <SelectItem key={p.Id} value={p.Id}>
-                          {p.NombreCompleto}
-                          {p.NombreCargo ? ` · ${p.NombreCargo}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Solicitantes (varios; mismo patrón multi-select que el
+                  personal de las órdenes de mantenimiento) */}
+              <div className="space-y-1">
+                <Label>
+                  Solicitantes{" "}
+                  {idsSolicitante.length > 0 && (
+                    <span className="font-normal text-muted-foreground">
+                      ({idsSolicitante.length} seleccionado{idsSolicitante.length === 1 ? "" : "s"})
+                    </span>
+                  )}
+                </Label>
+                <Command className="rounded-lg border">
+                  <CommandInput placeholder="Buscar personal..." />
+                  <CommandList className="max-h-44">
+                    <CommandEmpty>No se encontró personal.</CommandEmpty>
+                    <CommandGroup>
+                      {personal?.map((p) => {
+                        const activo = idsSolicitante.includes(p.Id);
+                        return (
+                          <CommandItem
+                            key={p.Id}
+                            value={p.NombreCompleto}
+                            onSelect={() => toggleSolicitante(p.Id)}
+                            className="gap-2"
+                          >
+                            <span
+                              className={cn(
+                                "flex h-4 w-4 items-center justify-center rounded border",
+                                activo
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-input",
+                              )}
+                            >
+                              {activo && <Check className="h-3 w-3" />}
+                            </span>
+                            <span className="flex-1">{p.NombreCompleto}</span>
+                            {p.NombreCargo && (
+                              <span className="text-xs text-muted-foreground">{p.NombreCargo}</span>
+                            )}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
               </div>
 
               {/* Equipo / Vehículo — al menos uno */}
@@ -324,7 +567,7 @@ export default function RequerimientosPage() {
                               variant="ghost"
                               size="icon"
                               className="h-11 w-11 text-muted-foreground hover:text-destructive"
-                              onClick={() => fields.length > 1 && remove(idx)}
+                              onClick={() => eliminarLinea(idx)}
                               disabled={fields.length === 1}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -333,15 +576,7 @@ export default function RequerimientosPage() {
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Producto</Label>
-                          <ProductoCombobox
-                            productos={productos ?? []}
-                            value={watch(`Detalle.${idx}.IdProducto`) || null}
-                            onChange={(v) =>
-                              setValue(`Detalle.${idx}.IdProducto`, v ?? "", {
-                                shouldValidate: true,
-                              })
-                            }
-                          />
+                          {renderCampoProducto(idx, field.id)}
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
@@ -401,15 +636,7 @@ export default function RequerimientosPage() {
                         {fields.map((field, idx) => (
                           <TableRow key={field.id}>
                             <TableCell className="min-w-64 align-top">
-                              <ProductoCombobox
-                                productos={productos ?? []}
-                                value={watch(`Detalle.${idx}.IdProducto`) || null}
-                                onChange={(v) =>
-                                  setValue(`Detalle.${idx}.IdProducto`, v ?? "", {
-                                    shouldValidate: true,
-                                  })
-                                }
-                              />
+                              {renderCampoProducto(idx, field.id)}
                             </TableCell>
                             <TableCell className="align-top">{renderSelectPlaca(idx)}</TableCell>
                             <TableCell className="align-top">
@@ -446,7 +673,7 @@ export default function RequerimientosPage() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                  onClick={() => fields.length > 1 && remove(idx)}
+                                  onClick={() => eliminarLinea(idx)}
                                   disabled={fields.length === 1}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />

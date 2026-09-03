@@ -122,10 +122,12 @@ export interface Requerimiento extends CamposAuditoria {
   IdDocumentoInventario: string | null;
 }
 
-/* Línea de detalle de un requerimiento (con datos del producto para la bandeja). */
+/* Línea de detalle de un requerimiento (con datos del producto para la bandeja).
+   IdProducto NULL = producto NO catalogado: DescripcionLibre describe lo pedido y
+   UrlFotoLibre (máx 1) lo ilustra; se cataloga al entregar. */
 export interface RequerimientoDetalleLinea {
   Id: string;
-  IdProducto: string;
+  IdProducto: string | null;
   NombreProducto: string;
   Sku: string;
   Cantidad: number;
@@ -134,6 +136,17 @@ export interface RequerimientoDetalleLinea {
   IdVehiculo: string | null;
   Placa: string | null;
   Notas: string | null;
+  DescripcionLibre: string | null;
+  UrlFotoLibre: string | null;
+}
+
+/* Solicitante de un requerimiento (puente N:M inv.T_RequerimientoPersonal). */
+export interface RequerimientoSolicitante {
+  Id: string;
+  IdPersonal: string;
+  NombreCompleto: string | null;
+  Cargo: string | null;
+  Orden: number;
 }
 
 /* Requerimiento con su detalle y nombres de equipo/placa (vista de aprobación). */
@@ -147,9 +160,7 @@ export interface RequerimientoConDetalle {
   NombreEquipo: string | null;
   IdVehiculo: string | null;
   Placa: string | null;
-  IdPersonalSolicitante: string | null;
-  NombreSolicitante: string | null;
-  CargoSolicitante: string | null;
+  Solicitantes: RequerimientoSolicitante[];
   Notas: string | null;
   IdDocumentoInventario: string | null;
   Detalle: RequerimientoDetalleLinea[];

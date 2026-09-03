@@ -49,6 +49,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImagenAmpliable } from "@/components/ImagenAmpliable";
+import { DialogCatalogarProducto } from "@/components/requerimientos/DialogCatalogarProducto";
 import { moneda } from "@/lib/format";
 import type { RequerimientoDetalleLinea } from "@congeminco/shared";
 
@@ -93,6 +95,7 @@ export function DialogAprobarRequerimiento({
   const [comprobante, setComprobante] = useState("");
   const [rechazar, setRechazar] = useState(false);
   const [motivo, setMotivo] = useState("");
+  const [lineaACatalogar, setLineaACatalogar] = useState<RequerimientoDetalleLinea | null>(null);
   const seededRef = useRef<string | null>(null);
 
   // Siembra el estado de entrega UNA sola vez por requerimiento (todo a "stock",
@@ -104,8 +107,13 @@ export function DialogAprobarRequerimiento({
       const init: Record<string, EstadoLinea> = {};
       req.Detalle.forEach((l) => {
         // Siembra con el SALDO pendiente (no la cantidad total): en un requerimiento
-        // parcial ya se entregó parte, y solo resta lo pendiente.
-        init[l.Id] = { cantidad: String(restanteDe(l)), modo: "stock", costo: "" };
+        // parcial ya se entregó parte, y solo resta lo pendiente. Las líneas NO
+        // catalogadas arrancan en 0: primero hay que registrar el producto.
+        init[l.Id] = {
+          cantidad: l.IdProducto === null ? "0" : String(restanteDe(l)),
+          modo: "stock",
+          costo: "",
+        };
       });
       setLineas(init);
     }
@@ -160,6 +168,15 @@ export function DialogAprobarRequerimiento({
 
     if (!payload.some((l) => l.Cantidad > 0)) {
       toast.error("Indica al menos una cantidad a entregar.");
+      return;
+    }
+    // Defensa en profundidad (la UI deshabilita el input y la BD lo rechaza igual):
+    // ninguna línea NO catalogada puede llevar cantidad > 0.
+    const sinCatalogo = new Set(
+      req.Detalle.filter((l) => l.IdProducto === null).map((l) => l.Id),
+    );
+    if (payload.some((l) => l.Cantidad > 0 && sinCatalogo.has(l.IdDetalle))) {
+      toast.error("Registra en el catálogo los productos nuevos antes de entregarlos.");
       return;
     }
     if (hayCompra && (!idProveedor || !comprobante.trim())) {
@@ -241,12 +258,15 @@ export function DialogAprobarRequerimiento({
                 <p>{req.Placa ?? req.NombreEquipo ?? "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Solicitante</p>
+                <p className="text-xs text-muted-foreground">
+                  Solicitante{req.Solicitantes.length > 1 ? "s" : ""}
+                </p>
                 <p>
-                  {req.NombreSolicitante ?? "—"}
-                  {req.CargoSolicitante ? (
-                    <span className="text-muted-foreground"> · {req.CargoSolicitante}</span>
-                  ) : null}
+                  {req.Solicitantes.length
+                    ? req.Solicitantes.map(
+                        (s) => `${s.NombreCompleto ?? "—"}${s.Cargo ? ` · ${s.Cargo}` : ""}`,
+                      ).join(", ")
+                    : "—"}
                 </p>
               </div>
             </div>
@@ -300,8 +320,40 @@ export function DialogAprobarRequerimiento({
                     return (
                       <TableRow key={l.Id}>
                         <TableCell>
-                          <p className="font-medium leading-tight">{l.NombreProducto}</p>
-                          <p className="font-mono text-xs text-muted-foreground">{l.Sku}</p>
+                          {l.IdProducto === null ? (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <ImagenAmpliable
+                                  url={l.UrlFotoLibre}
+                                  size={40}
+                                  nombre={l.DescripcionLibre ?? undefined}
+                                />
+                                <div className="min-w-0">
+                                  <p className="font-medium leading-tight">
+                                    {l.DescripcionLibre ?? "—"}
+                                  </p>
+                                  <Badge variant="warning" className="mt-0.5 text-[10px]">
+                                    No catalogado
+                                  </Badge>
+                                </div>
+                              </div>
+                              {puedeActuar && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs"
+                                  onClick={() => setLineaACatalogar(l)}
+                                >
+                                  Registrar producto
+                                </Button>
+                              )}
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-medium leading-tight">{l.NombreProducto}</p>
+                              <p className="font-mono text-xs text-muted-foreground">{l.Sku}</p>
+                            </>
+                          )}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {l.Placa ?? req.Placa ?? "—"}
@@ -323,7 +375,12 @@ export function DialogAprobarRequerimiento({
                                 type="number"
                                 min={0}
                                 max={restanteDe(l)}
-                                disabled={restanteDe(l) === 0}
+                                disabled={restanteDe(l) === 0 || l.IdProducto === null}
+                                title={
+                                  l.IdProducto === null
+                                    ? "Registra el producto en el catálogo primero"
+                                    : undefined
+                                }
                                 className="h-8"
                                 value={st?.cantidad ?? ""}
                                 onChange={(e) => setLinea(l.Id, { cantidad: e.target.value })}
@@ -482,6 +539,21 @@ export function DialogAprobarRequerimiento({
             )}
           </DialogFooter>
         )}
+
+        <DialogCatalogarProducto
+          linea={lineaACatalogar}
+          idRequerimiento={req?.Id ?? null}
+          onClose={() => setLineaACatalogar(null)}
+          onCatalogado={() => {
+            // La siembra usa seededRef y no re-siembra tras el refetch: habilitar
+            // la entrega de la línea recién catalogada con su saldo pendiente.
+            if (lineaACatalogar) {
+              setLinea(lineaACatalogar.Id, {
+                cantidad: String(restanteDe(lineaACatalogar)),
+              });
+            }
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

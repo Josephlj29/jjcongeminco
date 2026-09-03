@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { CrearRequerimientoSchema, puede } from "@congeminco/shared";
+import { CrearRequerimientoSchema, SITUACION_REQUERIMIENTO, puede } from "@congeminco/shared";
 
 export async function GET(request: NextRequest) {
   const { error } = await autenticarRequest();
@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
     Math.max(parseInt(searchParams.get("limit") ?? "50", 10) || 50, 1),
     500,
   );
-  const situacion = searchParams.get("situacion"); // pendiente | atendido | anulado
-  const SITUACIONES = ["pendiente", "atendido", "anulado"];
-  if (situacion && !SITUACIONES.includes(situacion)) {
+  const situacion = searchParams.get("situacion"); // pendiente | parcial | atendido | anulado
+  // Fuente única (incluye 'parcial' de 0058): sin esto la tab "Por atender" recibía 400.
+  if (situacion && !(SITUACION_REQUERIMIENTO as readonly string[]).includes(situacion)) {
     return respuestaError("Situación inválida.", 400);
   }
 

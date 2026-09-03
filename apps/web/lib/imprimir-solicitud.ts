@@ -44,7 +44,7 @@ function construirHtml(r: RequerimientoConDetalle): string {
       <tr>
         <td class="c">${i + 1}</td>
         <td class="mono">${esc(l.Sku)}</td>
-        <td>${esc(l.NombreProducto)}</td>
+        <td>${esc(l.NombreProducto)}${l.IdProducto ? "" : " (no catalogado)"}</td>
         <td>${esc(l.Placa ?? r.Placa ?? "—")}</td>
         <td class="c">${esc(l.Cantidad)}</td>
         <td class="c">${esc(l.CantidadAtendida)}</td>
@@ -53,6 +53,10 @@ function construirHtml(r: RequerimientoConDetalle): string {
   ).join("");
 
   const destino = r.Placa ? `Placa ${esc(r.Placa)}` : r.NombreEquipo ? esc(r.NombreEquipo) : "—";
+
+  const solicitantes = r.Solicitantes.map(
+    (s) => `${esc(s.NombreCompleto ?? "—")}${s.Cargo ? ` (${esc(s.Cargo)})` : ""}`,
+  ).join(", ");
 
   return `<!doctype html>
 <html lang="es">
@@ -102,12 +106,8 @@ function construirHtml(r: RequerimientoConDetalle): string {
       <td class="k">Destino</td><td>${destino}</td>
     </tr>
     <tr>
-      <td class="k">Solicitante</td>
-      <td colspan="3">${
-        r.NombreSolicitante
-          ? esc(r.NombreSolicitante) + (r.CargoSolicitante ? ` (${esc(r.CargoSolicitante)})` : "")
-          : "—"
-      }</td>
+      <td class="k">Solicitante${r.Solicitantes.length > 1 ? "s" : ""}</td>
+      <td colspan="3">${solicitantes || "—"}</td>
     </tr>
   </table>
 
@@ -131,7 +131,9 @@ function construirHtml(r: RequerimientoConDetalle): string {
 
   <div class="firmas">
     <div class="firma">Solicitado por${
-      r.NombreSolicitante ? `<br/><span style="color:#111">${esc(r.NombreSolicitante)}</span>` : ""
+      r.Solicitantes.length
+        ? `<br/><span style="color:#111">${r.Solicitantes.map((s) => esc(s.NombreCompleto ?? "")).filter(Boolean).join(", ")}</span>`
+        : ""
     }</div>
     <div class="firma">Aprobado por</div>
     <div class="firma">Recibido por</div>
