@@ -480,7 +480,9 @@ export function DialogOrdenMantenimiento({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      {/* max-w-4xl: adentro va la tabla de repuestos, de 5 columnas. Con 2xl no
+          entraba y las celdas se comprimían hasta tapar la cantidad. */}
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {modoEdicion ? "Editar orden de trabajo" : "Nueva orden de trabajo"}

@@ -126,3 +126,29 @@
       "calt" 1;
   }
 }
+
+@layer base {
+  /*
+   * Fuera las flechitas nativas de los campos numéricos.
+   *
+   * En las tablas densas (repuestos de una orden, detalle de un movimiento) la
+   * celda de cantidad mide menos de 100px y el spinner del navegador se come
+   * unos 20px POR ENCIMA del texto: el número quedaba tapado y no se podía leer
+   * lo que uno mismo acababa de escribir, ni en escritorio ni en el celular.
+   *
+   * Además de ocupar lugar son un mal control: el objetivo táctil es diminuto
+   * para un dedo con guante, cada navegador los dibuja distinto, y con el campo
+   * enfocado la rueda del mouse cambia la cantidad sin que nadie lo note.
+   *
+   * Se escribe el número a mano, que es lo que se hace igual.
+   */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}

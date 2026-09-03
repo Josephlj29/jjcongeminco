@@ -179,11 +179,16 @@ export function EditorConsumoRepuestos({
       </div>
 
       <div className="rounded-md border">
-        <Table>
+        {/* min-w: la tabla tiene 5 columnas y no entra en un celular. El contenedor
+            de Table ya desborda con scroll, pero sin un ancho mínimo el navegador
+            comprime las celdas en vez de desbordar, y la cantidad se queda sin
+            lugar. Con el mínimo, en pantalla chica se arrastra de costado y cada
+            campo conserva su ancho útil. */}
+        <Table className="min-w-[680px]">
           <TableHeader>
             <TableRow>
               <TableHead>Producto</TableHead>
-              <TableHead className="w-24">Cantidad</TableHead>
+              <TableHead className="w-28">Cantidad</TableHead>
               <TableHead className="w-32">Modo</TableHead>
               <TableHead className="w-28">Costo (compra)</TableHead>
               <TableHead className="w-10"></TableHead>
