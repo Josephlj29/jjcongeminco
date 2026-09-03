@@ -220,6 +220,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     MotivoReconciliacion: h.MotivoReconciliacion,
     FechaReconciliacion: h.FechaReconciliacion,
     StockDescontado: h.IdRequerimiento !== null,
+    // Ya resueltos arriba: el borrador si no descontó stock, el ledger si sí.
+    TieneRepuestos: repuestos.length > 0,
     IdUbicacionConsumo: h.IdUbicacionConsumo ?? null,
     IdProveedorCompra: h.IdProveedorCompra ?? null,
     ComprobanteCompra: h.ComprobanteCompra ?? null,

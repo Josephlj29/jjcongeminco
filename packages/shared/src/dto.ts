@@ -407,6 +407,12 @@ export const ReconciliarOrdenSchema = z.object({
 });
 export type ReconciliarOrden = z.infer<typeof ReconciliarOrdenSchema>;
 
+/* Devolver una OT "por aprobar" al estado abierta para corregirla. */
+export const ReabrirOrdenSchema = z.object({
+  Motivo: z.string().max(400).optional(),
+});
+export type ReabrirOrden = z.infer<typeof ReabrirOrdenSchema>;
+
 /* Cerrar/anular una OT abierta sin repuestos. */
 export const FinalizarOrdenSchema = z.object({
   Anular: z.boolean().default(false),

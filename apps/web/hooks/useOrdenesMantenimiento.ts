@@ -139,6 +139,28 @@ export function useFinalizarOrden() {
         body: JSON.stringify({ Anular: anular, Motivo: motivo }),
       });
       if (!res.ok) throw new Error(await leerError(res));
+      // La BD decide el destino al culminar (por aprobar si hay repuestos,
+      // cerrada si no); lo devolvemos para que la UI lo diga y cambie de pestaña.
+      return res.json() as Promise<{ ok: true; Situacion: SituacionOrden | null }>;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["ordenes-mantenimiento"] });
+    },
+  });
+}
+
+/* Devolver a abierta (aprobador): saca la OT de la bandeja de aprobación y la
+   vuelve editable, conservando el borrador de repuestos. Sin impacto en stock. */
+export function useReabrirOrden() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, motivo }: { id: string; motivo?: string }) => {
+      const res = await fetch(`/api/mantenimiento/${id}/reabrir`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ Motivo: motivo }),
+      });
+      if (!res.ok) throw new Error(await leerError(res));
       return res.json() as Promise<{ ok: true }>;
     },
     onSuccess: () => {

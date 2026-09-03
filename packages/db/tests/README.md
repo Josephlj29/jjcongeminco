@@ -82,6 +82,28 @@ Los puntos 1 a 5 están cubiertos por el bloque `DO` de prueba que acompaña a 0
 (corrido con ROLLBACK contra el remoto el 2026-09-03). Los puntos 6 y 7 requieren el
 claim JWT de un aprobador y quedan para el runner.
 
+### 4b. Culminar por repuestos y devolver a abierta (migración 0069)
+
+Verificado en el remoto el 2026-09-03, en transacción con ROLLBACK y con la sesión
+simulada de un usuario `admin` (`set_config('request.jwt.claims', ...)`), que es lo
+que exige la revalidación de rol de las funciones `SECURITY DEFINER`:
+
+1. `FnCerrarOrdenMantenimiento` devuelve la situación destino: `cerrada` si la OT
+   no tiene repuestos en borrador, `consumida` si los tiene. Culminar NO mueve el
+   saldo en ninguno de los dos casos.
+2. `FnReabrirOrdenMantenimiento` devuelve una OT `consumida` a `abierta`
+   conservando el borrador de repuestos y dejando el motivo en
+   `MotivoReconciliacion` con el prefijo "Devuelta a abierta:".
+3. Ida y vuelta completa: devolver a abierta → editar (reemplaza el borrador) →
+   la OT vuelve a `consumida`.
+4. **Aprobar descuenta el stock recién ahí**: tras `FnReconciliarOrdenMantenimiento`
+   con `PAprobar = true`, la OT queda `cerrada` con requerimiento enlazado, hay una
+   fila en `T_RequerimientoAtencion` y `T_SaldoStock.CantidadDisponible` bajó
+   exactamente la cantidad del borrador. Este es el escenario que quedó pendiente
+   al aplicar 0068 y se cubrió acá.
+5. Se rechaza devolver a abierta una OT `cerrada`, y devolver a abierta o culminar
+   una OT legada que ya descontó stock ("ya desconto stock").
+
 ### 5. Segregación de funciones
 
 El creador de un requerimiento no puede aprobarlo/rechazarlo (admin exento);

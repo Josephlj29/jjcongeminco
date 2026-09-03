@@ -1,17 +1,20 @@
 /**
  * app/api/mantenimiento/[id]/cerrar/route.ts
  *
- * POST /api/mantenimiento/:id/cerrar — finaliza una OT ABIERTA sin repuestos:
- *   { Anular: false } → cierra (solo mano de obra).
+ * POST /api/mantenimiento/:id/cerrar — finaliza una OT ABIERTA:
+ *   { Anular: false } → culmina. La BD decide el destino según los repuestos
+ *                       cargados: con repuestos pasa a "por aprobar" (el stock se
+ *                       descuenta recién al aprobar); sin repuestos, a cerrada.
+ *                       Devuelve esa situación para que la UI diga adónde fue.
  *   { Anular: true }  → cancela (sin impacto en stock).
- * Para OTs ya consumidas, usar /reconciliar. Rol: requerimientoCrear.
+ * Para OTs ya "por aprobar", usar /reconciliar o /reabrir. Rol: requerimientoCrear.
  */
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { FinalizarOrdenSchema, puede } from "@congeminco/shared";
+import { FinalizarOrdenSchema, puede, type SituacionOrden } from "@congeminco/shared";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { usuario, error } = await autenticarRequest();
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const supabase = await crearClienteServidor();
-  const { error: dbError } = parsed.data.Anular
+  const { data, error: dbError } = parsed.data.Anular
     ? await supabase
         .schema("inv")
         .rpc("FnAnularOrdenMantenimiento", { PIdOrden: id, PMotivo: parsed.data.Motivo ?? null })
@@ -38,5 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return mapearErrorNegocio(dbError);
   }
 
-  return NextResponse.json({ ok: true });
+  // Anular no devuelve nada; culminar devuelve la situación resultante.
+  const situacion = parsed.data.Anular ? "anulada" : ((data as SituacionOrden | null) ?? null);
+  return NextResponse.json({ ok: true, Situacion: situacion });
 }

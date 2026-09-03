@@ -41,6 +41,8 @@ interface FilaOrden {
   IdRequerimiento: string | null;
   T_Vehiculo: { Placa: string } | null;
   T_OrdenMantenimientoPersonal: FilaPersonal[] | null;
+  /** Solo se pide el Id: alcanza para saber si la OT tiene repuestos cargados. */
+  T_OrdenMantenimientoRepuesto: { Id: string }[] | null;
 }
 
 /** Normaliza el embed de personales a OrdenMantenimientoResumen["Personales"]. */
@@ -78,7 +80,7 @@ export async function GET(request: NextRequest) {
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Situacion, IdRequerimiento, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Situacion, IdRequerimiento, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre))), T_OrdenMantenimientoRepuesto(Id)",
     )
     .eq("Estado", true);
 
@@ -107,6 +109,8 @@ export async function GET(request: NextRequest) {
     Situacion: o.Situacion,
     // Con requerimiento enlazado el stock ya salió: la OT deja de ser editable.
     StockDescontado: o.IdRequerimiento !== null,
+    // Decide adónde va la OT al culminarla, sin tener que pedir el detalle.
+    TieneRepuestos: (o.T_OrdenMantenimientoRepuesto ?? []).length > 0,
   }));
 
   return NextResponse.json(resultado);

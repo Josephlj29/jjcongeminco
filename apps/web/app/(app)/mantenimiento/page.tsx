@@ -27,6 +27,7 @@ import {
   Trash2,
   Hammer,
   ClipboardCheck,
+  Undo2,
 } from "lucide-react";
 import { type OrdenMantenimientoResumen, type SituacionOrden } from "@congeminco/shared";
 import {
@@ -34,10 +35,13 @@ import {
   useOrdenMantenimientoDetalle,
   useEliminarOrdenMantenimiento,
   useFinalizarOrden,
+  useReabrirOrden,
 } from "@/hooks/useOrdenesMantenimiento";
 import { DialogOrdenMantenimiento } from "@/components/mantenimiento/DialogOrdenMantenimiento";
 import { DialogDetalleOrden } from "@/components/mantenimiento/DialogDetalleOrden";
 import { DialogReconciliarOrden } from "@/components/mantenimiento/DialogReconciliarOrden";
+import { DialogCulminarOrden } from "@/components/mantenimiento/DialogCulminarOrden";
+import { DialogDevolverAbierta } from "@/components/mantenimiento/DialogDevolverAbierta";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
@@ -103,7 +107,8 @@ interface AccionesHandlers {
   puedeAprobar: boolean;
   onDetalle: (id: string) => void;
   onEditar: (id: string) => void;
-  onCulminar: (id: string) => void;
+  onCulminar: (o: OrdenMantenimientoResumen) => void;
+  onDevolverAbierta: (o: OrdenMantenimientoResumen) => void;
   onCancelar: (id: string) => void;
   onReconciliar: (id: string) => void;
   onEliminar: (v: { id: string; nombre: string }) => void;
@@ -144,9 +149,9 @@ function AccionesOrden({
               <Pencil className="mr-2 h-4 w-4" />
               Editar
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handlers.onCulminar(o.Id)}>
+            <DropdownMenuItem onClick={() => handlers.onCulminar(o)}>
               <CheckCircle2 className="mr-2 h-4 w-4" />
-              Culminar (sin repuestos)
+              Culminar
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
@@ -185,6 +190,14 @@ function AccionesOrden({
                   Eliminar
                 </DropdownMenuItem>
               </>
+            )}
+            {/* Devolver a abierta: la saca de la bandeja sin juzgarla, a diferencia
+                de rechazar, que la anula. No aplica si ya descontó stock. */}
+            {puedeAprobar && !o.StockDescontado && (
+              <DropdownMenuItem onClick={() => handlers.onDevolverAbierta(o)}>
+                <Undo2 className="mr-2 h-4 w-4" />
+                Devolver a abierta
+              </DropdownMenuItem>
             )}
             {puedeAprobar ? (
               <DropdownMenuItem onClick={() => handlers.onReconciliar(o.Id)}>
@@ -258,15 +271,48 @@ export default function MantenimientoPage() {
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [reconciliar, setReconciliar] = useState<string | null>(null);
   const [eliminar, setEliminar] = useState<{ id: string; nombre: string } | null>(null);
+  const [culminar, setCulminar] = useState<OrdenMantenimientoResumen | null>(null);
+  const [devolver, setDevolver] = useState<OrdenMantenimientoResumen | null>(null);
 
   const { data: detalleEditar } = useOrdenMantenimientoDetalle(editarId);
   const { mutateAsync: borrar } = useEliminarOrdenMantenimiento();
-  const { mutateAsync: finalizar } = useFinalizarOrden();
+  const { mutateAsync: finalizar, isPending: finalizando } = useFinalizarOrden();
+  const { mutateAsync: reabrir, isPending: reabriendo } = useReabrirOrden();
 
-  const finalizarOrden = async (id: string, anular: boolean) => {
+  /* Culminar: el destino lo decide la BD según los repuestos, así que el aviso se
+     arma con la situación que devuelve y además se salta a esa pestaña, para que
+     la orden no "desaparezca" de la vista. */
+  const culminarOrden = async (o: OrdenMantenimientoResumen) => {
     try {
-      await finalizar({ id, anular });
-      toast.success(anular ? "Orden cancelada" : "Orden cerrada");
+      const { Situacion } = await finalizar({ id: o.Id, anular: false });
+      setCulminar(null);
+      if (Situacion === "consumida") {
+        toast.success("Orden culminada. Queda por aprobar: el stock se descuenta al aprobarla.");
+        setTab("consumida");
+      } else {
+        toast.success("Orden culminada y cerrada. No hubo movimientos de stock.");
+        setTab("cerrada");
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const cancelarOrden = async (id: string) => {
+    try {
+      await finalizar({ id, anular: true });
+      toast.success("Orden cancelada");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const devolverAbierta = async (o: OrdenMantenimientoResumen, motivo: string) => {
+    try {
+      await reabrir({ id: o.Id, motivo: motivo || undefined });
+      setDevolver(null);
+      toast.success("Orden devuelta a abierta. Ya se puede editar.");
+      setTab("abierta");
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -277,10 +323,10 @@ export default function MantenimientoPage() {
     puedeAprobar,
     onDetalle: setDetalleId,
     onEditar: setEditarId,
-    // Cierre directo de una OT abierta legada: ya no hay diálogo de fotos (la
-    // evidencia es por tarea y opcional).
-    onCulminar: (id) => void finalizarOrden(id, false),
-    onCancelar: (id) => void finalizarOrden(id, true),
+    // Culminar confirma primero: el destino depende de si hay repuestos.
+    onCulminar: setCulminar,
+    onDevolverAbierta: setDevolver,
+    onCancelar: (id) => void cancelarOrden(id),
     onReconciliar: setReconciliar,
     onEliminar: setEliminar,
   };
@@ -358,9 +404,7 @@ export default function MantenimientoPage() {
                   <TableBody>
                     {ordenes.map((o) => (
                       <TableRow key={o.Id}>
-                        <TableCell className="text-xs">
-                          {fechaCorta(o.FechaOrden)}
-                        </TableCell>
+                        <TableCell className="text-xs">{fechaCorta(o.FechaOrden)}</TableCell>
                         <TableCell className="font-mono text-xs">{nombreOrden(o)}</TableCell>
                         <TableCell className="text-sm font-medium">{o.Placa ?? "—"}</TableCell>
                         <TableCell className="text-xs">{TIPO_LABEL[o.TipoMantenimiento]}</TableCell>
@@ -405,6 +449,25 @@ export default function MantenimientoPage() {
 
       {reconciliar && (
         <DialogReconciliarOrden idOrden={reconciliar} onClose={() => setReconciliar(null)} />
+      )}
+
+      {culminar && (
+        <DialogCulminarOrden
+          numeroOrden={culminar.NumeroOrden}
+          tieneRepuestos={culminar.TieneRepuestos}
+          procesando={finalizando}
+          onConfirmar={() => void culminarOrden(culminar)}
+          onCancelar={() => setCulminar(null)}
+        />
+      )}
+
+      {devolver && (
+        <DialogDevolverAbierta
+          numeroOrden={devolver.NumeroOrden}
+          procesando={reabriendo}
+          onConfirmar={(motivo) => void devolverAbierta(devolver, motivo)}
+          onCancelar={() => setDevolver(null)}
+        />
       )}
 
       <DialogEliminar

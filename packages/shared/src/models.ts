@@ -216,6 +216,9 @@ export interface OrdenMantenimientoResumen {
   Situacion: SituacionOrden;
   /** true si la OT ya descontó stock (requerimiento enlazado): ya no se edita. */
   StockDescontado: boolean;
+  /** true si tiene repuestos cargados. Decide adónde va la OT al culminarla:
+      con repuestos a "por aprobar", sin repuestos directo a cerrada. */
+  TieneRepuestos: boolean;
 }
 
 /* OT con trabajos y repuestos resueltos (vista de detalle + PDF). */
