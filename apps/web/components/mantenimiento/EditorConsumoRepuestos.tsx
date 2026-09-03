@@ -3,11 +3,11 @@
 /**
  * components/mantenimiento/EditorConsumoRepuestos.tsx
  *
- * Editor de líneas de consumo de repuestos (almacén origen + producto/cantidad/
- * modo/costo + proveedor/comprobante si hay compra directa). Compartido entre
- * DialogConsumirRepuestos (OT existente) y DialogOrdenMantenimiento (consumo
- * opcional en el alta). Componente CONTROLADO: el estado vive en el padre;
- * los catálogos (saldos, ubicaciones, proveedores) los carga el editor.
+ * Editor de líneas de repuestos de una OT (almacén origen + producto/cantidad/
+ * modo/costo + proveedor/comprobante si hay compra directa). Es el BORRADOR que
+ * viaja con la orden (alta y edición) y se convierte en salida de stock al
+ * aprobar. Componente CONTROLADO: el estado vive en el padre; los catálogos
+ * (saldos, ubicaciones, proveedores) los carga el editor.
  */
 import { toast } from "sonner";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
@@ -156,8 +156,9 @@ export function EditorConsumoRepuestos({
       <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
         <p className="text-xs leading-tight">
-          El stock se descuenta al guardar (consumo provisional). Si el repuesto no está en
-          almacén, usa <strong>compra directa</strong> en la línea.
+          El stock se descuenta al <strong>aprobar</strong> la orden; hasta entonces esta lista
+          es un borrador editable. Si el repuesto no está en almacén, usa{" "}
+          <strong>compra directa</strong> en la línea.
         </p>
       </div>
 

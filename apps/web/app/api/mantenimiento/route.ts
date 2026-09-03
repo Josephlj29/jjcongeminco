@@ -2,7 +2,10 @@
  * app/api/mantenimiento/route.ts
  *
  * GET  /api/mantenimiento — lista de órdenes de trabajo (soporta ?situacion=).
- * POST /api/mantenimiento — crea una OT vía RPC inv.FnRegistrarOrdenMantenimiento.
+ * POST /api/mantenimiento — crea una OT en UN paso vía RPC inv.FnRegistrarOrdenMantenimiento:
+ *      trabajos con fotos opcionales por tarea + Consumo opcional de repuestos (descuenta
+ *      stock en la misma transacción). Devuelve { Id, Situacion }: 'consumida' (por
+ *      aprobar) si hubo repuestos, 'cerrada' si no.
  *
  * Rol requerido para POST: requerimientoCrear (admin, almacenero, supervision).
  */
@@ -15,6 +18,7 @@ import {
   CrearOrdenMantenimientoSchema,
   puede,
   type OrdenMantenimientoResumen,
+  type SituacionOrden,
 } from "@congeminco/shared";
 
 interface FilaPersonal {
@@ -34,6 +38,7 @@ interface FilaOrden {
   Horometro: number | null;
   IdVehiculo: string;
   Situacion: OrdenMantenimientoResumen["Situacion"];
+  IdRequerimiento: string | null;
   T_Vehiculo: { Placa: string } | null;
   T_OrdenMantenimientoPersonal: FilaPersonal[] | null;
 }
@@ -73,7 +78,7 @@ export async function GET(request: NextRequest) {
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Situacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Situacion, IdRequerimiento, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
     )
     .eq("Estado", true);
 
@@ -100,6 +105,8 @@ export async function GET(request: NextRequest) {
     Placa: o.T_Vehiculo?.Placa ?? null,
     Personales: mapearPersonales(o.T_OrdenMantenimientoPersonal),
     Situacion: o.Situacion,
+    // Con requerimiento enlazado el stock ya salió: la OT deja de ser editable.
+    StockDescontado: o.IdRequerimiento !== null,
   }));
 
   return NextResponse.json(resultado);
@@ -125,10 +132,20 @@ export async function POST(request: NextRequest) {
     .rpc("FnRegistrarOrdenMantenimiento", { POrden: parsed.data });
 
   if (dbError) {
-    // Los RAISE EXCEPTION de negocio (p. ej. "Asigna al menos un personal")
-    // salen como 409 legibles, no como 500 opacos.
+    // Los RAISE EXCEPTION de negocio (p. ej. "Asigna al menos un personal" o el
+    // "Stock insuficiente" del consumo) salen como 409 legibles, no como 500.
     return mapearErrorNegocio(dbError);
   }
 
-  return NextResponse.json({ Id: data }, { status: 201 });
+  // La situación final la decide la BD (consumida con repuestos, cerrada sin):
+  // se lee de la fila creada en vez de duplicar la regla acá.
+  const { data: creada } = await supabase
+    .schema("inv")
+    .from("T_OrdenMantenimiento")
+    .select("Situacion")
+    .eq("Id", data as string)
+    .maybeSingle();
+  const situacion = (creada as { Situacion: SituacionOrden } | null)?.Situacion ?? null;
+
+  return NextResponse.json({ Id: data, Situacion: situacion }, { status: 201 });
 }

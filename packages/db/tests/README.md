@@ -49,16 +49,43 @@ Vía `/api/documentos` la API la mapea a **409** (antes 500) con `mapearErrorNeg
 `{ok:false, dependencias}`; sin dependencias, da de baja (`Estado=false`) y devuelve
 `{ok:true}`. El `FOR UPDATE` sobre la fila madre cierra el TOCTOU del check+use.
 
-### 4. Evidencia obligatoria en OTs (migración 0048)
+### 4. OT con fotos por tarea y repuestos en borrador (migraciones 0067 + 0068)
 
-`FnCerrarOrdenMantenimiento` y la rama "aprobar" de `FnReconciliarOrdenMantenimiento`
-llaman a `FnExigirEvidenciaMantenimiento`: cerrar sin ≥1 foto `estado_actual` y ≥1
-`post_mantenimiento` → excepción.
+`FnRegistrarOrdenMantenimiento` recibe los trabajos con `UrlFotoAntes`/`UrlFotoDespues`
+opcionales y un `Consumo` opcional que se guarda como **borrador** en
+`T_OrdenMantenimientoRepuesto` (+ almacén/proveedor/comprobante en la cabecera).
+El stock se descuenta **al aprobar**, no al registrar (decisión de negocio 2026-09-03).
+
+1. Toda OT nueva nace `consumida` (= "Por aprobar"), con o sin repuestos. El alta NO
+   genera ningún documento de inventario (se verifica que no exista documento con la
+   referencia `OT <NumeroOrden>`).
+2. `V_OrdenMantenimientoRepuesto` expone el borrador con costo estimado: compra directa
+   al costo declarado, stock al `CostoPromedio` vigente.
+3. `FnActualizarOrdenMantenimiento` acepta el mismo payload con `Consumo` y reemplaza el
+   borrador completo (agregar, subir, bajar, quitar). Quitar todas las líneas deja la OT
+   por aprobar con la cabecera de consumo en NULL. Una OT `abierta` legada que recibe
+   repuestos pasa a `consumida`.
+4. Validaciones del borrador: almacén activo, producto activo, cantidad > 0, compra
+   directa exige costo > 0 y proveedor + comprobante ("La compra directa requiere
+   proveedor y comprobante.").
+5. Una OT legada con `IdRequerimiento` (ya descontó stock con el flujo anterior) NO se
+   edita: "Esta orden ya desconto stock".
+6. `FnReconciliarOrdenMantenimiento(aprobar = true)` convierte el borrador en
+   requerimiento atendido + entrada por compra directa + UNA salida + fila en
+   `T_RequerimientoAtencion`, y cierra. Sin repuestos solo cierra. Legadas: solo cierra.
+7. `FnReconciliarOrdenMantenimiento(aprobar = false)` anula sin tocar el kardex;
+   legadas: reversa(s) al `CostoUnitario` exacto del ledger (0066).
+8. `FnConsumirRepuestosOrdenMantenimiento` ya no existe; la evidencia por orden
+   (`T_OrdenMantenimientoEvidencia`, `FnExigirEvidenciaMantenimiento`) se eliminó en 0067.
+
+Los puntos 1 a 5 están cubiertos por el bloque `DO` de prueba que acompaña a 0068
+(corrido con ROLLBACK contra el remoto el 2026-09-03). Los puntos 6 y 7 requieren el
+claim JWT de un aprobador y quedan para el runner.
 
 ### 5. Segregación de funciones
 
 El creador de un requerimiento no puede aprobarlo/rechazarlo (admin exento);
-quien consume una OT no la reconcilia (admin exento).
+quien registró el borrador de repuestos de una OT no la aprueba (admin exento).
 
 > Nota: estos escenarios están listos para portarse a un runner (vitest + `pg`)
 > cuando el equipo disponga de Supabase local en CI. El unit-test suite

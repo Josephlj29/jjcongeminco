@@ -3,8 +3,8 @@
 /**
  * components/mantenimiento/DialogDetalleOrden.tsx
  *
- * Vista de solo lectura de una OT: cabecera, trabajos realizados y repuestos
- * consumidos (con su costo congelado del ledger).
+ * Vista de solo lectura de una OT: cabecera, trabajos realizados (con sus fotos
+ * de antes/después por tarea) y repuestos consumidos (costo congelado del ledger).
  */
 import { useOrdenMantenimientoDetalle } from "@/hooks/useOrdenesMantenimiento";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EvidenciaMantenimiento } from "@/components/mantenimiento/EvidenciaMantenimiento";
+import { ListaTrabajos } from "@/components/mantenimiento/ListaTrabajos";
+import { fechaCorta } from "@/lib/format";
 
 const TURNO_LABEL: Record<string, string> = { dia: "Día", tarde: "Tarde", noche: "Noche" };
 const SIT_LABEL: Record<string, string> = {
@@ -69,7 +70,7 @@ export function DialogDetalleOrden({ idOrden, onClose }: { idOrden: string; onCl
               </div>
               <div>
                 <span className="text-muted-foreground">Fecha: </span>
-                {new Date(o.FechaOrden).toLocaleDateString("es-PE")}
+                {fechaCorta(o.FechaOrden)}
               </div>
               <div>
                 <span className="text-muted-foreground">Turno: </span>
@@ -95,15 +96,7 @@ export function DialogDetalleOrden({ idOrden, onClose }: { idOrden: string; onCl
 
             <div>
               <h3 className="mb-1 text-sm font-medium">Trabajos realizados</h3>
-              {o.Trabajos.length ? (
-                <ol className="list-decimal space-y-0.5 pl-5 text-sm">
-                  {o.Trabajos.map((t) => (
-                    <li key={t.Id}>{t.Descripcion}</li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="text-sm text-muted-foreground">Sin trabajos registrados.</p>
-              )}
+              <ListaTrabajos trabajos={o.Trabajos} />
             </div>
 
             {o.Observaciones && (
@@ -114,7 +107,9 @@ export function DialogDetalleOrden({ idOrden, onClose }: { idOrden: string; onCl
             )}
 
             <div>
-              <h3 className="mb-1 text-sm font-medium">Repuestos consumidos</h3>
+              <h3 className="mb-1 text-sm font-medium">
+                {o.StockDescontado ? "Repuestos consumidos" : "Repuestos (se descuentan al aprobar)"}
+              </h3>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -143,7 +138,7 @@ export function DialogDetalleOrden({ idOrden, onClose }: { idOrden: string; onCl
                     ) : (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-muted-foreground">
-                          Aún sin repuestos.
+                          Sin repuestos.
                         </TableCell>
                       </TableRow>
                     )}
@@ -151,13 +146,6 @@ export function DialogDetalleOrden({ idOrden, onClose }: { idOrden: string; onCl
                 </Table>
               </div>
             </div>
-
-            {o.Evidencias.length > 0 && (
-              <div>
-                <h3 className="mb-1 text-sm font-medium">Evidencia fotográfica</h3>
-                <EvidenciaMantenimiento idOrden={idOrden} editable={false} />
-              </div>
-            )}
 
             {o.Situacion === "anulada" && o.MotivoReconciliacion && (
               <p className="text-sm text-destructive">

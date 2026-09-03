@@ -3,9 +3,12 @@
 /**
  * app/(app)/mantenimiento/page.tsx — Órdenes de Trabajo de Mantenimiento (OT)
  *
- * Flujo consumir→reconciliar (Model 2): se crea la OT, se registran los repuestos
- * usados (descuenta stock al instante), y el admin reconcilia en Aprobaciones.
- * Pestañas por situación. Acciones por fila en menú kebab.
+ * La OT se registra al TERMINAR el trabajo, en un solo paso: tareas con foto
+ * opcional de antes/después y repuestos usados como BORRADOR. Toda orden nueva
+ * nace "Por aprobar" (con o sin repuestos) y mientras está ahí se sigue editando
+ * (cabecera, tareas y repuestos); al aprobar se descuenta el stock y se cierra.
+ * Las OTs "Abiertas" son legado (ya no nacen así) y conservan sus acciones hasta
+ * que se procesen. Pestañas por situación. Acciones por fila en kebab.
  *
  * Responsive: el mismo dato se presenta como tarjetas apiladas en móvil
  * (`md:hidden`) y como tabla densa en desktop (`hidden md:block`). El menú de
@@ -18,7 +21,6 @@ import {
   MoreHorizontal,
   Eye,
   FileText,
-  PackageMinus,
   Pencil,
   CheckCircle2,
   Ban,
@@ -34,9 +36,7 @@ import {
   useFinalizarOrden,
 } from "@/hooks/useOrdenesMantenimiento";
 import { DialogOrdenMantenimiento } from "@/components/mantenimiento/DialogOrdenMantenimiento";
-import { DialogConsumirRepuestos } from "@/components/mantenimiento/DialogConsumirRepuestos";
 import { DialogDetalleOrden } from "@/components/mantenimiento/DialogDetalleOrden";
-import { DialogCulminarOrden } from "@/components/mantenimiento/DialogCulminarOrden";
 import { DialogReconciliarOrden } from "@/components/mantenimiento/DialogReconciliarOrden";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { EmptyState } from "@/components/EmptyState";
@@ -64,6 +64,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { fechaCorta } from "@/lib/format";
 
 const TIPO_LABEL: Record<string, string> = { preventivo: "Preventivo", correctivo: "Correctivo" };
 const TURNO_LABEL: Record<string, string> = { dia: "Día", tarde: "Tarde", noche: "Noche" };
@@ -101,9 +102,8 @@ interface AccionesHandlers {
   puedeEscribir: boolean;
   puedeAprobar: boolean;
   onDetalle: (id: string) => void;
-  onConsumir: (v: { id: string; numero: string | null }) => void;
   onEditar: (id: string) => void;
-  onCulminar: (v: { id: string; numero: string | null }) => void;
+  onCulminar: (id: string) => void;
   onCancelar: (id: string) => void;
   onReconciliar: (id: string) => void;
   onEliminar: (v: { id: string; nombre: string }) => void;
@@ -138,19 +138,13 @@ function AccionesOrden({
         {puedeEscribir && o.Situacion === "abierta" && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => handlers.onConsumir({ id: o.Id, numero: o.NumeroOrden })}
-            >
-              <PackageMinus className="mr-2 h-4 w-4" />
-              Consumir repuestos
-            </DropdownMenuItem>
+            {/* El consumo de una OT abierta se hace desde "Editar" (bloque de
+                repuestos del formulario); no hay acción separada. */}
             <DropdownMenuItem onClick={() => handlers.onEditar(o.Id)}>
               <Pencil className="mr-2 h-4 w-4" />
               Editar
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handlers.onCulminar({ id: o.Id, numero: o.NumeroOrden })}
-            >
+            <DropdownMenuItem onClick={() => handlers.onCulminar(o.Id)}>
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Culminar (sin repuestos)
             </DropdownMenuItem>
@@ -174,6 +168,24 @@ function AccionesOrden({
         {o.Situacion === "consumida" && (
           <>
             <DropdownMenuSeparator />
+            {/* Hasta aprobar, la OT es un borrador (cabecera, tareas y repuestos)
+                que se corrige o elimina desde acá; con el stock ya descontado
+                (legado) no se toca. */}
+            {puedeEscribir && !o.StockDescontado && (
+              <>
+                <DropdownMenuItem onClick={() => handlers.onEditar(o.Id)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => handlers.onEliminar({ id: o.Id, nombre: nombreOrden(o) })}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar
+                </DropdownMenuItem>
+              </>
+            )}
             {puedeAprobar ? (
               <DropdownMenuItem onClick={() => handlers.onReconciliar(o.Id)}>
                 <ClipboardCheck className="mr-2 h-4 w-4" />
@@ -214,7 +226,7 @@ function TarjetaOrden({
         </div>
         <p className="text-lg font-bold leading-none">{o.Placa ?? "—"}</p>
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-          <span>{new Date(o.FechaOrden).toLocaleDateString("es-PE")}</span>
+          <span>{fechaCorta(o.FechaOrden)}</span>
           <span>· {TIPO_LABEL[o.TipoMantenimiento]}</span>
           <span>· {TURNO_LABEL[o.Turno] ?? o.Turno}</span>
         </div>
@@ -231,7 +243,9 @@ export default function MantenimientoPage() {
   const puedeEscribir = usePermiso("requerimientoCrear");
   const puedeAprobar = usePermiso("requerimientoAprobar");
 
-  const [tab, setTab] = useState<SituacionOrden>("abierta");
+  // Toda OT nueva nace "Por aprobar": la pestaña inicial es la bandeja de
+  // aprobación, no el legado "Abiertas".
+  const [tab, setTab] = useState<SituacionOrden>("consumida");
   const {
     data: ordenes,
     isLoading,
@@ -242,8 +256,6 @@ export default function MantenimientoPage() {
   const [crear, setCrear] = useState(false);
   const [editarId, setEditarId] = useState<string | null>(null);
   const [detalleId, setDetalleId] = useState<string | null>(null);
-  const [consumir, setConsumir] = useState<{ id: string; numero: string | null } | null>(null);
-  const [culminar, setCulminar] = useState<{ id: string; numero: string | null } | null>(null);
   const [reconciliar, setReconciliar] = useState<string | null>(null);
   const [eliminar, setEliminar] = useState<{ id: string; nombre: string } | null>(null);
 
@@ -264,9 +276,10 @@ export default function MantenimientoPage() {
     puedeEscribir,
     puedeAprobar,
     onDetalle: setDetalleId,
-    onConsumir: setConsumir,
     onEditar: setEditarId,
-    onCulminar: setCulminar,
+    // Cierre directo de una OT abierta legada: ya no hay diálogo de fotos (la
+    // evidencia es por tarea y opcional).
+    onCulminar: (id) => void finalizarOrden(id, false),
     onCancelar: (id) => void finalizarOrden(id, true),
     onReconciliar: setReconciliar,
     onEliminar: setEliminar,
@@ -276,7 +289,7 @@ export default function MantenimientoPage() {
     <div className="space-y-6">
       <PageHeader
         titulo="Mantenimiento"
-        descripcion="Órdenes de trabajo por placa. Los repuestos se consumen del inventario y el admin los ratifica."
+        descripcion="Órdenes de trabajo por placa. Se registran al terminar el trabajo, con fotos por tarea, y quedan pendientes de aprobación; el stock de los repuestos se descuenta al aprobar."
         acciones={
           puedeEscribir && (
             <Button onClick={() => setCrear(true)} className="w-full sm:w-auto">
@@ -289,10 +302,10 @@ export default function MantenimientoPage() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as SituacionOrden)} className="space-y-4">
         <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
-          <TabsTrigger value="abierta">Abiertas</TabsTrigger>
           <TabsTrigger value="consumida">Por aprobar</TabsTrigger>
           <TabsTrigger value="cerrada">Cerradas</TabsTrigger>
           <TabsTrigger value="anulada">Anuladas</TabsTrigger>
+          <TabsTrigger value="abierta">Abiertas</TabsTrigger>
         </TabsList>
 
         <TabsContent value={tab}>
@@ -310,7 +323,7 @@ export default function MantenimientoPage() {
               titulo="Sin órdenes"
               descripcion={`No hay órdenes ${SIT_LABEL[tab].toLowerCase()}.`}
               accion={
-                puedeEscribir && tab === "abierta" ? (
+                puedeEscribir ? (
                   <Button size="sm" onClick={() => setCrear(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva orden
@@ -346,7 +359,7 @@ export default function MantenimientoPage() {
                     {ordenes.map((o) => (
                       <TableRow key={o.Id}>
                         <TableCell className="text-xs">
-                          {new Date(o.FechaOrden).toLocaleDateString("es-PE")}
+                          {fechaCorta(o.FechaOrden)}
                         </TableCell>
                         <TableCell className="font-mono text-xs">{nombreOrden(o)}</TableCell>
                         <TableCell className="text-sm font-medium">{o.Placa ?? "—"}</TableCell>
@@ -371,29 +384,24 @@ export default function MantenimientoPage() {
         </TabsContent>
       </Tabs>
 
-      {crear && <DialogOrdenMantenimiento orden={null} onClose={() => setCrear(false)} />}
+      {crear && (
+        <DialogOrdenMantenimiento
+          orden={null}
+          onClose={() => setCrear(false)}
+          // La orden nueva aparece en la pestaña donde cayó (por aprobar).
+          onGuardada={setTab}
+        />
+      )}
 
       {editarId && detalleEditar && detalleEditar.Id === editarId && (
-        <DialogOrdenMantenimiento orden={detalleEditar} onClose={() => setEditarId(null)} />
+        <DialogOrdenMantenimiento
+          orden={detalleEditar}
+          onClose={() => setEditarId(null)}
+          onGuardada={setTab}
+        />
       )}
 
       {detalleId && <DialogDetalleOrden idOrden={detalleId} onClose={() => setDetalleId(null)} />}
-
-      {consumir && (
-        <DialogConsumirRepuestos
-          idOrden={consumir.id}
-          numeroOrden={consumir.numero}
-          onClose={() => setConsumir(null)}
-        />
-      )}
-
-      {culminar && (
-        <DialogCulminarOrden
-          idOrden={culminar.id}
-          numeroOrden={culminar.numero}
-          onClose={() => setCulminar(null)}
-        />
-      )}
 
       {reconciliar && (
         <DialogReconciliarOrden idOrden={reconciliar} onClose={() => setReconciliar(null)} />

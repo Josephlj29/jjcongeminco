@@ -322,56 +322,23 @@ export const AnularRequerimientoSchema = z.object({
 });
 export type AnularRequerimiento = z.infer<typeof AnularRequerimientoSchema>;
 
-/* ─── Orden de Trabajo de Mantenimiento (OT) ─── */
+/* ─── Orden de Trabajo de Mantenimiento (OT) ───
+   La OT se registra al TERMINAR el trabajo (formaliza lo ya hecho), en un solo
+   paso: trabajos con foto opcional de antes/después POR TAREA y, si hubo,
+   repuestos usados (Consumo). Consumo es un BORRADOR editable hasta la
+   aprobación: el stock se descuenta al APROBAR (FnReconciliar), no al registrar.
+   Toda OT nueva nace 'consumida' (por aprobar), con o sin repuestos, para poder
+   corregir el borrador antes de aprobar. */
 export const TIPO_MANTENIMIENTO = ["preventivo", "correctivo"] as const;
 export type TipoMantenimiento = (typeof TIPO_MANTENIMIENTO)[number];
 
 export const TURNO = ["dia", "tarde", "noche"] as const;
 export type Turno = (typeof TURNO)[number];
 
-export const TrabajoMantenimientoSchema = z.object({
-  Secuencia: z.number().int().positive(),
-  Descripcion: z.string().min(1).max(300),
-});
-
-export const CrearOrdenMantenimientoSchema = z.object({
-  NumeroOrden: z.string().max(40).optional(),
-  TipoMantenimiento: z.enum(TIPO_MANTENIMIENTO),
-  FechaOrden: z.string().date(),
-  Turno: z.enum(TURNO),
-  Kilometraje: z.number().nonnegative().optional(),
-  Horometro: z.number().nonnegative().optional(),
-  IdVehiculo: z.string().uuid({ message: "Elige una placa." }),
-  // Personales asignados a la orden (todos por igual). El primero del arreglo
-  // es el solicitante del requerimiento que genera el consumo de repuestos.
-  IdsPersonal: z.array(z.string().uuid()).min(1, { message: "Asigna al menos un personal." }),
-  Observaciones: z.string().max(500).optional(),
-  Trabajos: z.array(TrabajoMantenimientoSchema).default([]),
-});
-export type CrearOrdenMantenimiento = z.infer<typeof CrearOrdenMantenimientoSchema>;
-
-export const ActualizarOrdenMantenimientoSchema = CrearOrdenMantenimientoSchema.partial();
-export type ActualizarOrdenMantenimiento = z.infer<typeof ActualizarOrdenMantenimientoSchema>;
-
-/* ─── Evidencia fotográfica de mantenimiento ───
-   Se sube al culminar la orden: 'estado_actual' (antes) y 'post_mantenimiento'
-   (después). Mín. 1 de cada tipo (lo exige la BD al cerrar); máx. 10 por tipo
-   (lo valida el endpoint por conteo, igual que las imágenes de producto). */
-export const MAX_EVIDENCIA_MANTENIMIENTO = 10;
-
-export const TIPO_EVIDENCIA = ["estado_actual", "post_mantenimiento"] as const;
-export type TipoEvidencia = (typeof TIPO_EVIDENCIA)[number];
-
-export const CrearEvidenciaMantenimientoSchema = z.object({
-  Tipo: z.enum(TIPO_EVIDENCIA),
-  Url: z.string().url().max(500),
-  Orden: z.number().int().positive().max(MAX_EVIDENCIA_MANTENIMIENTO).default(1),
-});
-export type CrearEvidenciaMantenimiento = z.infer<typeof CrearEvidenciaMantenimientoSchema>;
-
-/* Consumo de repuestos: genera la salida de inmediato (Model 2). Modo 'stock'
-   sale del almacén; 'compra' = compra directa (entrada+salida) con proveedor +
-   comprobante + costo por línea. */
+/* Repuestos de la OT (Consumo): borrador que se guarda con la orden y se
+   convierte en salida de stock al APROBAR. Modo 'stock' sale del almacén;
+   'compra' = compra directa (entrada+salida) con proveedor + comprobante + costo
+   por línea. Mismo contrato en el alta y en la edición (reemplaza el borrador). */
 export const LineaConsumoSchema = z.object({
   IdProducto: z.string().uuid(),
   Cantidad: z.number().positive(),
@@ -399,6 +366,39 @@ export const ConsumirRepuestosSchema = z
   });
 export type ConsumirRepuestos = z.infer<typeof ConsumirRepuestosSchema>;
 export type LineaConsumo = z.infer<typeof LineaConsumoSchema>;
+
+export const TrabajoMantenimientoSchema = z.object({
+  Secuencia: z.number().int().positive(),
+  Descripcion: z.string().min(1).max(300),
+  // Fotos opcionales por tarea: URL pública del bucket "mantenimiento"
+  // (ruta trabajos/{uuid}-{archivo}), subida por el front antes del POST.
+  UrlFotoAntes: z.string().url().max(500).optional(),
+  UrlFotoDespues: z.string().url().max(500).optional(),
+});
+
+export const CrearOrdenMantenimientoSchema = z.object({
+  NumeroOrden: z.string().max(40).optional(),
+  TipoMantenimiento: z.enum(TIPO_MANTENIMIENTO),
+  FechaOrden: z.string().date(),
+  Turno: z.enum(TURNO),
+  Kilometraje: z.number().nonnegative().optional(),
+  Horometro: z.number().nonnegative().optional(),
+  IdVehiculo: z.string().uuid({ message: "Elige una placa." }),
+  // Personales asignados a la orden (todos por igual); todos heredan como
+  // solicitantes del requerimiento que genera el consumo de repuestos.
+  IdsPersonal: z.array(z.string().uuid()).min(1, { message: "Asigna al menos un personal." }),
+  Observaciones: z.string().max(500).optional(),
+  Trabajos: z.array(TrabajoMantenimientoSchema).default([]),
+  // Borrador de repuestos usados, editable hasta aprobar. El stock se descuenta
+  // recién al aprobar.
+  Consumo: ConsumirRepuestosSchema.optional(),
+});
+export type CrearOrdenMantenimiento = z.infer<typeof CrearOrdenMantenimientoSchema>;
+
+/* Edición (OT abierta o por aprobar que aún no descontó stock): mismo cuerpo que
+   el alta; Consumo reemplaza el borrador completo. */
+export const ActualizarOrdenMantenimientoSchema = CrearOrdenMantenimientoSchema;
+export type ActualizarOrdenMantenimiento = z.infer<typeof ActualizarOrdenMantenimientoSchema>;
 
 /* Reconciliar (admin): aprobar (cerrar) o rechazar (anular + reversa). */
 export const ReconciliarOrdenSchema = z.object({

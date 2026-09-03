@@ -169,19 +169,26 @@ export interface RequerimientoConDetalle {
 /* ─── Orden de Trabajo de Mantenimiento (OT) ─── */
 export type SituacionOrden = "abierta" | "consumida" | "cerrada" | "anulada";
 
+/* Trabajo realizado, con su foto opcional de antes y de después (por tarea). */
 export interface TrabajoMantenimiento {
   Id: string;
   Secuencia: number;
   Descripcion: string;
+  UrlFotoAntes: string | null;
+  UrlFotoDespues: string | null;
 }
 
-/* Repuesto consumido = línea del requerimiento enlazado, con datos del producto. */
+/* Repuesto de la OT. Hasta aprobar es el BORRADOR (vista V_OrdenMantenimientoRepuesto,
+   CostoUnitario estimado); con el stock ya descontado es la línea del ledger. */
 export interface RepuestoConsumido {
   IdProducto: string;
   NombreProducto: string;
   Sku: string;
   CodigoUnidad: string | null;
   Cantidad: number;
+  Modo: "stock" | "compra";
+  /** Costo unitario declarado en compra directa (borrador); null en modo stock. */
+  CostoUnitarioCompra: number | null;
   CostoUnitario: number;
 }
 
@@ -191,14 +198,6 @@ export interface OrdenMantenimientoPersonal {
   IdPersonal: string;
   NombreCompleto: string | null;
   Cargo: string | null;
-  Orden: number;
-}
-
-/* Evidencia fotográfica de una orden de mantenimiento. */
-export interface OrdenMantenimientoEvidencia {
-  Id: string;
-  Tipo: "estado_actual" | "post_mantenimiento";
-  Url: string;
   Orden: number;
 }
 
@@ -215,6 +214,8 @@ export interface OrdenMantenimientoResumen {
   Placa: string | null;
   Personales: OrdenMantenimientoPersonal[];
   Situacion: SituacionOrden;
+  /** true si la OT ya descontó stock (requerimiento enlazado): ya no se edita. */
+  StockDescontado: boolean;
 }
 
 /* OT con trabajos y repuestos resueltos (vista de detalle + PDF). */
@@ -224,9 +225,12 @@ export interface OrdenMantenimientoConDetalle extends OrdenMantenimientoResumen 
   IdDocumentoInventarioReversa: string | null;
   MotivoReconciliacion: string | null;
   FechaReconciliacion: string | null;
+  /* Cabecera del borrador de repuestos (para precargar la edición). */
+  IdUbicacionConsumo: string | null;
+  IdProveedorCompra: string | null;
+  ComprobanteCompra: string | null;
   Trabajos: TrabajoMantenimiento[];
   Repuestos: RepuestoConsumido[];
-  Evidencias: OrdenMantenimientoEvidencia[];
 }
 
 export interface ProductoImagen extends CamposAuditoria {

@@ -3,11 +3,24 @@
 /**
  * components/mantenimiento/DialogOrdenMantenimiento.tsx
  *
- * Alta/edición de una Orden de Trabajo de Mantenimiento (cabecera + trabajos).
+ * Alta/edición de una Orden de Trabajo de Mantenimiento. La OT se registra al
+ * TERMINAR el trabajo, en un solo paso: cabecera + trabajos (cada tarea con su
+ * foto opcional de antes y de después) + consumo opcional de repuestos.
+ *
+ * ALTA: las fotos se suben a Storage ANTES del POST y los repuestos viajan dentro
+ * del payload (Consumo) como BORRADOR. Toda orden nueva nace "Por aprobar", con o
+ * sin repuestos (así se pueden agregar los que se olvidaron); el stock se descuenta
+ * recién al APROBAR. Si falla una subida, no se crea nada.
+ *
+ * EDICIÓN (OT abierta o "Por aprobar" que todavía no descontó stock): mismo
+ * formulario con el borrador precargado; un solo PATCH reemplaza cabecera,
+ * trabajos y repuestos y la BD recalcula la situación. Una vez aprobada (stock
+ * descontado) la orden ya no se edita.
+ *
  * Selects controlados (value={watch}) y montaje condicional desde el padre para
- * evitar el bug de valor pegado/stale. La edición solo aplica a OTs abiertas.
+ * evitar el bug de valor pegado/stale.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Check } from "lucide-react";
@@ -17,14 +30,15 @@ import {
   CrearOrdenMantenimientoSchema,
   TIPO_MANTENIMIENTO,
   TURNO,
+  type ConsumirRepuestos,
   type CrearOrdenMantenimiento,
   type OrdenMantenimientoConDetalle,
+  type SituacionOrden,
 } from "@congeminco/shared";
 import {
   useOrdenesMantenimiento,
   useCrearOrdenMantenimiento,
   useActualizarOrdenMantenimiento,
-  useConsumirRepuestos,
 } from "@/hooks/useOrdenesMantenimiento";
 import {
   EditorConsumoRepuestos,
@@ -33,12 +47,15 @@ import {
   validarConsumo,
   type ConsumoState,
 } from "@/components/mantenimiento/EditorConsumoRepuestos";
+import { FotoTrabajo, type FotoLocal } from "@/components/mantenimiento/FotoTrabajo";
 import { useVehiculos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
 import { VehiculoCombobox } from "@/components/VehiculoCombobox";
+import { crearClienteNavegador } from "@/lib/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -72,6 +89,96 @@ const TURNO_LABEL: Record<string, string> = {
   tarde: "Tarde",
   noche: "Noche",
 };
+
+type LadoFoto = "antes" | "despues";
+const ETIQUETA_LADO: Record<LadoFoto, string> = { antes: "de antes", despues: "de después" };
+
+/* Fila del editor de trabajos. La clave es estable (no el índice) para que la
+   foto siga a SU fila al borrar otras, misma razón que el field.id de RHF en
+   requerimientos. Una foto es un archivo local pendiente (preview = objectURL) o
+   una URL ya subida (file = null, edición de una OT legada). */
+interface TrabajoForm {
+  key: string;
+  descripcion: string;
+  antes: FotoLocal | null;
+  despues: FotoLocal | null;
+}
+
+function nuevoTrabajo(
+  descripcion = "",
+  urlAntes: string | null = null,
+  urlDespues: string | null = null,
+): TrabajoForm {
+  return {
+    key: crypto.randomUUID(),
+    descripcion,
+    antes: urlAntes ? { file: null, preview: urlAntes } : null,
+    despues: urlDespues ? { file: null, preview: urlDespues } : null,
+  };
+}
+
+function conFoto(t: TrabajoForm, lado: LadoFoto, foto: FotoLocal | null): TrabajoForm {
+  return lado === "antes" ? { ...t, antes: foto } : { ...t, despues: foto };
+}
+
+function liberarPreview(foto: FotoLocal | null) {
+  if (foto?.file) URL.revokeObjectURL(foto.preview);
+}
+
+/** Precarga el editor de repuestos con el borrador de la orden (edición). */
+function consumoDesdeOrden(orden: OrdenMantenimientoConDetalle | null): ConsumoState {
+  if (!orden || !orden.Repuestos.length) return { ...CONSUMO_INICIAL };
+  return {
+    idUbicacion: orden.IdUbicacionConsumo ?? "",
+    idProveedor: orden.IdProveedorCompra ?? "",
+    comprobante: orden.ComprobanteCompra ?? "",
+    lineas: orden.Repuestos.map((r) => ({
+      idProducto: r.IdProducto,
+      cantidad: String(r.Cantidad),
+      modo: r.Modo,
+      costo: r.CostoUnitarioCompra === null ? "" : String(r.CostoUnitarioCompra),
+    })),
+  };
+}
+
+/** Sube una foto al bucket "mantenimiento" y devuelve su URL pública. */
+async function subirFoto(file: File): Promise<string> {
+  const supabase = crearClienteNavegador();
+  const ruta = `trabajos/${crypto.randomUUID()}-${file.name}`;
+  const { data, error } = await supabase.storage
+    .from("mantenimiento")
+    .upload(ruta, file, { upsert: false });
+  if (error || !data) throw new Error(error?.message ?? "No se pudo subir la foto.");
+  return supabase.storage.from("mantenimiento").getPublicUrl(data.path).data.publicUrl;
+}
+
+/**
+ * Arma los trabajos del payload subiendo las fotos locales. Falla en la primera
+ * subida que no funcione: todavía no se tocó la BD, así que se reintenta sin
+ * dejar nada huérfano.
+ */
+async function armarTrabajos(filas: TrabajoForm[]): Promise<CrearOrdenMantenimiento["Trabajos"]> {
+  const resultado: CrearOrdenMantenimiento["Trabajos"] = [];
+  for (const [i, t] of filas.entries()) {
+    const urls: { UrlFotoAntes?: string; UrlFotoDespues?: string } = {};
+    for (const lado of ["antes", "despues"] as const) {
+      const foto = t[lado];
+      if (!foto) continue;
+      let url: string;
+      try {
+        url = foto.file ? await subirFoto(foto.file) : foto.preview;
+      } catch (e) {
+        throw new Error(
+          `No se pudo subir la foto ${ETIQUETA_LADO[lado]} de la tarea ${i + 1}: ${(e as Error).message}`,
+        );
+      }
+      if (lado === "antes") urls.UrlFotoAntes = url;
+      else urls.UrlFotoDespues = url;
+    }
+    resultado.push({ Secuencia: i + 1, Descripcion: t.descripcion, ...urls });
+  }
+  return resultado;
+}
 
 /**
  * Arma el N° de orden completo: PREFIJO-DDMMYYYY-PLACA-NN.
@@ -108,27 +215,46 @@ function armarNumeroOrden(
 export function DialogOrdenMantenimiento({
   orden,
   onClose,
+  onGuardada,
 }: {
   orden: OrdenMantenimientoConDetalle | null;
   onClose: () => void;
+  /** Alta: situación con la que nació la orden ('consumida' o 'cerrada'). */
+  onGuardada?: (situacion: SituacionOrden) => void;
 }) {
   const modoEdicion = !!orden;
   const { mutateAsync: crear, isPending: creando } = useCrearOrdenMantenimiento();
   const { mutateAsync: actualizar, isPending: act } = useActualizarOrdenMantenimiento();
-  const { mutateAsync: consumir, isPending: consumiendo } = useConsumirRepuestos();
   const { data: vehiculos } = useVehiculos();
   const { data: personal } = usePersonal();
-  const isPending = creando || act || consumiendo;
+  const [subiendoFotos, setSubiendoFotos] = useState(false);
+  const isPending = creando || act || subiendoFotos;
 
-  const [trabajos, setTrabajos] = useState<string[]>(
-    orden && orden.Trabajos.length ? orden.Trabajos.map((t) => t.Descripcion) : [""],
+  const [trabajos, setTrabajos] = useState<TrabajoForm[]>(() =>
+    orden && orden.Trabajos.length
+      ? orden.Trabajos.map((t) => nuevoTrabajo(t.Descripcion, t.UrlFotoAntes, t.UrlFotoDespues))
+      : [nuevoTrabajo()],
   );
 
-  // Consumo de repuestos opcional en el ALTA: se registra encadenado tras crear
-  // la OT (dos requests; si el consumo falla, la OT queda 'abierta' y se
-  // reintenta desde la acción "Consumir repuestos").
-  const [conConsumo, setConConsumo] = useState(false);
-  const [consumo, setConsumo] = useState<ConsumoState>({ ...CONSUMO_INICIAL });
+  // Los previews locales son objectURLs: se liberan al quitar/reemplazar la foto y,
+  // por si el diálogo se cierra a medio camino, también al desmontar.
+  const trabajosRef = useRef(trabajos);
+  trabajosRef.current = trabajos;
+  useEffect(
+    () => () => {
+      for (const t of trabajosRef.current) {
+        liberarPreview(t.antes);
+        liberarPreview(t.despues);
+      }
+    },
+    [],
+  );
+
+  // Borrador de repuestos (opcional). Viaja dentro del payload en el alta y en la
+  // edición (reemplaza el borrador completo); el stock se descuenta al aprobar.
+  // En edición se precarga desde la orden.
+  const [conConsumo, setConConsumo] = useState(!!orden?.Repuestos.length);
+  const [consumo, setConsumo] = useState<ConsumoState>(() => consumoDesdeOrden(orden));
 
   const {
     register,
@@ -177,21 +303,50 @@ export function DialogOrdenMantenimiento({
     setValue("IdsPersonal", next, { shouldValidate: true });
   };
 
-  const onSubmit = async (data: CrearOrdenMantenimiento) => {
-    const trabajosLimpios = trabajos
-      .map((d) => d.trim())
-      .filter(Boolean)
-      .map((Descripcion, i) => ({ Secuencia: i + 1, Descripcion }));
-    const payload = { ...data, Trabajos: trabajosLimpios };
+  /* ── Trabajos y sus fotos ── */
+  const editarDescripcion = (key: string, descripcion: string) =>
+    setTrabajos((arr) => arr.map((t) => (t.key === key ? { ...t, descripcion } : t)));
 
-    // Validar el consumo ANTES de crear la OT: con el checkbox activo, un
-    // consumo vacío o a medias es un error visible — no se crea nada (evita
-    // OTs sin consumo "en silencio" por un typo en la cantidad).
-    let consumoData = null;
-    if (!modoEdicion && conConsumo) {
+  const ponerFoto = (key: string, lado: LadoFoto, file: File) => {
+    liberarPreview(trabajos.find((t) => t.key === key)?.[lado] ?? null);
+    const foto: FotoLocal = { file, preview: URL.createObjectURL(file) };
+    setTrabajos((arr) => arr.map((t) => (t.key === key ? conFoto(t, lado, foto) : t)));
+  };
+
+  const quitarFoto = (key: string, lado: LadoFoto) => {
+    liberarPreview(trabajos.find((t) => t.key === key)?.[lado] ?? null);
+    setTrabajos((arr) => arr.map((t) => (t.key === key ? conFoto(t, lado, null) : t)));
+  };
+
+  const quitarTrabajo = (key: string) => {
+    if (trabajos.length === 1) return;
+    const t = trabajos.find((x) => x.key === key);
+    liberarPreview(t?.antes ?? null);
+    liberarPreview(t?.despues ?? null);
+    setTrabajos((arr) => arr.filter((x) => x.key !== key));
+  };
+
+  const onSubmit = async (data: CrearOrdenMantenimiento) => {
+    // 1. Trabajos: se descartan las filas vacías. Una fila con foto pero sin
+    //    descripción es un error visible (si no, la foto se perdería en silencio).
+    const filas = trabajos.map((t) => ({ ...t, descripcion: t.descripcion.trim() }));
+    const huerfana = filas.findIndex((t) => !t.descripcion && (t.antes || t.despues));
+    if (huerfana >= 0) {
+      toast.error(
+        `La tarea ${huerfana + 1} tiene foto pero no descripción: complétala o quita la foto.`,
+      );
+      return;
+    }
+    const activos = filas.filter((t) => t.descripcion);
+
+    // 2. Consumo: con el checkbox activo, un consumo vacío o a medias es un error
+    //    visible ANTES de tocar nada (evita OTs sin consumo "en silencio" por un
+    //    typo en la cantidad).
+    let consumoData: ConsumirRepuestos | null = null;
+    if (conConsumo) {
       if (consumoVacio(consumo)) {
         toast.error(
-          "Marcaste 'Consumir repuestos ahora' sin repuestos: agrega al menos uno o desmarca la opción.",
+          "Marcaste 'Repuestos utilizados' sin repuestos: agrega al menos uno o desmarca la opción.",
         );
         return;
       }
@@ -199,32 +354,65 @@ export function DialogOrdenMantenimiento({
       if (!consumoData) return;
     }
 
+    // 3. Fotos: se suben ANTES de guardar. Si una falla, se corta acá.
+    let trabajosPayload: CrearOrdenMantenimiento["Trabajos"] = [];
+    setSubiendoFotos(true);
+    try {
+      trabajosPayload = await armarTrabajos(activos);
+    } catch (e) {
+      toast.error((e as Error).message);
+      return;
+    } finally {
+      setSubiendoFotos(false);
+    }
+
+    // Cabecera + trabajos + borrador de repuestos en UN solo request; la BD decide
+    // la situación (toda OT nueva queda por aprobar; una abierta legada pasa a por
+    // aprobar si recibe repuestos).
+    const payload: CrearOrdenMantenimiento = {
+      ...data,
+      Trabajos: trabajosPayload,
+      Consumo: consumoData ?? undefined,
+    };
+
     try {
       if (modoEdicion) {
-        await actualizar({ id: orden.Id, data: payload });
-        toast.success("Orden actualizada correctamente");
+        const { Situacion } = await actualizar({ id: orden.Id, data: payload });
+        const final: SituacionOrden = Situacion ?? orden.Situacion;
+        toast.success(
+          final === "consumida"
+            ? "Orden actualizada. Pendiente de aprobación."
+            : "Orden actualizada correctamente",
+        );
+        onGuardada?.(final);
       } else {
-        const { Id } = await crear(payload);
-        if (consumoData) {
-          // La OT ya existe: un fallo acá NO la revierte (dos transacciones).
-          try {
-            await consumir({ id: Id, data: consumoData });
-            toast.success("Orden creada y repuestos consumidos. Pendiente de aprobación.");
-          } catch (e) {
-            toast.warning(
-              `Orden creada, pero el consumo falló: ${(e as Error).message}. ` +
-                `Reintenta desde la acción "Consumir repuestos".`,
-            );
-          }
-        } else {
-          toast.success("Orden creada correctamente");
-        }
+        const { Situacion } = await crear(payload);
+        // Toda OT nueva nace por aprobar (con o sin repuestos); la BD es la fuente.
+        const final: SituacionOrden = Situacion ?? "consumida";
+        toast.success(
+          consumoData
+            ? "Orden registrada. Pendiente de aprobación: el stock se descuenta al aprobar."
+            : "Orden registrada. Pendiente de aprobación.",
+        );
+        onGuardada?.(final);
+      }
+      for (const t of trabajos) {
+        liberarPreview(t.antes);
+        liberarPreview(t.despues);
       }
       onClose();
     } catch (e) {
       toast.error((e as Error).message);
     }
   };
+
+  const textoBoton = subiendoFotos
+    ? "Subiendo fotos..."
+    : isPending
+      ? "Guardando..."
+      : modoEdicion
+        ? "Guardar cambios"
+        : "Registrar orden";
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -233,6 +421,11 @@ export function DialogOrdenMantenimiento({
           <DialogTitle>
             {modoEdicion ? "Editar orden de trabajo" : "Nueva orden de trabajo"}
           </DialogTitle>
+          <DialogDescription>
+            {modoEdicion
+              ? "Corrige la cabecera, las tareas y los repuestos. El stock se descuenta al aprobar."
+              : "Registra el trabajo ya realizado: tareas con sus fotos y los repuestos usados. La orden queda pendiente de aprobación."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -403,15 +596,20 @@ export function DialogOrdenMantenimiento({
             )}
           </div>
 
-          {/* Trabajos realizados */}
+          {/* Trabajos realizados: cada tarea con foto opcional de antes y de después */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Trabajos realizados</Label>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <Label>Trabajos realizados</Label>
+                <p className="text-xs text-muted-foreground">
+                  Cada tarea puede llevar una foto de antes y una de después (opcionales).
+                </p>
+              </div>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setTrabajos((t) => [...t, ""])}
+                onClick={() => setTrabajos((arr) => [...arr, nuevoTrabajo()])}
               >
                 <Plus className="mr-1 h-3 w-3" />
                 Agregar
@@ -419,29 +617,42 @@ export function DialogOrdenMantenimiento({
             </div>
             <div className="space-y-2">
               {trabajos.map((t, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}</span>
-                  <Input
-                    value={t}
-                    placeholder="Descripción del trabajo..."
-                    onChange={(e) =>
-                      setTrabajos((arr) => arr.map((v, idx) => (idx === i ? e.target.value : v)))
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() =>
-                      setTrabajos((arr) =>
-                        arr.length > 1 ? arr.filter((_, idx) => idx !== i) : arr,
-                      )
-                    }
-                    disabled={trabajos.length === 1}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                <div key={t.key} className="space-y-2 rounded-md border p-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}</span>
+                    <Input
+                      value={t.descripcion}
+                      placeholder="Descripción del trabajo..."
+                      onChange={(e) => editarDescripcion(t.key, e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => quitarTrabajo(t.key)}
+                      disabled={trabajos.length === 1}
+                      aria-label="Quitar tarea"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-3 pl-7">
+                    <FotoTrabajo
+                      etiqueta="Antes"
+                      foto={t.antes}
+                      onSeleccionar={(f) => ponerFoto(t.key, "antes", f)}
+                      onQuitar={() => quitarFoto(t.key, "antes")}
+                      disabled={isPending}
+                    />
+                    <FotoTrabajo
+                      etiqueta="Después"
+                      foto={t.despues}
+                      onSeleccionar={(f) => ponerFoto(t.key, "despues", f)}
+                      onQuitar={() => quitarFoto(t.key, "despues")}
+                      disabled={isPending}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -452,45 +663,36 @@ export function DialogOrdenMantenimiento({
             <Input id="Observaciones" placeholder="Opcional" {...register("Observaciones")} />
           </div>
 
-          {/* Consumo de repuestos en el mismo alta (opcional): ahorra el paso
-              posterior de "Consumir repuestos", que sigue disponible igual. */}
-          {!modoEdicion && (
-            <div className="space-y-3 rounded-md border p-3">
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4"
-                  checked={conConsumo}
-                  onChange={(e) => setConConsumo(e.target.checked)}
-                />
-                Consumir repuestos ahora (opcional)
-              </label>
-              {conConsumo ? (
-                <EditorConsumoRepuestos estado={consumo} onChange={setConsumo} />
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Si los repuestos ya se usaron, registralos acá y la orden queda lista para
-                  aprobación en un solo paso. También podés hacerlo después desde la acción
-                  &quot;Consumir repuestos&quot;.
-                </p>
-              )}
-            </div>
-          )}
+          {/* Borrador de repuestos (opcional). Editable mientras la OT siga "Por
+              aprobar"; el stock se descuenta al aprobar. En edición viene
+              precargado desde la orden. */}
+          <div className="space-y-3 rounded-md border p-3">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={conConsumo}
+                onChange={(e) => setConConsumo(e.target.checked)}
+              />
+              Repuestos utilizados (opcional)
+            </label>
+            {conConsumo ? (
+              <EditorConsumoRepuestos estado={consumo} onChange={setConsumo} />
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {modoEdicion
+                  ? "Marca la opción para registrar o corregir los repuestos usados. El stock se descuenta al aprobar la orden."
+                  : "Si se usaron repuestos, regístralos acá; el stock se descuenta al aprobar la orden. Puedes agregarlos o corregirlos después, mientras la orden siga por aprobar."}
+              </p>
+            )}
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>
-              {consumiendo
-                ? "Consumiendo repuestos..."
-                : isPending
-                  ? "Guardando..."
-                  : modoEdicion
-                    ? "Guardar cambios"
-                    : conConsumo && !consumoVacio(consumo)
-                      ? "Crear orden y consumir"
-                      : "Crear orden"}
+              {textoBoton}
             </Button>
           </DialogFooter>
         </form>

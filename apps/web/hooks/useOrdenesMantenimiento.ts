@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  ConsumirRepuestos,
   CrearOrdenMantenimiento,
   OrdenMantenimientoConDetalle,
   OrdenMantenimientoResumen,
@@ -36,6 +35,9 @@ export function useOrdenMantenimientoDetalle(id: string | null) {
   });
 }
 
+/* Alta en un paso: trabajos con fotos + borrador de repuestos (Consumo). Toda OT
+   nueva nace 'consumida' (por aprobar). El stock no se toca hasta aprobar, así
+   que solo se invalidan las órdenes. */
 export function useCrearOrdenMantenimiento() {
   const qc = useQueryClient();
   return useMutation({
@@ -46,7 +48,7 @@ export function useCrearOrdenMantenimiento() {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(await leerError(res));
-      return res.json() as Promise<{ Id: string }>;
+      return res.json() as Promise<{ Id: string; Situacion: SituacionOrden | null }>;
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["ordenes-mantenimiento"] });
@@ -54,6 +56,8 @@ export function useCrearOrdenMantenimiento() {
   });
 }
 
+/* Edición (OT abierta o por aprobar sin stock descontado): reemplaza cabecera,
+   trabajos y borrador de repuestos; la BD recalcula la situación. */
 export function useActualizarOrdenMantenimiento() {
   const qc = useQueryClient();
   return useMutation({
@@ -64,7 +68,7 @@ export function useActualizarOrdenMantenimiento() {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(await leerError(res));
-      return res.json() as Promise<{ ok: true }>;
+      return res.json() as Promise<{ ok: true; Situacion: SituacionOrden | null }>;
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["ordenes-mantenimiento"] });
@@ -85,29 +89,8 @@ export function useEliminarOrdenMantenimiento() {
   });
 }
 
-/* Consumir repuestos: descuenta stock al instante. Invalida saldos/reportes. */
-export function useConsumirRepuestos() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ConsumirRepuestos }) => {
-      const res = await fetch(`/api/mantenimiento/${id}/consumir`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error(await leerError(res));
-      return res.json() as Promise<{ IdDocumentoInventario: string }>;
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["ordenes-mantenimiento"] });
-      void qc.invalidateQueries({ queryKey: ["saldos"] });
-      void qc.invalidateQueries({ queryKey: ["reportes"] });
-      void qc.invalidateQueries({ queryKey: ["requerimientos"] });
-    },
-  });
-}
-
-/* Reconciliar (admin): aprobar (cerrar) o rechazar (anular + reversa). */
+/* Reconciliar (admin): aprobar = descontar el stock del borrador y cerrar;
+   rechazar = anular (en OTs legadas que ya descontaron, además reversa). */
 export function useReconciliarOrden() {
   const qc = useQueryClient();
   return useMutation({

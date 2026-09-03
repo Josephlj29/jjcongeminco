@@ -1,8 +1,12 @@
 /**
  * app/api/mantenimiento/[id]/route.ts
  *
- * GET    /api/mantenimiento/:id — OT + trabajos + repuestos consumidos (del ledger).
- * PATCH  /api/mantenimiento/:id — edita cabecera + trabajos (solo abierta) vía RPC.
+ * GET    /api/mantenimiento/:id — OT + trabajos (con sus fotos por tarea) + repuestos:
+ *        si la OT todavía no descontó stock, el BORRADOR (inv.V_OrdenMantenimientoRepuesto,
+ *        costo estimado); si ya lo descontó, las líneas del ledger (todas las salidas del
+ *        requerimiento enlazado). Incluye StockDescontado y la cabecera del borrador.
+ * PATCH  /api/mantenimiento/:id — reemplaza cabecera + trabajos + borrador de repuestos
+ *        (OT abierta o por aprobar sin stock descontado) vía RPC; devuelve { ok, Situacion }.
  * DELETE /api/mantenimiento/:id — soft-delete; bloquea si ya consumió repuestos.
  *
  * Rol para PATCH/DELETE: requerimientoCrear (admin, almacenero, supervision).
@@ -13,7 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError, mapearErrorNegocio } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import {
-  CrearOrdenMantenimientoSchema,
+  ActualizarOrdenMantenimientoSchema,
   puede,
   type OrdenMantenimientoConDetalle,
 } from "@congeminco/shared";
@@ -40,8 +44,31 @@ interface FilaHeader {
   IdDocumentoInventarioReversa: string | null;
   MotivoReconciliacion: string | null;
   FechaReconciliacion: string | null;
+  IdUbicacionConsumo: string | null;
+  IdProveedorCompra: string | null;
+  ComprobanteCompra: string | null;
   T_Vehiculo: { Placa: string } | null;
   T_OrdenMantenimientoPersonal: FilaPersonal[] | null;
+}
+
+/* Fila de inv.V_OrdenMantenimientoRepuesto (borrador, antes de aprobar). */
+interface FilaRepuestoBorrador {
+  IdProducto: string;
+  NombreProducto: string;
+  Sku: string;
+  CodigoUnidad: string | null;
+  Cantidad: number;
+  Modo: "stock" | "compra";
+  CostoUnitarioCompra: number | null;
+  CostoUnitario: number | null;
+}
+
+interface FilaTrabajo {
+  Id: string;
+  Secuencia: number;
+  Descripcion: string;
+  UrlFotoAntes: string | null;
+  UrlFotoDespues: string | null;
 }
 
 interface FilaMovimiento {
@@ -66,7 +93,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     .schema("inv")
     .from("T_OrdenMantenimiento")
     .select(
-      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
+      "Id, NumeroOrden, FechaOrden, TipoMantenimiento, Turno, Kilometraje, Horometro, IdVehiculo, Observaciones, Situacion, IdRequerimiento, IdDocumentoInventarioReversa, MotivoReconciliacion, FechaReconciliacion, IdUbicacionConsumo, IdProveedorCompra, ComprobanteCompra, T_Vehiculo(Placa), T_OrdenMantenimientoPersonal(Id, IdPersonal, Orden, T_Personal(NombreCompleto, T_Cargo(Nombre)))",
     )
     .eq("Id", id)
     .eq("Estado", true)
@@ -81,7 +108,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const { data: trabajos, error: trabajosError } = await supabase
     .schema("inv")
     .from("T_OrdenMantenimientoTrabajo")
-    .select("Id, Secuencia, Descripcion")
+    .select("Id, Secuencia, Descripcion, UrlFotoAntes, UrlFotoDespues")
     .eq("IdOrdenMantenimiento", id)
     .eq("Estado", true)
     .order("Secuencia");
@@ -90,50 +117,78 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: trabajosError.message }, { status: 500 });
   }
 
-  // Repuestos = movimientos de egreso de la salida del requerimiento enlazado
-  // (costo unitario congelado en el ledger).
+  // Repuestos. Sin requerimiento enlazado la OT todavía no descontó stock: se lee
+  // el BORRADOR desde la vista (costo estimado). Con requerimiento, las líneas son
+  // los egresos de TODAS las salidas (T_RequerimientoAtencion), agrupados por
+  // producto con el costo promedio ponderado congelado en el ledger.
   let repuestos: OrdenMantenimientoConDetalle["Repuestos"] = [];
-  if (h.IdRequerimiento) {
-    const { data: req } = await supabase
+  if (!h.IdRequerimiento) {
+    const { data: borrador, error: borradorError } = await supabase
       .schema("inv")
-      .from("T_Requerimiento")
+      .from("V_OrdenMantenimientoRepuesto")
+      .select(
+        "IdProducto, NombreProducto, Sku, CodigoUnidad, Cantidad, Modo, CostoUnitarioCompra, CostoUnitario",
+      )
+      .eq("IdOrdenMantenimiento", id)
+      .order("FechaCreacion");
+    if (borradorError) {
+      return NextResponse.json({ error: borradorError.message }, { status: 500 });
+    }
+    repuestos = ((borrador as unknown as FilaRepuestoBorrador[]) ?? []).map((r) => ({
+      IdProducto: r.IdProducto,
+      NombreProducto: r.NombreProducto,
+      Sku: r.Sku,
+      CodigoUnidad: r.CodigoUnidad,
+      Cantidad: Number(r.Cantidad),
+      Modo: r.Modo,
+      CostoUnitarioCompra: r.CostoUnitarioCompra === null ? null : Number(r.CostoUnitarioCompra),
+      CostoUnitario: Number(r.CostoUnitario ?? 0),
+    }));
+  } else {
+    const { data: atenciones } = await supabase
+      .schema("inv")
+      .from("T_RequerimientoAtencion")
       .select("IdDocumentoInventario")
-      .eq("Id", h.IdRequerimiento)
-      .maybeSingle();
-    const salidaId = (req as { IdDocumentoInventario: string | null } | null)
-      ?.IdDocumentoInventario;
-    if (salidaId) {
+      .eq("IdRequerimiento", h.IdRequerimiento)
+      .eq("Estado", true);
+    const salidaIds = ((atenciones as { IdDocumentoInventario: string }[] | null) ?? []).map(
+      (a) => a.IdDocumentoInventario,
+    );
+    if (salidaIds.length) {
       const { data: movs } = await supabase
         .schema("inv")
         .from("T_MovimientoStock")
         .select(
           "IdProducto, Cantidad, CostoUnitario, T_Producto(Nombre, Sku, T_UnidadMedida(Codigo))",
         )
-        .eq("IdDocumentoInventario", salidaId)
+        .in("IdDocumentoInventario", salidaIds)
         .eq("Direccion", -1);
-      repuestos = ((movs as unknown as FilaMovimiento[]) ?? []).map((m) => ({
-        IdProducto: m.IdProducto,
-        NombreProducto: m.T_Producto?.Nombre ?? "—",
-        Sku: m.T_Producto?.Sku ?? "—",
-        CodigoUnidad: m.T_Producto?.T_UnidadMedida?.Codigo ?? null,
-        Cantidad: Number(m.Cantidad),
-        CostoUnitario: Number(m.CostoUnitario ?? 0),
-      }));
+      const porProducto = new Map<string, OrdenMantenimientoConDetalle["Repuestos"][number]>();
+      for (const m of (movs as unknown as FilaMovimiento[]) ?? []) {
+        const cant = Number(m.Cantidad);
+        const costo = Number(m.CostoUnitario ?? 0);
+        const previo = porProducto.get(m.IdProducto);
+        if (!previo) {
+          porProducto.set(m.IdProducto, {
+            IdProducto: m.IdProducto,
+            NombreProducto: m.T_Producto?.Nombre ?? "—",
+            Sku: m.T_Producto?.Sku ?? "—",
+            CodigoUnidad: m.T_Producto?.T_UnidadMedida?.Codigo ?? null,
+            Cantidad: cant,
+            // El ledger no distingue el modo original; ya descontado, es informativo.
+            Modo: "stock",
+            CostoUnitarioCompra: null,
+            CostoUnitario: costo,
+          });
+          continue;
+        }
+        const total = previo.Cantidad + cant;
+        previo.CostoUnitario =
+          total > 0 ? (previo.Cantidad * previo.CostoUnitario + cant * costo) / total : 0;
+        previo.Cantidad = total;
+      }
+      repuestos = [...porProducto.values()];
     }
-  }
-
-  // Evidencia fotográfica (estado_actual / post_mantenimiento) ordenada por tipo+orden.
-  const { data: evidencias, error: evidenciasError } = await supabase
-    .schema("inv")
-    .from("T_OrdenMantenimientoEvidencia")
-    .select("Id, Tipo, Url, Orden")
-    .eq("IdOrdenMantenimiento", id)
-    .eq("Estado", true)
-    .order("Tipo")
-    .order("Orden");
-
-  if (evidenciasError) {
-    return NextResponse.json({ error: evidenciasError.message }, { status: 500 });
   }
 
   const personales = (h.T_OrdenMantenimientoPersonal ?? [])
@@ -164,16 +219,18 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     IdDocumentoInventarioReversa: h.IdDocumentoInventarioReversa,
     MotivoReconciliacion: h.MotivoReconciliacion,
     FechaReconciliacion: h.FechaReconciliacion,
-    Trabajos: ((trabajos as { Id: string; Secuencia: number; Descripcion: string }[]) ?? []).map(
-      (t) => ({ Id: t.Id, Secuencia: Number(t.Secuencia), Descripcion: t.Descripcion }),
-    ),
-    Repuestos: repuestos,
-    Evidencias: ((evidencias as OrdenMantenimientoConDetalle["Evidencias"]) ?? []).map((e) => ({
-      Id: e.Id,
-      Tipo: e.Tipo,
-      Url: e.Url,
-      Orden: Number(e.Orden),
+    StockDescontado: h.IdRequerimiento !== null,
+    IdUbicacionConsumo: h.IdUbicacionConsumo ?? null,
+    IdProveedorCompra: h.IdProveedorCompra ?? null,
+    ComprobanteCompra: h.ComprobanteCompra ?? null,
+    Trabajos: ((trabajos as FilaTrabajo[] | null) ?? []).map((t) => ({
+      Id: t.Id,
+      Secuencia: Number(t.Secuencia),
+      Descripcion: t.Descripcion,
+      UrlFotoAntes: t.UrlFotoAntes ?? null,
+      UrlFotoDespues: t.UrlFotoDespues ?? null,
     })),
+    Repuestos: repuestos,
   };
 
   return NextResponse.json(resultado);
@@ -188,7 +245,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { id } = await params;
   const body = await request.json().catch(() => null);
-  const parsed = CrearOrdenMantenimientoSchema.safeParse(body);
+  const parsed = ActualizarOrdenMantenimientoSchema.safeParse(body);
   if (!parsed.success) {
     return respuestaError("Datos inválidos.", 400, parsed.error.flatten());
   }
@@ -201,7 +258,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (dbError) {
     return mapearErrorNegocio(dbError);
   }
-  return NextResponse.json({ ok: true });
+
+  // La BD recalcula la situación según el borrador (con líneas queda por aprobar):
+  // se lee para que la UI informe y salte a la pestaña correcta.
+  const { data: actualizada } = await supabase
+    .schema("inv")
+    .from("T_OrdenMantenimiento")
+    .select("Situacion")
+    .eq("Id", id)
+    .maybeSingle();
+  const situacion =
+    (actualizada as { Situacion: OrdenMantenimientoConDetalle["Situacion"] } | null)
+      ?.Situacion ?? null;
+
+  return NextResponse.json({ ok: true, Situacion: situacion });
 }
 
 export async function DELETE(
