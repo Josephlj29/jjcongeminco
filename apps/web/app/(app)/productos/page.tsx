@@ -93,6 +93,7 @@ import { usePermiso } from "@/hooks/useYo";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { fechaCorta } from "@/lib/format";
 
 /* ─── Tipo para producto de la vista consolidada ─── */
 interface ProductoConsolidado {
@@ -117,10 +118,7 @@ interface ProductoConsolidado {
  * considera productos dados de baja, que esta lista no incluye); esto es solo
  * la previsualización del SKU que se va a asignar.
  */
-function armarSku(
-  codigoCategoria: string | undefined,
-  skusExistentes: string[],
-): string | null {
+function armarSku(codigoCategoria: string | undefined, skusExistentes: string[]): string | null {
   if (!codigoCategoria) return null;
   const prefijo = codigoCategoria
     .replace(/^(CAT|FAM)-/i, "")
@@ -784,9 +782,7 @@ function DialogKardex({
             <TableBody>
               {kardex.map((fila: KardexFila) => (
                 <TableRow key={fila.IdMovimientoStock}>
-                  <TableCell className="text-xs">
-                    {new Date(fila.FechaMovimiento).toLocaleDateString("es-PE")}
-                  </TableCell>
+                  <TableCell className="text-xs">{fechaCorta(fila.FechaMovimiento)}</TableCell>
                   <TableCell className="text-xs capitalize">{fila.TipoDocumento}</TableCell>
                   <TableCell className="text-xs">{fila.Comprobante ?? "—"}</TableCell>
                   <TableCell className="text-xs">{fila.NombreUbicacion}</TableCell>

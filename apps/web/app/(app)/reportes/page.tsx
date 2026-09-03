@@ -70,6 +70,7 @@ import { GraficoPorTipoDocumento } from "@/components/charts/GraficoPorTipoDocum
 import { GraficoDonutCategorias } from "@/components/charts/GraficoDonutCategorias";
 import type { ReporteMovimiento, ProductoValorizado, ReporteRecambio } from "@congeminco/shared";
 import { TIPO_DOCUMENTO } from "@congeminco/shared";
+import { fechaCorta } from "@/lib/format";
 
 const TIPO_LABEL: Record<string, string> = {
   existencia_inicial: "Existencia inicial",
@@ -378,7 +379,7 @@ export default function ReportesPage() {
       { key: "Valor", label: "Valor (S/)" },
     ],
     filas: (movimientos ?? []).map((m) => ({
-      Fecha: new Date(m.FechaMovimiento).toLocaleDateString("es-PE"),
+      Fecha: fechaCorta(m.FechaMovimiento),
       Tipo: TIPO_LABEL[m.TipoDocumento] ?? m.TipoDocumento,
       Producto: m.NombreProducto,
       Ubicacion: m.NombreUbicacion,
@@ -899,7 +900,7 @@ export default function ReportesPage() {
                               </span>
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-xs">
-                              {new Date(r.FechaRequerimiento).toLocaleDateString("es-PE")}
+                              {fechaCorta(r.FechaRequerimiento)}
                             </TableCell>
                             <TableCell className="text-xs">{r.Origen}</TableCell>
                             <TableCell className="text-right">
@@ -936,9 +937,7 @@ function GrupoMovimiento({
     <>
       {grupo.filas.map((m) => (
         <TableRow key={m.IdMovimiento}>
-          <TableCell className="text-xs">
-            {new Date(m.FechaMovimiento).toLocaleDateString("es-PE")}
-          </TableCell>
+          <TableCell className="text-xs">{fechaCorta(m.FechaMovimiento)}</TableCell>
           <TableCell className="text-xs capitalize">
             {TIPO_LABEL[m.TipoDocumento] ?? m.TipoDocumento}
           </TableCell>

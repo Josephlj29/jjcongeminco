@@ -48,8 +48,24 @@ export function hoyLima(): string {
   return FMT_ISO.format(new Date());
 }
 
-/** ISO string o Date -> "27/08/2026" (hora de Lima). */
+/* Columnas DATE de Postgres (FechaOrden, FechaDocumento, FechaRequerimiento)
+   llegan como "YYYY-MM-DD" pelado. */
+const SOLO_FECHA = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * ISO string o Date -> "27/08/2026".
+ *
+ * Distingue los DOS tipos de dato, que necesitan tratamiento OPUESTO:
+ *  - DATE ("2026-09-03"): es un DÍA CALENDARIO, se muestra tal cual. Convertirlo
+ *    de zona lo corre: `new Date("2026-09-03")` es medianoche UTC y en Lima
+ *    (UTC−5) cae el día ANTERIOR a las 19:00 — así se veía un día menos.
+ *  - TIMESTAMPTZ ("2026-09-03T01:30:00Z"): es un INSTANTE, se convierte a Lima.
+ */
 export function fechaCorta(fecha: string | Date): string {
+  if (typeof fecha === "string") {
+    const m = SOLO_FECHA.exec(fecha.trim());
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`; // día calendario, sin tocar la zona
+  }
   const d = typeof fecha === "string" ? new Date(fecha) : fecha;
   return d.toLocaleDateString("es-PE", {
     timeZone: ZONA,

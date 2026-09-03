@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fechaCorta } from "@/lib/format";
 
 const ORIGEN_LABEL: Record<PrecioHistoricoConProveedor["Origen"], string> = {
   compra: "Compra",
@@ -101,7 +102,7 @@ export function DialogHistorialPrecios({
                 {precios.map((p) => (
                   <TableRow key={p.Id} className={p.TieneStock ? "" : "opacity-50"}>
                     <TableCell className="whitespace-nowrap text-xs">
-                      {new Date(p.FechaPrecio).toLocaleDateString("es-PE")}
+                      {fechaCorta(p.FechaPrecio)}
                     </TableCell>
                     <TableCell className="text-right text-xs font-medium">
                       S/ {p.Costo.toFixed(2)}

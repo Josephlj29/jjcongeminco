@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { fechaCorta } from "@/lib/format";
 
 const SITUACION_VARIANTE = {
   pendiente: "default" as const,
@@ -196,9 +197,7 @@ export default function AprobacionesPage() {
                       className="cursor-pointer"
                       onClick={() => setSeleccionado(r.Id)}
                     >
-                      <TableCell className="text-xs">
-                        {new Date(r.FechaRequerimiento).toLocaleDateString("es-PE")}
-                      </TableCell>
+                      <TableCell className="text-xs">{fechaCorta(r.FechaRequerimiento)}</TableCell>
                       <TableCell className="font-mono text-xs">
                         {r.NumeroRequerimiento ?? "—"}
                       </TableCell>
@@ -260,9 +259,7 @@ export default function AprobacionesPage() {
                 <TableBody>
                   {historico.map((r) => (
                     <TableRow key={r.Id}>
-                      <TableCell className="text-xs">
-                        {new Date(r.FechaRequerimiento).toLocaleDateString("es-PE")}
-                      </TableCell>
+                      <TableCell className="text-xs">{fechaCorta(r.FechaRequerimiento)}</TableCell>
                       <TableCell className="font-mono text-xs">
                         {r.NumeroRequerimiento ?? "—"}
                       </TableCell>

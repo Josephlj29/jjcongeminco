@@ -51,7 +51,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { DialogCatalogarProducto } from "@/components/requerimientos/DialogCatalogarProducto";
-import { moneda } from "@/lib/format";
+import { fechaCorta, moneda } from "@/lib/format";
 import type { RequerimientoDetalleLinea } from "@congeminco/shared";
 
 const SITUACION_VARIANTE = {
@@ -239,7 +239,7 @@ export function DialogAprobarRequerimiento({
             <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div>
                 <p className="text-xs text-muted-foreground">Fecha</p>
-                <p>{new Date(req.FechaRequerimiento).toLocaleDateString("es-PE")}</p>
+                <p>{fechaCorta(req.FechaRequerimiento)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Origen</p>

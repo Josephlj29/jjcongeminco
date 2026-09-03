@@ -45,10 +45,40 @@ describe("fechaISO (día calendario en hora de Lima)", () => {
   });
 });
 
+describe("fechaCorta con columnas DATE (día calendario)", () => {
+  /* Regresión: FechaOrden/FechaDocumento/FechaRequerimiento son DATE y llegan
+     como "YYYY-MM-DD". `new Date("2026-09-03")` es medianoche UTC, así que al
+     renderizar en Lima (UTC−5) retrocedía al día anterior: la grilla de OTs
+     mostraba un día MENOS que la fecha del propio N° de orden. Una DATE no se
+     convierte de zona: es el día, punto. */
+  it("muestra la DATE tal cual, sin correr el día", () => {
+    expect(fechaCorta("2026-09-03")).toBe("03/09/2026");
+    expect(fechaCorta("2026-09-01")).toBe("01/09/2026");
+    expect(fechaCorta("2026-08-31")).toBe("31/08/2026");
+  });
+
+  it("no se cuelga del parseo UTC de un string pelado", () => {
+    // Lo que hacía antes y estaba mal:
+    expect(
+      new Date("2026-09-03").toLocaleDateString("es-PE", { timeZone: "America/Lima" }),
+    ).not.toBe("3/9/2026");
+    // Lo correcto:
+    expect(fechaCorta("2026-09-03")).toBe("03/09/2026");
+  });
+
+  it("respeta el primer día del mes (el caso más frágil)", () => {
+    expect(fechaCorta("2026-01-01")).toBe("01/01/2026");
+  });
+});
+
 describe("fechaCorta / fechaHora fijadas a Lima", () => {
   it("no corren el día por la zona del dispositivo", () => {
     // 20:30 de Lima: el día mostrado debe ser 03, no 04.
     expect(fechaCorta(new Date("2026-09-04T01:30:00Z"))).toBe("03/09/2026");
+  });
+
+  it("un TIMESTAMPTZ con offset sí se convierte a Lima", () => {
+    expect(fechaCorta("2026-09-04T01:30:00Z")).toBe("03/09/2026");
   });
 
   it("muestra la hora de Lima, no UTC", () => {
