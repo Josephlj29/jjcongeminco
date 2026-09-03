@@ -5,13 +5,8 @@
  * autocontenido y abre el diálogo de impresión del navegador. Desde ahí el
  * usuario puede imprimir o "Guardar como PDF".
  */
-import type { RequerimientoConDetalle } from "@congeminco/shared";
+import { ORIGEN_REQUERIMIENTO_LABEL, type RequerimientoConDetalle } from "@congeminco/shared";
 
-const ORIGEN: Record<string, string> = {
-  planificado: "Planificado",
-  presupuestado: "Presupuestado",
-  desgaste_prematuro: "Desgaste prematuro",
-};
 const SITUACION: Record<string, string> = {
   pendiente: "Pendiente",
   parcial: "Parcial",
@@ -102,7 +97,7 @@ function construirHtml(r: RequerimientoConDetalle): string {
       <td class="k">Situación</td><td>${esc(SITUACION[r.Situacion] ?? r.Situacion)}</td>
     </tr>
     <tr>
-      <td class="k">Origen</td><td>${esc(ORIGEN[r.Origen] ?? r.Origen)}</td>
+      <td class="k">Origen</td><td>${esc(ORIGEN_REQUERIMIENTO_LABEL[r.Origen] ?? r.Origen)}</td>
       <td class="k">Destino</td><td>${destino}</td>
     </tr>
     <tr>
@@ -132,7 +127,9 @@ function construirHtml(r: RequerimientoConDetalle): string {
   <div class="firmas">
     <div class="firma">Solicitado por${
       r.Solicitantes.length
-        ? `<br/><span style="color:#111">${r.Solicitantes.map((s) => esc(s.NombreCompleto ?? "")).filter(Boolean).join(", ")}</span>`
+        ? `<br/><span style="color:#111">${r.Solicitantes.map((s) => esc(s.NombreCompleto ?? ""))
+            .filter(Boolean)
+            .join(", ")}</span>`
         : ""
     }</div>
     <div class="firma">Aprobado por</div>

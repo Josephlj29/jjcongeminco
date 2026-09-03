@@ -224,8 +224,20 @@ export const ActualizarVehiculoSchema = CrearVehiculoSchema.partial().extend({
 export type ActualizarVehiculo = z.infer<typeof ActualizarVehiculoSchema>;
 
 /* ─── Requerimiento ─── */
-export const ORIGEN_REQUERIMIENTO = ["planificado", "presupuestado", "desgaste_prematuro"] as const;
+/* Origen del requerimiento (coincide con CHK_T_Requerimiento_Origen_Permitido).
+   'planificado' engloba también lo presupuestado: la distinción que importa al
+   negocio es contra 'desgaste_prematuro', que marca los recambios acelerados. */
+export const ORIGEN_REQUERIMIENTO = ["planificado", "desgaste_prematuro"] as const;
 export type OrigenRequerimiento = (typeof ORIGEN_REQUERIMIENTO)[number];
+
+/* Etiquetas visibles del origen. Fuente única: la usan el form, la bandeja de
+   aprobación y el PDF de la solicitud. */
+export const ORIGEN_REQUERIMIENTO_LABEL: Record<string, string> = {
+  planificado: "Planificado / Presupuestado",
+  desgaste_prematuro: "Desgaste prematuro",
+  // Histórico: filas anteriores a la unificación (backfilleadas, red de seguridad).
+  presupuestado: "Planificado / Presupuestado",
+};
 
 /* Línea de requerimiento: producto del catálogo XOR producto NUEVO no catalogado
    (DescripcionLibre + máx 1 foto opcional). Al entregar, la línea libre exige
@@ -261,8 +273,8 @@ export const CrearRequerimientoSchema = z
     Notas: z.string().max(500).optional(),
     Detalle: z.array(DetalleRequerimientoSchema).min(1),
   })
-  .refine((r) => r.Detalle.every((l) => !!l.IdVehiculo) || !!r.IdEquipo || !!r.IdVehiculo, {
-    message: "Asigna una placa por línea, o elige un equipo/placa de cabecera como destino.",
+  .refine((r) => r.Detalle.every((l) => !!l.IdVehiculo) || !!r.IdVehiculo, {
+    message: "Asigna una placa por línea, o una placa de cabecera como destino.",
     path: ["Detalle"],
   });
 export type CrearRequerimiento = z.infer<typeof CrearRequerimientoSchema>;

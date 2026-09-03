@@ -17,6 +17,7 @@
 import { useState } from "react";
 import { ChevronRight, ClipboardCheck, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { ORIGEN_REQUERIMIENTO_LABEL } from "@congeminco/shared";
 import { useRequerimientos, type RequerimientoResumen } from "@/hooks/useRequerimientos";
 import { useYo, usePermiso } from "@/hooks/useYo";
 import { DialogAprobarRequerimiento } from "@/components/requerimientos/DialogAprobarRequerimiento";
@@ -36,12 +37,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const ORIGEN_LABEL: Record<string, string> = {
-  planificado: "Planificado",
-  presupuestado: "Presupuestado",
-  desgaste_prematuro: "Desgaste prematuro",
-};
 
 const SITUACION_VARIANTE = {
   pendiente: "default" as const,
@@ -208,7 +203,7 @@ export default function AprobacionesPage() {
                         {r.NumeroRequerimiento ?? "—"}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {ORIGEN_LABEL[r.Origen] ?? r.Origen}
+                        {ORIGEN_REQUERIMIENTO_LABEL[r.Origen] ?? r.Origen}
                       </TableCell>
                       <TableCell>
                         <Badge variant={SITUACION_VARIANTE[r.Situacion] ?? "default"}>
@@ -272,7 +267,7 @@ export default function AprobacionesPage() {
                         {r.NumeroRequerimiento ?? "—"}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {ORIGEN_LABEL[r.Origen] ?? r.Origen}
+                        {ORIGEN_REQUERIMIENTO_LABEL[r.Origen] ?? r.Origen}
                       </TableCell>
                       <TableCell>
                         <Badge variant={SITUACION_VARIANTE[r.Situacion] ?? "default"}>

@@ -114,7 +114,7 @@ export interface Requerimiento extends CamposAuditoria {
   Id: string;
   NumeroRequerimiento: string | null;
   FechaRequerimiento: string;
-  Origen: "planificado" | "presupuestado" | "desgaste_prematuro";
+  Origen: "planificado" | "desgaste_prematuro";
   IdEquipo: string | null;
   IdVehiculo: string | null;
   Situacion: SituacionRequerimiento;
@@ -154,7 +154,7 @@ export interface RequerimientoConDetalle {
   Id: string;
   NumeroRequerimiento: string | null;
   FechaRequerimiento: string;
-  Origen: "planificado" | "presupuestado" | "desgaste_prematuro";
+  Origen: "planificado" | "desgaste_prematuro";
   Situacion: SituacionRequerimiento;
   IdEquipo: string | null;
   NombreEquipo: string | null;
@@ -368,7 +368,7 @@ export interface ReporteRecambio {
   IdRequerimiento: string;
   NumeroRequerimiento: string | null;
   FechaRequerimiento: string;
-  Origen: "planificado" | "presupuestado" | "desgaste_prematuro";
+  Origen: "planificado" | "desgaste_prematuro";
   TargetId: string;
   TargetTipo: "placa" | "equipo";
   TargetNombre: string;

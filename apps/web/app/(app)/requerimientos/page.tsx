@@ -4,8 +4,9 @@
  * app/(app)/requerimientos/page.tsx — Requerimientos de materiales
  *
  * Funcionalidades:
- * - Formulario para crear requerimiento (origen: planificado/presupuestado/desgaste_prematuro)
- * - Debe apuntar a equipo O vehículo (placa)
+ * - Formulario para crear requerimiento (origen: planificado / desgaste_prematuro)
+ * - El destino es SIEMPRE una placa: por línea, con la de cabecera como fallback
+ *   (la maquinaria sin placa de rodaje se identifica por su código interno)
  * - Cada línea es producto del catálogo O producto NUEVO no catalogado
  *   (DescripcionLibre + máx 1 foto opcional que se sube a Storage al enviar)
  *
@@ -21,11 +22,11 @@ import { toast } from "sonner";
 import {
   CrearRequerimientoSchema,
   ORIGEN_REQUERIMIENTO,
+  ORIGEN_REQUERIMIENTO_LABEL,
   type CrearRequerimiento,
 } from "@congeminco/shared";
 import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
 import { useSaldos } from "@/hooks/useSaldos";
-import { useEquipos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePermiso } from "@/hooks/useYo";
@@ -64,16 +65,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-const ORIGEN_LABEL: Record<string, string> = {
-  planificado: "Planificado",
-  presupuestado: "Presupuestado",
-  desgaste_prematuro: "Desgaste prematuro",
-};
-
 export default function RequerimientosPage() {
   const { mutateAsync, isPending } = useCrearRequerimiento();
   const { data: productos } = useSaldos();
-  const { data: equipos } = useEquipos();
   const { data: personal } = usePersonal();
 
   const puedeCrear = usePermiso("requerimientoCrear");
@@ -396,7 +390,7 @@ export default function RequerimientosPage() {
     <div className="space-y-8">
       <PageHeader
         titulo="Requerimientos"
-        descripcion="Crea solicitudes de materiales asociadas a equipos o vehículos"
+        descripcion="Crea solicitudes de materiales asociadas a una placa"
       />
 
       {/* Formulario (solo para roles que pueden crear) */}
@@ -424,7 +418,7 @@ export default function RequerimientosPage() {
                     <SelectContent>
                       {ORIGEN_REQUERIMIENTO.map((o) => (
                         <SelectItem key={o} value={o}>
-                          {ORIGEN_LABEL[o]}
+                          {ORIGEN_REQUERIMIENTO_LABEL[o]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -496,26 +490,10 @@ export default function RequerimientosPage() {
                 </Command>
               </div>
 
-              {/* Equipo / Vehículo — al menos uno */}
+              {/* Destino: SIEMPRE por placa (una por línea, con esta como fallback).
+                 El equipo dejó de pedirse: toda unidad se identifica por su placa
+                 (la maquinaria sin placa de rodaje usa su código interno). */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label>Equipo</Label>
-                  <Select
-                    value={watch("IdEquipo") ?? ""}
-                    onValueChange={(v) => setValue("IdEquipo", v, { shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar equipo..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {equipos?.map((eq) => (
-                        <SelectItem key={eq.Id} value={eq.Id}>
-                          {eq.Codigo} — {eq.Nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-1">
                   <Label>Placa por defecto (opcional)</Label>
                   <VehiculoCombobox

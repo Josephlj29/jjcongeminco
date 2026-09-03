@@ -13,7 +13,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, PackageX } from "lucide-react";
-import type { LineaEntrega } from "@congeminco/shared";
+import { ORIGEN_REQUERIMIENTO_LABEL, type LineaEntrega } from "@congeminco/shared";
 import {
   useRequerimientoDetalle,
   useAtenderRequerimiento,
@@ -53,12 +53,6 @@ import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { DialogCatalogarProducto } from "@/components/requerimientos/DialogCatalogarProducto";
 import { moneda } from "@/lib/format";
 import type { RequerimientoDetalleLinea } from "@congeminco/shared";
-
-const ORIGEN_LABEL: Record<string, string> = {
-  planificado: "Planificado",
-  presupuestado: "Presupuestado",
-  desgaste_prematuro: "Desgaste prematuro",
-};
 
 const SITUACION_VARIANTE = {
   pendiente: "default" as const,
@@ -172,9 +166,7 @@ export function DialogAprobarRequerimiento({
     }
     // Defensa en profundidad (la UI deshabilita el input y la BD lo rechaza igual):
     // ninguna línea NO catalogada puede llevar cantidad > 0.
-    const sinCatalogo = new Set(
-      req.Detalle.filter((l) => l.IdProducto === null).map((l) => l.Id),
-    );
+    const sinCatalogo = new Set(req.Detalle.filter((l) => l.IdProducto === null).map((l) => l.Id));
     if (payload.some((l) => l.Cantidad > 0 && sinCatalogo.has(l.IdDetalle))) {
       toast.error("Registra en el catálogo los productos nuevos antes de entregarlos.");
       return;
@@ -251,7 +243,7 @@ export function DialogAprobarRequerimiento({
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Origen</p>
-                <p>{ORIGEN_LABEL[req.Origen] ?? req.Origen}</p>
+                <p>{ORIGEN_REQUERIMIENTO_LABEL[req.Origen] ?? req.Origen}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Destino</p>
