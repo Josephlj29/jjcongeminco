@@ -46,15 +46,27 @@ export async function GET() {
   if (idsUsuario.length) {
     // Service-role: seg.T_Usuario está fuera del alcance RLS de los roles no-admin;
     // sin esto un no-admin vería "Sin login" para personal que sí tiene usuario.
-    const admin = crearClienteAdmin();
-    const { data: usuarios } = await admin
-      .schema("seg")
-      .from("T_Usuario")
-      .select("Id, NombreCompleto")
-      .in("Id", idsUsuario);
-    (usuarios as { Id: string; NombreCompleto: string }[] | null)?.forEach((u) =>
-      nombrePorUsuario.set(u.Id, u.NombreCompleto)
-    );
+    //
+    // Es un dato SECUNDARIO (columna "Acceso"): si la service-role key no está
+    // configurada en el entorno, o la consulta a seg falla, degradamos a "sin
+    // login" en vez de tumbar todo el listado con un 500. El listado de personal
+    // no puede depender de un enriquecimiento opcional.
+    try {
+      const admin = crearClienteAdmin();
+      const { data: usuarios } = await admin
+        .schema("seg")
+        .from("T_Usuario")
+        .select("Id, NombreCompleto")
+        .in("Id", idsUsuario);
+      (usuarios as { Id: string; NombreCompleto: string }[] | null)?.forEach((u) =>
+        nombrePorUsuario.set(u.Id, u.NombreCompleto),
+      );
+    } catch (e) {
+      console.error(
+        "No se pudo resolver el usuario vinculado del personal (¿falta SUPABASE_SERVICE_ROLE_KEY?):",
+        (e as Error).message,
+      );
+    }
   }
 
   const resultado: PersonalConDetalle[] = filas.map((p) => ({
@@ -65,7 +77,7 @@ export async function GET() {
     IdCargo: p.IdCargo,
     NombreCargo: p.T_Cargo?.Nombre ?? null,
     IdUsuario: p.IdUsuario,
-    NombreUsuario: p.IdUsuario ? nombrePorUsuario.get(p.IdUsuario) ?? null : null,
+    NombreUsuario: p.IdUsuario ? (nombrePorUsuario.get(p.IdUsuario) ?? null) : null,
   }));
 
   return NextResponse.json(resultado);
@@ -102,7 +114,7 @@ export async function POST(request: NextRequest) {
     const dup = /UQ_T_Personal_IdUsuario|duplicate key/i.test(dbError.message);
     return NextResponse.json(
       { error: dup ? "Ese usuario ya está vinculado a otro personal." : dbError.message },
-      { status: dup ? 409 : 500 }
+      { status: dup ? 409 : 500 },
     );
   }
   return NextResponse.json(data, { status: 201 });
