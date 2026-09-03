@@ -15,7 +15,7 @@
  * - Acciones restringidas por rol (productoEscritura)
  */
 import { useState, useMemo, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type DefaultValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Plus,
@@ -27,6 +27,7 @@ import {
   History,
   Package,
   Camera,
+  Eraser,
 } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
@@ -89,7 +90,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Combobox } from "@/components/Combobox";
-import { usePermiso } from "@/hooks/useYo";
+import { usePermiso, useYo } from "@/hooks/useYo";
+import { useBorradorFormulario } from "@/hooks/useBorradorFormulario";
+import { AvisoBorrador } from "@/components/AvisoBorrador";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
 import { useQueryClient } from "@tanstack/react-query";
@@ -143,6 +146,24 @@ function armarSku(codigoCategoria: string | undefined, skusExistentes: string[])
 /* ─── Dialog: Alta / edición de producto ───
    La compatibilidad (general o tipos de equipo) se configura ACÁ, en el alta,
    no en la grilla. */
+/* Estado inicial del alta. Única fuente de verdad para defaultValues, el reset
+   al abrir, "Limpiar todo" y el borrador: si se separan, uno queda desfasado. */
+function productoVacio(): DefaultValues<CrearProducto> {
+  return {
+    // Sku ausente a propósito: lo autogenera la BD (FnGuardarProducto).
+    Sku: undefined,
+    Nombre: "",
+    IdCategoria: undefined,
+    IdUnidadMedida: undefined,
+    StockMinimo: 0,
+    CodigoBarra: undefined,
+    CodigoProductoProveedor: undefined,
+    Atributos: {},
+    EsGeneral: false,
+    IdsTipoEquipo: [],
+  };
+}
+
 function DialogProducto({
   open,
   producto,
@@ -154,6 +175,7 @@ function DialogProducto({
 }) {
   const esEdicion = !!producto;
   const qc = useQueryClient();
+  const { data: yo } = useYo();
   const { mutateAsync: crear, isPending: creando } = useCrearProducto();
   const { mutateAsync: editar, isPending: editandoProd } = useEditarProducto();
   const { data: categorias } = useCategorias();
@@ -197,15 +219,12 @@ function DialogProducto({
     setValue,
     watch,
     reset,
+    getValues,
+    clearErrors,
     formState: { errors },
   } = useForm<CrearProducto>({
     resolver: zodResolver(CrearProductoSchema),
-    defaultValues: {
-      StockMinimo: 0,
-      Atributos: {},
-      EsGeneral: false,
-      IdsTipoEquipo: [],
-    },
+    defaultValues: productoVacio(),
   });
 
   const esGeneral = watch("EsGeneral");
@@ -238,19 +257,7 @@ function DialogProducto({
         IdsTipoEquipo: detalle.IdsTipoEquipo,
       });
     } else if (!esEdicion) {
-      reset({
-        // Sku ausente a propósito: lo autogenera la BD (FnGuardarProducto).
-        Sku: undefined,
-        Nombre: "",
-        IdCategoria: undefined,
-        IdUnidadMedida: undefined,
-        StockMinimo: 0,
-        CodigoBarra: undefined,
-        CodigoProductoProveedor: undefined,
-        Atributos: {},
-        EsGeneral: false,
-        IdsTipoEquipo: [],
-      });
+      reset(productoVacio());
     }
     // Al (re)abrir, descartar las imágenes seleccionadas de la sesión anterior.
     setArchivos((prev) => {
@@ -258,6 +265,32 @@ function DialogProducto({
       return [];
     });
   }, [open, esEdicion, detalle, reset]);
+
+  /* Red de contención del ALTA (en edición nunca: pisaría un producto real con
+     datos viejos). Declarado DESPUÉS del efecto que resetea al abrir a propósito:
+     los efectos corren en orden de declaración, así que la restauración del
+     borrador se aplica sobre ese reset y no al revés. */
+  const borrador = useBorradorFormulario<CrearProducto>({
+    clave: "producto",
+    version: 1,
+    activo: open && !esEdicion,
+    idUsuario: yo?.id,
+    watch,
+    getValues,
+    reset,
+    valoresIniciales: productoVacio,
+  });
+
+  /* "Limpiar todo": vacía los campos, suelta los objectURL de las imágenes
+     elegidas y borra el borrador para que no reaparezca al reabrir. */
+  const limpiarTodo = () => {
+    setArchivos((prev) => {
+      prev.forEach((a) => URL.revokeObjectURL(a.url));
+      return [];
+    });
+    clearErrors();
+    borrador.descartar();
+  };
 
   const toggleTipo = (id: string) => {
     const next = idsTipo.includes(id) ? idsTipo.filter((x) => x !== id) : [...idsTipo, id];
@@ -338,6 +371,9 @@ function DialogProducto({
           );
         }
       }
+      // El alta ya está guardada: se olvida el borrador (y se cancela el guardado
+      // con retardo pendiente, que si no reescribiría lo recién enviado).
+      borrador.olvidar();
       onClose();
     } catch (e) {
       setSubiendoImagenes(false);
@@ -364,6 +400,9 @@ function DialogProducto({
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {borrador.restaurado && (
+              <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>SKU</Label>
@@ -595,6 +634,18 @@ function DialogProducto({
             )}
 
             <DialogFooter>
+              {!esEdicion && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={limpiarTodo}
+                  disabled={guardando}
+                  className="sm:mr-auto"
+                >
+                  <Eraser className="mr-2 h-4 w-4" />
+                  Limpiar todo
+                </Button>
+              )}
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>

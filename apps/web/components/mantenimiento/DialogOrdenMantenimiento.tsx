@@ -21,9 +21,9 @@
  * evitar el bug de valor pegado/stale.
  */
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type DefaultValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Check } from "lucide-react";
+import { Plus, Trash2, Check, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { hoyLima } from "@/lib/format";
 import {
@@ -48,6 +48,9 @@ import {
   type ConsumoState,
 } from "@/components/mantenimiento/EditorConsumoRepuestos";
 import { FotoTrabajo, type FotoLocal } from "@/components/mantenimiento/FotoTrabajo";
+import { useBorradorFormulario } from "@/hooks/useBorradorFormulario";
+import { AvisoBorrador } from "@/components/AvisoBorrador";
+import { useYo } from "@/hooks/useYo";
 import { useVehiculos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
 import { VehiculoCombobox } from "@/components/VehiculoCombobox";
@@ -212,6 +215,22 @@ function armarNumeroOrden(
   return `${base}-${String(correlativo).padStart(2, "0")}`;
 }
 
+/* Estado inicial del ALTA. Única fuente de verdad para defaultValues, el
+   borrador y "Limpiar todo". Es función porque FechaOrden es la de hoy: una
+   constante de módulo se congelaría en la fecha de la primera carga. */
+function ordenVacia(): DefaultValues<CrearOrdenMantenimiento> {
+  return { FechaOrden: hoyLima(), IdsPersonal: [], Trabajos: [] };
+}
+
+/* Lo que el borrador guarda además de los campos del form. Las fotos NO entran:
+   son File con objectURL, que no sobreviven al cierre de la pestaña. Se guardan
+   solo las descripciones de las tareas. */
+interface BorradorOrden {
+  trabajos: string[];
+  conConsumo: boolean;
+  consumo: ConsumoState;
+}
+
 export function DialogOrdenMantenimiento({
   orden,
   onClose,
@@ -223,6 +242,7 @@ export function DialogOrdenMantenimiento({
   onGuardada?: (situacion: SituacionOrden) => void;
 }) {
   const modoEdicion = !!orden;
+  const { data: yo } = useYo();
   const { mutateAsync: crear, isPending: creando } = useCrearOrdenMantenimiento();
   const { mutateAsync: actualizar, isPending: act } = useActualizarOrdenMantenimiento();
   const { data: vehiculos } = useVehiculos();
@@ -261,6 +281,9 @@ export function DialogOrdenMantenimiento({
     handleSubmit,
     setValue,
     watch,
+    reset,
+    getValues,
+    clearErrors,
     formState: { errors },
   } = useForm<CrearOrdenMantenimiento>({
     resolver: zodResolver(CrearOrdenMantenimientoSchema),
@@ -277,12 +300,54 @@ export function DialogOrdenMantenimiento({
           Observaciones: orden.Observaciones ?? undefined,
           Trabajos: [],
         }
-      : {
-          FechaOrden: hoyLima(),
-          IdsPersonal: [],
-          Trabajos: [],
-        },
+      : ordenVacia(),
   });
+
+  /* Red de contención del ALTA: la orden es el formulario más largo del sistema
+     (cabecera + tareas + repuestos) y se carga desde el celular en obra. Guarda
+     también trabajos y repuestos, que viven fuera de react-hook-form; sin eso el
+     borrador rescataría solo la cabecera. En edición no corre: pisaría una orden
+     real con datos viejos. */
+  const borrador = useBorradorFormulario<CrearOrdenMantenimiento, BorradorOrden>({
+    clave: "orden-mantenimiento",
+    version: 1,
+    activo: !modoEdicion,
+    idUsuario: yo?.id,
+    watch,
+    getValues,
+    reset,
+    valoresIniciales: ordenVacia,
+    extra: { trabajos: trabajos.map((t) => t.descripcion), conConsumo, consumo },
+    onRestaurarExtra: (e) => {
+      setTrabajos(e.trabajos.length ? e.trabajos.map((d) => nuevoTrabajo(d)) : [nuevoTrabajo()]);
+      setConConsumo(e.conConsumo);
+      setConsumo(e.consumo);
+    },
+    // Lo que hace "no vacía" a una orden casi siempre son las tareas o los
+    // repuestos, no la cabecera: por eso la detección no puede mirar solo el form.
+    estaVacio: () =>
+      !trabajos.some((t) => t.descripcion.trim()) &&
+      consumoVacio(consumo) &&
+      !getValues("IdVehiculo") &&
+      !(getValues("IdsPersonal") ?? []).length &&
+      !getValues("TipoMantenimiento") &&
+      !getValues("Turno"),
+  });
+
+  /* "Limpiar todo": deja el formulario como recién abierto. Además de vaciar los
+     campos hay que soltar los objectURL de las fotos y borrar el borrador, para
+     que no reaparezca al volver a abrir el diálogo. */
+  const limpiarTodo = () => {
+    for (const t of trabajos) {
+      liberarPreview(t.antes);
+      liberarPreview(t.despues);
+    }
+    setTrabajos([nuevoTrabajo()]);
+    setConConsumo(false);
+    setConsumo({ ...CONSUMO_INICIAL });
+    clearErrors();
+    borrador.descartar();
+  };
 
   const { data: ordenes } = useOrdenesMantenimiento();
   const idsPersonal = watch("IdsPersonal") ?? [];
@@ -400,6 +465,9 @@ export function DialogOrdenMantenimiento({
         liberarPreview(t.antes);
         liberarPreview(t.despues);
       }
+      // Antes de cerrar: cancela el guardado con retardo pendiente, que si no
+      // volvería a escribir lo que se acaba de registrar.
+      borrador.olvidar();
       onClose();
     } catch (e) {
       toast.error((e as Error).message);
@@ -428,6 +496,9 @@ export function DialogOrdenMantenimiento({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {borrador.restaurado && (
+            <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
+          )}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <div className="space-y-1">
               <Label>Tipo *</Label>
@@ -688,6 +759,18 @@ export function DialogOrdenMantenimiento({
           </div>
 
           <DialogFooter>
+            {!modoEdicion && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={limpiarTodo}
+                disabled={isPending}
+                className="sm:mr-auto"
+              >
+                <Eraser className="mr-2 h-4 w-4" />
+                Limpiar todo
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>

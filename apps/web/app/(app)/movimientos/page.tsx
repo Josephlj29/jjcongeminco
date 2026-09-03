@@ -24,11 +24,12 @@ import {
   useFieldArray,
   useWatch,
   type Control,
+  type DefaultValues,
   type UseFormSetValue,
   type UseFormRegister,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, History, Info, Package, FileText } from "lucide-react";
+import { Plus, Trash2, History, Info, Package, FileText, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearDocumentoSchema,
@@ -42,6 +43,9 @@ import { useUbicaciones } from "@/hooks/useCatalogo";
 import { useVehiculos, useEquipos } from "@/hooks/useEquipos";
 import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
 import { fechaCorta, fechaISO } from "@/lib/format";
+import { useBorradorFormulario } from "@/hooks/useBorradorFormulario";
+import { AvisoBorrador } from "@/components/AvisoBorrador";
+import { useYo } from "@/hooks/useYo";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
@@ -341,7 +345,18 @@ function LineaDetalle({
   );
 }
 
+/* Estado inicial del formulario. Única fuente de verdad para defaultValues, el
+   reset tras registrar, "Limpiar todo" y el borrador: si se separan, uno queda
+   desfasado. Es función porque la fecha es la de hoy. */
+function documentoVacio(): DefaultValues<CrearDocumento> {
+  return {
+    FechaDocumento: fechaISO(new Date()),
+    Detalle: [{ IdProducto: "", Cantidad: 1 }],
+  };
+}
+
 export default function MovimientosPage() {
+  const { data: yo } = useYo();
   const { mutateAsync, isPending } = useCrearDocumento();
   const { data: productos } = useSaldos();
   const { data: ubicaciones } = useUbicaciones();
@@ -374,14 +389,33 @@ export default function MovimientosPage() {
     watch,
     control,
     reset,
+    getValues,
+    clearErrors,
     formState: { errors },
   } = useForm<CrearDocumento>({
     resolver: zodResolver(CrearDocumentoSchema),
-    defaultValues: {
-      FechaDocumento: fechaISO(new Date()),
-      Detalle: [{ IdProducto: "", Cantidad: 1 }],
-    },
+    defaultValues: documentoVacio(),
   });
+
+  /* Red de contención: un documento con muchas líneas es un rato largo de carga
+     y hasta ahora se perdía entero si el navegador cerraba la pestaña. */
+  const borrador = useBorradorFormulario<CrearDocumento>({
+    clave: "documento",
+    version: 1,
+    activo: true,
+    idUsuario: yo?.id,
+    watch,
+    getValues,
+    reset,
+    valoresIniciales: documentoVacio,
+  });
+
+  /* "Limpiar todo": deja el formulario como recién abierto y borra el borrador,
+     para que no reaparezca al volver a entrar. */
+  const limpiarTodo = () => {
+    clearErrors();
+    borrador.descartar();
+  };
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -442,10 +476,10 @@ export default function MovimientosPage() {
     try {
       await mutateAsync(payload);
       toast.success("Documento registrado correctamente");
-      reset({
-        FechaDocumento: fechaISO(new Date()),
-        Detalle: [{ IdProducto: "", Cantidad: 1 }],
-      });
+      // Primero se olvida el borrador: cancela el guardado con retardo pendiente,
+      // que si no volvería a escribir lo que se acaba de registrar.
+      borrador.olvidar();
+      reset(documentoVacio());
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -459,6 +493,9 @@ export default function MovimientosPage() {
       />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {borrador.restaurado && (
+          <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
+        )}
         {/* ── Sección: Documento ── */}
         <Card>
           <CardHeader>
@@ -684,8 +721,18 @@ export default function MovimientosPage() {
 
             {detalleErrorMsg && <p className="mt-2 text-xs text-destructive">{detalleErrorMsg}</p>}
 
-            <div className="mt-6 flex justify-end">
-              <Button type="submit" disabled={isPending}>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={limpiarTodo}
+                disabled={isPending}
+                className="w-full sm:w-auto"
+              >
+                <Eraser className="mr-2 h-4 w-4" />
+                Limpiar todo
+              </Button>
+              <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
                 {isPending ? "Registrando..." : "Registrar documento"}
               </Button>
             </div>

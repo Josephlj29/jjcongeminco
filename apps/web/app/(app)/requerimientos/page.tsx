@@ -15,9 +15,9 @@
  * como tabla en desktop (`hidden md:block`). Ambas escriben el mismo fieldArray.
  */
 import { useState, type ChangeEvent } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type DefaultValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, Check, Copy, ImageIcon, Plus, Trash2, X } from "lucide-react";
+import { Camera, Check, Copy, Eraser, ImageIcon, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearRequerimientoSchema,
@@ -29,7 +29,9 @@ import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { usePersonal } from "@/hooks/usePersonal";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { usePermiso } from "@/hooks/useYo";
+import { usePermiso, useYo } from "@/hooks/useYo";
+import { useBorradorFormulario } from "@/hooks/useBorradorFormulario";
+import { AvisoBorrador } from "@/components/AvisoBorrador";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { hoyLima } from "@/lib/format";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
@@ -66,8 +68,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
+/* Estado inicial del formulario. Es una función y no una constante porque
+   FechaRequerimiento depende del día: una constante de módulo se congelaría en
+   la fecha de la primera carga y una pestaña abierta toda la noche arrancaría
+   con la fecha de ayer. La usan defaultValues, el reset tras crear y
+   "Limpiar todo", así que los tres siempre coinciden. */
+function requerimientoVacio(): DefaultValues<CrearRequerimiento> {
+  return {
+    FechaRequerimiento: hoyLima(),
+    IdsPersonalSolicitante: [],
+    Detalle: [{ IdProducto: "", Cantidad: 1 }],
+  };
+}
+
 export default function RequerimientosPage() {
   const { mutateAsync, isPending } = useCrearRequerimiento();
+  const { data: yo } = useYo();
   const { data: productos } = useSaldos();
   const { data: personal } = usePersonal();
 
@@ -88,15 +104,26 @@ export default function RequerimientosPage() {
     watch,
     control,
     reset,
+    getValues,
     clearErrors,
     formState: { errors },
   } = useForm<CrearRequerimiento>({
     resolver: zodResolver(CrearRequerimientoSchema),
-    defaultValues: {
-      FechaRequerimiento: hoyLima(),
-      IdsPersonalSolicitante: [],
-      Detalle: [{ IdProducto: "", Cantidad: 1 }],
-    },
+    defaultValues: requerimientoVacio(),
+  });
+
+  /* Red de contención: lo que se está cargando sobrevive a que el navegador
+     cierre o descarte la pestaña (típico en el celular de obra). Solo texto: las
+     fotos son File locales y no se pueden persistir. */
+  const borrador = useBorradorFormulario<CrearRequerimiento>({
+    clave: "requerimiento",
+    version: 1,
+    activo: puedeCrear,
+    idUsuario: yo?.id,
+    watch,
+    getValues,
+    reset,
+    valoresIniciales: requerimientoVacio,
   });
 
   const { fields, append, remove, insert } = useFieldArray({
@@ -220,14 +247,24 @@ export default function RequerimientosPage() {
       toast.success("Requerimiento creado correctamente");
       Object.values(fotos).forEach((f) => URL.revokeObjectURL(f.url));
       setFotos({});
-      reset({
-        FechaRequerimiento: hoyLima(),
-        IdsPersonalSolicitante: [],
-        Detalle: [{ IdProducto: "", Cantidad: 1 }],
-      });
+      // Primero se olvida el borrador: cancela el guardado con retardo pendiente,
+      // que si no volvería a escribir lo que se acaba de enviar.
+      borrador.olvidar();
+      reset(requerimientoVacio());
     } catch (e) {
       toast.error((e as Error).message);
     }
+  };
+
+  /* "Limpiar todo": deja el formulario como recién abierto. Además de vaciar los
+     campos hay que soltar los objectURL de las fotos (si no, quedan blobs
+     retenidos en memoria hasta recargar) y borrar el borrador guardado, para que
+     no reaparezca al volver a entrar. */
+  const limpiarTodo = () => {
+    Object.values(fotos).forEach((f) => URL.revokeObjectURL(f.url));
+    setFotos({});
+    clearErrors();
+    borrador.descartar();
   };
 
   /* Selector de placa por línea — reutilizado en tarjeta (móvil) y fila (desktop).
@@ -400,7 +437,10 @@ export default function RequerimientosPage() {
           <CardHeader>
             <CardTitle className="text-base">Nuevo requerimiento</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {borrador.restaurado && (
+              <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
+            )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 <div className="space-y-1">
@@ -710,7 +750,17 @@ export default function RequerimientosPage() {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={limpiarTodo}
+                  disabled={isPending}
+                  className="w-full sm:w-auto"
+                >
+                  <Eraser className="mr-2 h-4 w-4" />
+                  Limpiar todo
+                </Button>
                 <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
                   {isPending ? "Creando..." : "Crear requerimiento"}
                 </Button>
