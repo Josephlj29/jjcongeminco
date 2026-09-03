@@ -25,12 +25,13 @@ import {
 } from "@congeminco/shared";
 import { useCrearRequerimiento } from "@/hooks/useRequerimientos";
 import { useSaldos } from "@/hooks/useSaldos";
-import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
+import { useEquipos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePermiso } from "@/hooks/useYo";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
+import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,6 @@ export default function RequerimientosPage() {
   const { mutateAsync, isPending } = useCrearRequerimiento();
   const { data: productos } = useSaldos();
   const { data: equipos } = useEquipos();
-  const { data: vehiculos } = useVehiculos();
   const { data: personal } = usePersonal();
 
   const puedeCrear = usePermiso("requerimientoCrear");
@@ -236,122 +236,129 @@ export default function RequerimientosPage() {
   };
 
   /* Selector de placa por línea — reutilizado en tarjeta (móvil) y fila (desktop).
-     Función de render (no componente anidado) para no remontar el Select en cada
-     render del formulario. */
-  const renderSelectPlaca = (idx: number) => (
-    <Select
-      value={watch(`Detalle.${idx}.IdVehiculo`) ?? ""}
-      onValueChange={(v) => setValue(`Detalle.${idx}.IdVehiculo`, v, { shouldValidate: true })}
-    >
-      <SelectTrigger className="h-9">
-        <SelectValue placeholder="Placa..." />
-      </SelectTrigger>
-      <SelectContent>
-        {vehiculos?.map((v) => (
-          <SelectItem key={v.Id} value={v.Id}>
-            {v.Placa}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+     Combobox con búsqueda (placa/modelo/equipo). `detallado` solo en móvil,
+     donde el campo tiene el ancho completo de la tarjeta. */
+  const renderSelectPlaca = (idx: number, detallado = false) => (
+    <VehiculoCombobox
+      value={watch(`Detalle.${idx}.IdVehiculo`) ?? null}
+      onChange={(v) =>
+        setValue(`Detalle.${idx}.IdVehiculo`, v ?? undefined, { shouldValidate: true })
+      }
+      detallado={detallado}
+      className="h-9"
+    />
   );
 
   /* Campo Producto por línea — reutilizado en tarjeta (móvil) y celda (desktop).
-     Toggle Catálogo|Nuevo (mismo patrón visual del Stock|Compra de aprobación) y
-     debajo el combobox del catálogo O el input de descripción + 1 foto opcional. */
-  const renderCampoProducto = (idx: number, fieldId: string) => {
+     Toggle Catálogo|Nuevo (mismo patrón visual del Stock|Compra de aprobación).
+     En la TABLA el toggle va compacto e inline con el control (una sola línea,
+     alturas parejas con Placa/Cantidad/Notas); en la tarjeta móvil va apilado a
+     lo ancho. El combobox O el input de descripción + 1 foto opcional. */
+  const renderCampoProducto = (idx: number, fieldId: string, enTabla = false) => {
     const nueva = esLineaNueva(idx);
     const foto = fotos[fieldId];
     const errLinea = errors.Detalle?.[idx];
-    return (
-      <div className="space-y-2">
-        <div className="flex rounded-md border p-0.5 text-xs">
-          <button
-            type="button"
-            onClick={() => cambiarModoLinea(idx, false)}
-            className={`flex-1 rounded px-2 py-1 ${
-              !nueva ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            }`}
-          >
-            Catálogo
-          </button>
-          <button
-            type="button"
-            onClick={() => cambiarModoLinea(idx, true)}
-            className={`flex-1 rounded px-2 py-1 ${
-              nueva ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-            }`}
-          >
-            Nuevo
-          </button>
-        </div>
 
-        {nueva ? (
-          <>
-            <Input
-              className="h-9"
-              placeholder="Describe el producto urgente..."
-              {...register(`Detalle.${idx}.DescripcionLibre`)}
-            />
-            {foto ? (
-              <div className="relative w-fit">
-                {/* Miniatura ampliable; el X va como hermano absoluto (ImagenAmpliable
-                    renderiza un <button>: no se puede anidar otro button adentro). */}
-                <ImagenAmpliable
-                  url={foto.url}
-                  size={48}
-                  alt="Foto del producto nuevo"
-                  nombre={watch(`Detalle.${idx}.DescripcionLibre`) || undefined}
-                />
-                <button
-                  type="button"
-                  onClick={() => quitarFoto(fieldId)}
-                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive"
-                  aria-label="Quitar foto"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ) : (
-              /* Máx 1 foto: con foto puesta, estos botones desaparecen. */
-              <div className="flex gap-2">
-                {/* capture abre la cámara directo en Android/iOS; en desktop no aplica. */}
-                <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/70 hover:text-foreground md:hidden">
-                  <Camera className="h-3.5 w-3.5 shrink-0" />
-                  Foto
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => agregarFoto(fieldId, e)}
-                  />
-                </label>
-                <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/70 hover:text-foreground">
-                  <ImageIcon className="h-3.5 w-3.5 shrink-0" />
-                  Archivo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => agregarFoto(fieldId, e)}
-                  />
-                </label>
-              </div>
-            )}
-          </>
-        ) : (
-          <ProductoCombobox
-            productos={productos ?? []}
-            value={watch(`Detalle.${idx}.IdProducto`) || null}
-            onChange={(v) =>
-              setValue(`Detalle.${idx}.IdProducto`, v ?? "", {
-                shouldValidate: true,
-              })
-            }
-          />
+    const toggle = (
+      <div
+        className={cn(
+          "flex rounded-md border p-0.5 text-xs",
+          enTabla && "h-9 w-fit shrink-0 items-stretch",
         )}
+      >
+        <button
+          type="button"
+          onClick={() => cambiarModoLinea(idx, false)}
+          className={cn(
+            "whitespace-nowrap rounded px-2.5",
+            enTabla ? "" : "flex-1 py-1",
+            !nueva ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+          )}
+        >
+          Catálogo
+        </button>
+        <button
+          type="button"
+          onClick={() => cambiarModoLinea(idx, true)}
+          className={cn(
+            "whitespace-nowrap rounded px-2.5",
+            enTabla ? "" : "flex-1 py-1",
+            nueva ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+          )}
+        >
+          Nuevo
+        </button>
+      </div>
+    );
 
+    const control = nueva ? (
+      <>
+        <Input
+          className="h-9"
+          placeholder="Describe el producto urgente..."
+          {...register(`Detalle.${idx}.DescripcionLibre`)}
+        />
+        {foto ? (
+          <div className="relative w-fit">
+            {/* Miniatura ampliable; el X va como hermano absoluto (ImagenAmpliable
+                renderiza un <button>: no se puede anidar otro button adentro). */}
+            <ImagenAmpliable
+              url={foto.url}
+              size={48}
+              alt="Foto del producto nuevo"
+              nombre={watch(`Detalle.${idx}.DescripcionLibre`) || undefined}
+            />
+            <button
+              type="button"
+              onClick={() => quitarFoto(fieldId)}
+              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive"
+              aria-label="Quitar foto"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          /* Máx 1 foto: con foto puesta, estos botones desaparecen. */
+          <div className="flex gap-2">
+            {/* capture abre la cámara directo en Android/iOS; en desktop no aplica. */}
+            <label className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 px-2.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/70 hover:text-foreground md:hidden">
+              <Camera className="h-3.5 w-3.5 shrink-0" />
+              Foto
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => agregarFoto(fieldId, e)}
+              />
+            </label>
+            <label className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/40 px-2.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/70 hover:text-foreground">
+              <ImageIcon className="h-3.5 w-3.5 shrink-0" />
+              Adjuntar foto
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => agregarFoto(fieldId, e)}
+              />
+            </label>
+          </div>
+        )}
+      </>
+    ) : (
+      <ProductoCombobox
+        productos={productos ?? []}
+        value={watch(`Detalle.${idx}.IdProducto`) || null}
+        onChange={(v) =>
+          setValue(`Detalle.${idx}.IdProducto`, v ?? "", {
+            shouldValidate: true,
+          })
+        }
+      />
+    );
+
+    const errores = (
+      <>
         {errLinea?.DescripcionLibre && (
           <p className="text-xs text-destructive">{errLinea.DescripcionLibre.message}</p>
         )}
@@ -359,6 +366,28 @@ export default function RequerimientosPage() {
         {errLinea?.IdProducto && (
           <p className="text-xs text-destructive">{errLinea.IdProducto.message}</p>
         )}
+      </>
+    );
+
+    if (enTabla) {
+      // Una sola línea visual: toggle compacto + control a la misma altura que
+      // el resto de la fila; la foto/errores fluyen debajo del control.
+      return (
+        <div className="flex items-start gap-2">
+          {toggle}
+          <div className="min-w-0 flex-1 space-y-2">
+            {control}
+            {errores}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {toggle}
+        {control}
+        {errores}
       </div>
     );
   };
@@ -489,22 +518,12 @@ export default function RequerimientosPage() {
                 </div>
                 <div className="space-y-1">
                   <Label>Placa por defecto (opcional)</Label>
-                  <Select
-                    value={placaDefault ?? ""}
-                    onValueChange={(v) => setValue("IdVehiculo", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar placa..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vehiculos?.map((v) => (
-                        <SelectItem key={v.Id} value={v.Id}>
-                          {v.Placa}
-                          {v.Modelo ? ` — ${v.Modelo}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <VehiculoCombobox
+                    value={placaDefault ?? null}
+                    onChange={(v) => setValue("IdVehiculo", v ?? undefined)}
+                    placeholder="Seleccionar placa..."
+                    detallado
+                  />
                 </div>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -578,11 +597,13 @@ export default function RequerimientosPage() {
                           <Label className="text-xs">Producto</Label>
                           {renderCampoProducto(idx, field.id)}
                         </div>
+                        {/* Placa a ancho completo: el trigger detallado muestra
+                           placa + modelo/equipo, que en media tarjeta no entra. */}
+                        <div className="space-y-1">
+                          <Label className="text-xs">Placa</Label>
+                          {renderSelectPlaca(idx, true)}
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Placa</Label>
-                            {renderSelectPlaca(idx)}
-                          </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Cantidad</Label>
                             <Input
@@ -595,14 +616,14 @@ export default function RequerimientosPage() {
                               })}
                             />
                           </div>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Notas (opcional)</Label>
-                          <Input
-                            className="h-9"
-                            placeholder="Observaciones..."
-                            {...register(`Detalle.${idx}.Notas`)}
-                          />
+                          <div className="space-y-1">
+                            <Label className="text-xs">Notas (opcional)</Label>
+                            <Input
+                              className="h-9"
+                              placeholder="Observaciones..."
+                              {...register(`Detalle.${idx}.Notas`)}
+                            />
+                          </div>
                         </div>
                       </Card>
                     ))}
@@ -626,7 +647,7 @@ export default function RequerimientosPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Producto</TableHead>
-                          <TableHead className="w-44">Placa</TableHead>
+                          <TableHead className="w-48">Placa</TableHead>
                           <TableHead className="w-28">Cantidad</TableHead>
                           <TableHead className="w-48">Notas (opt.)</TableHead>
                           <TableHead className="w-20"></TableHead>
@@ -636,7 +657,7 @@ export default function RequerimientosPage() {
                         {fields.map((field, idx) => (
                           <TableRow key={field.id}>
                             <TableCell className="min-w-64 align-top">
-                              {renderCampoProducto(idx, field.id)}
+                              {renderCampoProducto(idx, field.id, true)}
                             </TableCell>
                             <TableCell className="align-top">{renderSelectPlaca(idx)}</TableCell>
                             <TableCell className="align-top">
@@ -649,15 +670,15 @@ export default function RequerimientosPage() {
                                 })}
                               />
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <Input
-                                className="h-8"
+                                className="h-9"
                                 placeholder="Observaciones..."
                                 {...register(`Detalle.${idx}.Notas`)}
                               />
                             </TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
+                            <TableCell className="align-top">
+                              <div className="flex h-9 items-center">
                                 <Button
                                   type="button"
                                   variant="ghost"
