@@ -45,6 +45,13 @@
 	             construye encima: aplicar siempre 0067 -> 0068 juntas. Lo que
 	             perdura de esta migracion: fotos por tarea y fin de la evidencia
 	             por orden.
+
+	             APLICADO EN LA BASE el 2026-09-03 SIN los bloques 2 y 5
+	             (FnRegistrarOrdenMantenimiento y FnReconciliarOrdenMantenimiento):
+	             0068 los reemplaza acto seguido, y la version de aca llama a
+	             FnConsumirRepuestosOrdenMantenimiento, que 0068 elimina. Saltearlos
+	             evita un estado intermedio inconsistente si 0068 fallara. El estado
+	             final es identico al de aplicar ambos archivos completos en orden.
 */
 
 /* ===== 1. Fotos por tarea ===== */
