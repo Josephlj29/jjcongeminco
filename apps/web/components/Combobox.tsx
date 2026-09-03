@@ -44,6 +44,9 @@ interface ComboboxProps {
   renderOpcion?: (opcion: OpcionCombobox, seleccionada: boolean) => React.ReactNode;
   renderSeleccion?: (opcion: OpcionCombobox) => React.ReactNode;
   className?: string;
+  /** Clases extra del dropdown (p. ej. un min-w cuando el trigger vive en una
+      celda angosta y las opciones traen descripción). */
+  popoverClassName?: string;
 }
 
 /** "Cañería" -> "caneria" para búsqueda insensible a acentos. */
@@ -62,6 +65,7 @@ export function Combobox({
   renderOpcion,
   renderSeleccion,
   className,
+  popoverClassName,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [busqueda, setBusqueda] = React.useState("");
@@ -108,7 +112,10 @@ export function Combobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+      <PopoverContent
+        align="start"
+        className={cn("w-[var(--radix-popover-trigger-width)] p-0", popoverClassName)}
+      >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={buscarPlaceholder}

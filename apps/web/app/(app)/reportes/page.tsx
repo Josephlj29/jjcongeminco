@@ -36,6 +36,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ErrorState } from "@/components/ErrorState";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { Combobox } from "@/components/Combobox";
+import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -549,18 +550,12 @@ export default function ReportesPage() {
                 </div>
                 <div className="space-y-1">
                   <Label>Placa</Label>
-                  <Select onValueChange={setFiltro("idVehiculo")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vehiculos?.map((v) => (
-                        <SelectItem key={v.Id} value={v.Id}>
-                          {v.Placa}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <VehiculoCombobox
+                    value={filtros.idVehiculo || null}
+                    onChange={(v) => setFiltro("idVehiculo")(v ?? "")}
+                    placeholder="Todas..."
+                    detallado
+                  />
                 </div>
               </div>
 

@@ -34,6 +34,7 @@ import {
 } from "@/components/mantenimiento/EditorConsumoRepuestos";
 import { useVehiculos } from "@/hooks/useEquipos";
 import { usePersonal } from "@/hooks/usePersonal";
+import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import {
   Dialog,
   DialogContent,
@@ -291,22 +292,11 @@ export function DialogOrdenMantenimiento({
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <div className="col-span-2 space-y-1 md:col-span-1">
               <Label>Placa *</Label>
-              <Select
-                value={watch("IdVehiculo") ?? ""}
-                onValueChange={(v) => setValue("IdVehiculo", v, { shouldValidate: true })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar placa..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {vehiculos?.map((v) => (
-                    <SelectItem key={v.Id} value={v.Id}>
-                      {v.Placa}
-                      {v.Modelo ? ` — ${v.Modelo}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <VehiculoCombobox
+                value={watch("IdVehiculo") ?? null}
+                onChange={(v) => setValue("IdVehiculo", v ?? "", { shouldValidate: true })}
+                detallado
+              />
               {errors.IdVehiculo && (
                 <p className="text-xs text-destructive">{errors.IdVehiculo.message}</p>
               )}

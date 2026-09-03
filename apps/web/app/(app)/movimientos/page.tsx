@@ -43,6 +43,7 @@ import { useVehiculos, useEquipos } from "@/hooks/useEquipos";
 import { useAsociacionesTiposEquipo } from "@/hooks/useTiposEquipo";
 import { fechaCorta, fechaISO } from "@/lib/format";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
+import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
 import { DialogHistorialPrecios } from "@/components/productos/DialogHistorialPrecios";
@@ -144,7 +145,6 @@ interface LineaDetalleProps {
   control: Control<CrearDocumento>;
   register: UseFormRegister<CrearDocumento>;
   setValue: UseFormSetValue<CrearDocumento>;
-  placas: { Id: string; label: string }[];
   productosParaPlaca: (idVehiculo: string | undefined) => ProductoStockConsolidado[];
   esSalida: boolean;
   puedeBorrar: boolean;
@@ -159,7 +159,6 @@ function LineaDetalle({
   control,
   register,
   setValue,
-  placas,
   productosParaPlaca,
   esSalida,
   puedeBorrar,
@@ -317,23 +316,13 @@ function LineaDetalle({
       </TableCell>
       {esSalida && (
         <TableCell className="align-top">
-          <Select
-            value={idVehiculoLinea ?? ""}
-            onValueChange={(v) =>
-              setValue(`Detalle.${index}.IdVehiculo`, v, { shouldValidate: true })
+          <VehiculoCombobox
+            value={idVehiculoLinea ?? null}
+            onChange={(v) =>
+              setValue(`Detalle.${index}.IdVehiculo`, v ?? undefined, { shouldValidate: true })
             }
-          >
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Placa..." />
-            </SelectTrigger>
-            <SelectContent>
-              {placas.map((p) => (
-                <SelectItem key={p.Id} value={p.Id}>
-                  {p.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className="h-9"
+          />
         </TableCell>
       )}
       <TableCell className="align-top">
@@ -413,16 +402,6 @@ export default function MovimientosPage() {
   const esSalida = tipoDocumento === "salida";
 
   const todosProductos = useMemo(() => productos ?? [], [productos]);
-
-  /* Opciones de placa para los selects de cada línea. */
-  const placas = useMemo(
-    () =>
-      (vehiculos ?? []).map((v) => ({
-        Id: v.Id,
-        label: v.Placa + (v.Modelo ? ` — ${v.Modelo}` : ""),
-      })),
-    [vehiculos],
-  );
 
   /* Productos compatibles con la placa de UNA línea (vehículo -> equipo -> tipo).
      Con el toggle activo, filtra a los del tipo de esa placa + los generales. */
@@ -611,18 +590,12 @@ export default function MovimientosPage() {
               <div className="flex flex-wrap items-end gap-3">
                 <div className="min-w-56 max-w-sm flex-1 space-y-1">
                   <Label>Placa por defecto (opcional)</Label>
-                  <Select value={idVehiculo ?? ""} onValueChange={(v) => setValue("IdVehiculo", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar placa..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {placas.map((p) => (
-                        <SelectItem key={p.Id} value={p.Id}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <VehiculoCombobox
+                    value={idVehiculo ?? null}
+                    onChange={(v) => setValue("IdVehiculo", v ?? undefined)}
+                    placeholder="Seleccionar placa..."
+                    detallado
+                  />
                 </div>
                 <Button
                   type="button"
@@ -682,7 +655,7 @@ export default function MovimientosPage() {
                     <TableHead className="w-56">
                       {esSalida ? "Costo (valorización)" : "Costo unit. (opt.)"}
                     </TableHead>
-                    {esSalida && <TableHead className="w-44">Placa</TableHead>}
+                    {esSalida && <TableHead className="w-52">Placa</TableHead>}
                     <TableHead className="w-12" />
                   </TableRow>
                 </TableHeader>
@@ -694,7 +667,6 @@ export default function MovimientosPage() {
                       control={control}
                       register={register}
                       setValue={setValue}
-                      placas={placas}
                       productosParaPlaca={productosParaPlaca}
                       esSalida={esSalida}
                       puedeBorrar={fields.length > 1}
