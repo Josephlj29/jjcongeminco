@@ -34,6 +34,7 @@ import { InputCantidad } from "@/components/InputCantidad";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { DataTable, type ColumnaDataTable, type AccionFila } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
+import { ExportarMenu, type ExportDataset } from "@/components/ExportarMenu";
 import { toast } from "sonner";
 import { CrearProductoSchema, type CrearProducto, MAX_IMAGENES_PRODUCTO } from "@congeminco/shared";
 import {
@@ -97,7 +98,7 @@ import { AvisoBorrador } from "@/components/AvisoBorrador";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { fechaCorta } from "@/lib/format";
+import { fechaCorta, hoyLima } from "@/lib/format";
 
 /* ─── Tipo para producto de la vista consolidada ─── */
 interface ProductoConsolidado {
@@ -1040,6 +1041,48 @@ export default function ProductosPage() {
   // desde ProductoStockConsolidado que sí lo tiene (la API lo devuelve).
   const productosFiltradosConId = productosFiltrados as ProductoConsolidado[];
 
+  /* Exportación del catálogo. Exporta lo que el usuario TIENE A LA VISTA, no
+     todo el catálogo: si filtró por categoría o buscó algo, el archivo tiene que
+     coincidir con la pantalla; si no, se lleva un Excel que no reconoce. Por eso
+     también el nombre del archivo lleva la categoría cuando hay una elegida. */
+  const datasetProductos = (): ExportDataset => {
+    const sufijo =
+      categoriaFiltro === "__todas__"
+        ? ""
+        : `-${categoriaFiltro.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}`;
+    return {
+      nombreArchivo: `catalogo-productos${sufijo}-${hoyLima()}`,
+      nombreHoja: "Catálogo",
+      columnas: [
+        { key: "Sku", label: "SKU" },
+        { key: "Nombre", label: "Nombre" },
+        { key: "Categoria", label: "Categoría" },
+        { key: "TiposEquipo", label: "Tipos de equipo" },
+        { key: "Unidad", label: "Unidad" },
+        { key: "StockTotal", label: "Stock total" },
+        { key: "StockMinimo", label: "Stock mínimo" },
+        { key: "BajoMinimo", label: "Bajo mínimo" },
+        { key: "CostoPromedio", label: "Costo promedio" },
+        { key: "CodigoProveedor", label: "Código proveedor" },
+      ],
+      filas: productosFiltrados.map((p) => ({
+        Sku: p.Sku,
+        Nombre: p.NombreProducto,
+        Categoria: p.NombreCategoria,
+        // Mismo criterio que la grilla: un producto general aplica a todo equipo.
+        TiposEquipo: p.EsGeneral
+          ? "General"
+          : (tiposPorProducto.get(p.IdProducto)?.join(", ") ?? ""),
+        Unidad: p.CodigoUnidad,
+        StockTotal: p.StockTotal,
+        StockMinimo: p.StockMinimo,
+        BajoMinimo: p.BajoMinimo ? "Sí" : "No",
+        CostoPromedio: p.CostoPromedio ?? 0,
+        CodigoProveedor: p.CodigoProductoProveedor ?? "",
+      })),
+    };
+  };
+
   const columnas = useMemo<ColumnaDataTable<ProductoConsolidado>[]>(
     () => [
       { id: "sku", titulo: "SKU", celda: (p) => p.Sku, className: "font-mono text-xs" },
@@ -1140,12 +1183,21 @@ export default function ProductosPage() {
         titulo="Catálogo de productos"
         descripcion="Administra el inventario de materiales"
         acciones={
-          puedeEscribir && (
-            <Button onClick={() => setEditando("nuevo")}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo producto
-            </Button>
-          )
+          <>
+            {/* Exportar no requiere permiso de escritura: quien puede ver el
+                catálogo puede llevárselo. */}
+            <ExportarMenu
+              dataset={datasetProductos}
+              tamano="default"
+              disabled={!productosFiltrados.length}
+            />
+            {puedeEscribir && (
+              <Button onClick={() => setEditando("nuevo")}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo producto
+              </Button>
+            )}
+          </>
         }
       />
 

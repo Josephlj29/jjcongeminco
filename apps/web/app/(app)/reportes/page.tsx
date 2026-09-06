@@ -15,7 +15,6 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   X,
-  Download,
   TrendingUp,
   TrendingDown,
   Scale,
@@ -26,12 +25,10 @@ import {
   Zap,
   Percent,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useCategorias, useProveedores } from "@/hooks/useCatalogo";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { useProductos } from "@/hooks/useProductos";
-import { exportarCsv } from "@/lib/csv";
-import { exportarExcel } from "@/lib/exportar-xlsx";
+import { ExportarMenu, type ExportDataset } from "@/components/ExportarMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { ErrorState } from "@/components/ErrorState";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -48,12 +45,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -139,56 +130,6 @@ function useReporteValorizado(idCategoria: string, soloBajoMinimo: boolean, habi
     },
     enabled: habilitado,
   });
-}
-
-/**
- * Datos listos para exportar (mismos {filas, columnas} para CSV y Excel).
- * Se arma una sola vez por pestaña y lo consumen ambos formatos.
- */
-interface ExportDataset {
-  nombreArchivo: string;
-  nombreHoja: string;
-  columnas: { key: string; label: string }[];
-  filas: Record<string, unknown>[];
-}
-
-/**
- * Menú "Exportar" reutilizable (CSV / Excel) sobre un mismo ExportDataset.
- * `dataset` es una fábrica: se evalúa al hacer clic para tomar los datos frescos.
- */
-function ExportarMenu({ dataset }: { dataset: () => ExportDataset }) {
-  const exportarComoExcel = async () => {
-    const d = dataset();
-    try {
-      await exportarExcel(d.nombreArchivo, [
-        { nombre: d.nombreHoja, columnas: d.columnas, filas: d.filas },
-      ]);
-    } catch {
-      toast.error("No se pudo exportar a Excel");
-    }
-  };
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Download className="mr-1 h-3.5 w-3.5" />
-          Exportar
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={() => {
-            const d = dataset();
-            exportarCsv(d.filas, d.columnas, d.nombreArchivo);
-          }}
-        >
-          CSV
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => void exportarComoExcel()}>Excel</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 interface FiltrosRecambio {

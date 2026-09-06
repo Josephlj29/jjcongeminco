@@ -13,6 +13,10 @@ export interface ProductoConsolidado {
   BajoMinimo: boolean;
   IdCategoria: string;
   EsGeneral: boolean;
+  /* Estos dos ya viajaban en la respuesta (la ruta hace select("*") sobre
+     V_Producto_StockConsolidado); faltaba declararlos. Los usa la exportación. */
+  CostoPromedio: number;
+  CodigoProductoProveedor: string | null;
 }
 
 interface ProductosParams {
