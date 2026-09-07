@@ -11,7 +11,8 @@
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare deploy",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "shots": "node --env-file-if-exists=.env.local scripts/responsive-shots.mts"
   },
   "dependencies": {
     "@congeminco/shared": "workspace:*",
@@ -54,6 +55,7 @@
     "@eslint/eslintrc": "^3.3.6",
     "@next/eslint-plugin-next": "^15.3.3",
     "@opennextjs/cloudflare": "^1.4.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/container-queries": "^0.1.1",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.12",
