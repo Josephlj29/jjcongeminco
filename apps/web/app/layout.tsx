@@ -54,7 +54,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // Las variables de fuente van en <html>: preflight de Tailwind aplica font-family ahí y
   // una var() indefinida invalida toda la declaración (caía a serif).
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="es"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <body className="antialiased">
         <Providers>
           {children}
