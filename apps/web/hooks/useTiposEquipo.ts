@@ -79,6 +79,26 @@ export function useAsociacionesTiposEquipo() {
   });
 }
 
+/**
+ * Asociaciones de UN producto (lazy: para el detalle de Saldos).
+ *
+ * `useAsociacionesTiposEquipo` baja la tabla puente completa, que sirve para
+ * pintar chips en la grilla de productos pero es un desperdicio cuando solo se
+ * abre el detalle de un producto.
+ */
+export function useAsociacionesProducto(idProducto: string | null) {
+  return useQuery({
+    queryKey: ["tipos-equipo", "asociaciones", idProducto],
+    enabled: !!idProducto,
+    staleTime: 1000 * 60 * 5,
+    queryFn: async () => {
+      const res = await fetch(`/api/tipos-equipo/asociaciones?idProducto=${idProducto}`);
+      if (!res.ok) throw new Error(`Error ${res.status} al cargar asociaciones`);
+      return res.json() as Promise<AsociacionProductoTipoEquipo[]>;
+    },
+  });
+}
+
 /* Asociación masiva: todos los productos de una categoría a un tipo. */
 export function useAsociarCategoria() {
   const qc = useQueryClient();

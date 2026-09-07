@@ -301,6 +301,24 @@ export interface ProductoStockConsolidado {
   UrlImagenPrincipal: string | null;
   EsGeneral: boolean;
   CodigoProductoProveedor: string | null;
+  /** Última vez que el stock de este producto se movió. null = nunca tuvo saldo. */
+  UltimoMovimiento: string | null;
+}
+
+/* Respuesta de GET /api/saldos?pagina=N — página de saldos filtrada en el servidor. */
+export interface PaginaSaldos {
+  items: ProductoStockConsolidado[];
+  total: number;
+  pagina: number;
+  limit: number;
+  totalPaginas: number;
+}
+
+/* Salida de la vista inv.V_Producto_FacetaCategoria — chips de filtro. */
+export interface FacetaCategoria {
+  IdCategoria: string;
+  NombreCategoria: string;
+  Productos: number;
 }
 
 /* Salida de la vista inv.V_SaldoStock_PorUbicacion */

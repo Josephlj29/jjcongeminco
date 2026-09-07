@@ -201,3 +201,28 @@ celular. El campo acepta la operación escrita; la escala es la de la BD
 | CANT-14 | Enter en cantidad | regresión | Enter dentro del campo | confirma sin enviar el formulario (antes lo enviaba) | manual |
 | CANT-15 | Borrar línea del medio | regresión | 3 líneas, borrar la primera | las restantes muestran los valores corridos correctos | manual |
 | CANT-16 | Ruido de fórmula al importar | borde | celda `0.3000000000000004` | importa como `0.300`, sin filas con error | manual |
+
+## 14. Saldos paginado en el servidor (`api/saldos`, `(app)/saldos/page.tsx`)
+
+La pantalla que más se abre y con la peor conexión traía el catálogo completo
+(348 productos con URL de imagen) más la tabla puente producto↔tipo entera, y
+filtraba en memoria. Ahora pide 10 filas por página, filtra y ordena en el
+servidor, y el detalle consulta solo el producto abierto.
+
+| ID | Caso | Tipo | Acción | Esperado | Método |
+|----|------|------|--------|----------|--------|
+| SAL-01 | Carga inicial acotada | happy | entrar a Saldos con la pestaña Red abierta | una sola request de saldos con `pagina=1&limit=10`, 10 tarjetas, NO 348 | manual |
+| SAL-02 | Orden por actividad | happy | ver la primera página sin filtros | los productos con movimiento más reciente primero, con su fecha en la tarjeta | manual |
+| SAL-03 | Debounce del buscador | happy | escribir `filtro de aceite` de corrido | una sola request al terminar de tipear, no una por tecla | manual |
+| SAL-04 | Búsqueda server-side | happy | buscar `filtro` | 23 resultados, paginados de 10 en 10 | manual |
+| SAL-05 | Búsqueda por código de proveedor | happy | buscar `FAF 40759` | aparecen las 3 fajas de freno | manual |
+| SAL-06 | Coma en la búsqueda | error | buscar `perno, tuerca` | no rompe el filtro ni devuelve 400; busca sin la coma | manual |
+| SAL-07 | Paginación estable | regresión | recorrer las 35 páginas sin filtro | ninguna fila se repite ni desaparece, incluidos los tres `Filtro de aceite SAKURA` | manual |
+| SAL-08 | Contador coherente | borde | pasar de página con conexión lenta | el texto `Mostrando N–M` cambia junto con las filas, no antes | manual |
+| SAL-09 | Chips sin cargar productos | happy | ver los chips de categoría | 28 chips con su conteo, de la vista de facetas; ninguna categoría vacía | manual |
+| SAL-10 | Filtro por categoría | happy | tocar el chip `Filtros` | 21 resultados en 3 páginas, y la búsqueda se combina con el chip | manual |
+| SAL-11 | Reset de página al filtrar | regresión | ir a la página 5 y luego buscar algo | vuelve a la página 1, sin request con la página vieja | manual |
+| SAL-12 | Bajo mínimo | happy | activar el chip `Bajo mínimo` | 176 resultados, todos con la insignia | manual |
+| SAL-13 | Detalle sin tabla puente | regresión | abrir el detalle de un producto | pide asociaciones solo de ese producto (`?idProducto=`), no la tabla entera | manual |
+| SAL-14 | Combos intactos | regresión | abrir requerimientos, movimientos y consumo de repuestos | el combo de producto sigue buscando sobre todo el catálogo (modo legacy de `/api/saldos`) | manual |
+| SAL-15 | Producto sin saldo | borde | ordenar por Recientes con un producto nunca ingresado | aparece al final, no al principio (NULLS LAST) | manual |
