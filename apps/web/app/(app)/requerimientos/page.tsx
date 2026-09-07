@@ -35,6 +35,7 @@ import { useBorradorFormulario } from "@/hooks/useBorradorFormulario";
 import { AvisoBorrador } from "@/components/AvisoBorrador";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { hoyLima } from "@/lib/format";
+import { comprimirImagen } from "@/lib/image";
 import { InputCantidad } from "@/components/InputCantidad";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import { VehiculoCombobox } from "@/components/VehiculoCombobox";
@@ -233,10 +234,11 @@ export default function RequerimientosPage() {
         const foto = fotos[fields[i]?.id ?? ""];
         if (!foto) continue;
         const supabase = crearClienteNavegador();
-        const ruta = `solicitudes/${crypto.randomUUID()}-${foto.file.name}`;
+        const comprimida = await comprimirImagen(foto.file);
+        const ruta = `solicitudes/${crypto.randomUUID()}-${comprimida.name}`;
         const { data: up, error } = await supabase.storage
           .from("requerimientos")
-          .upload(ruta, foto.file, { upsert: false });
+          .upload(ruta, comprimida, { upsert: false });
         if (error || !up) {
           toast.warning(`No se pudo subir la foto de la línea ${i + 1}; se envía sin foto.`);
           continue;

@@ -26,6 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Check, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { hoyLima } from "@/lib/format";
+import { comprimirImagen } from "@/lib/image";
 import {
   CrearOrdenMantenimientoSchema,
   TIPO_MANTENIMIENTO,
@@ -147,10 +148,11 @@ function consumoDesdeOrden(orden: OrdenMantenimientoConDetalle | null): ConsumoS
 /** Sube una foto al bucket "mantenimiento" y devuelve su URL pública. */
 async function subirFoto(file: File): Promise<string> {
   const supabase = crearClienteNavegador();
-  const ruta = `trabajos/${crypto.randomUUID()}-${file.name}`;
+  const comprimida = await comprimirImagen(file);
+  const ruta = `trabajos/${crypto.randomUUID()}-${comprimida.name}`;
   const { data, error } = await supabase.storage
     .from("mantenimiento")
-    .upload(ruta, file, { upsert: false });
+    .upload(ruta, comprimida, { upsert: false });
   if (error || !data) throw new Error(error?.message ?? "No se pudo subir la foto.");
   return supabase.storage.from("mantenimiento").getPublicUrl(data.path).data.publicUrl;
 }

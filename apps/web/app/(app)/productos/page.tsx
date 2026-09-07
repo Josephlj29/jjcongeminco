@@ -32,6 +32,7 @@ import {
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { InputCantidad } from "@/components/InputCantidad";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
+import { comprimirImagen } from "@/lib/image";
 import { DataTable, type ColumnaDataTable, type AccionFila } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
 import { ExportarMenu, type ExportDataset } from "@/components/ExportarMenu";
@@ -325,10 +326,11 @@ function DialogProducto({
           let orden = 0;
           for (const a of archivos) {
             try {
-              const ruta = `${Id}/${Date.now()}-${a.file.name}`;
+              const comprimida = await comprimirImagen(a.file);
+              const ruta = `${Id}/${Date.now()}-${comprimida.name}`;
               const { data: storageData, error: storageError } = await supabase.storage
                 .from("productos")
-                .upload(ruta, a.file, {
+                .upload(ruta, comprimida, {
                   upsert: false,
                 });
               if (storageError) throw new Error(storageError.message);
@@ -699,10 +701,11 @@ function DialogImagenes({
 
     try {
       const supabase = crearClienteNavegador();
-      const ruta = `${idProducto}/${Date.now()}-${archivo.name}`;
+      const comprimida = await comprimirImagen(archivo);
+      const ruta = `${idProducto}/${Date.now()}-${comprimida.name}`;
       const { data: storageData, error: storageError } = await supabase.storage
         .from("productos")
-        .upload(ruta, archivo, {
+        .upload(ruta, comprimida, {
           upsert: false,
         });
 

@@ -24,6 +24,8 @@ function ImagenProducto({ url, size }: { url: string | null; size: number }) {
       <img
         src={url}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="shrink-0 rounded object-cover"
         style={{ width: size, height: size }}
       />

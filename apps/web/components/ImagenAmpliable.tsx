@@ -139,6 +139,8 @@ export function ImagenAmpliable({ url, size, alt = "", nombre, className }: Imag
         <img
           src={url}
           alt={alt}
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
         />
         <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 transition-opacity group-hover:bg-black/30 group-hover:opacity-100">

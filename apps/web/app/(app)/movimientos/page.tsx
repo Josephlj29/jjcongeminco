@@ -216,6 +216,8 @@ function LineaDetalle({
               <img
                 src={producto.UrlImagenPrincipal}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="h-9 w-9 rounded border object-cover"
               />
             ) : (

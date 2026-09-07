@@ -126,7 +126,13 @@ export function GaleriaProductoDialog({
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.Url} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={img.Url}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
               </button>
             ))}
           </div>
