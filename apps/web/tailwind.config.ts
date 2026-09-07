@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
+import containerQueries from "@tailwindcss/container-queries";
+import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
   darkMode: ["class"],
@@ -10,14 +12,12 @@ const config: Config = {
     "./lib/**/*.{ts,tsx}",
   ],
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
+      // Geist se carga en app/layout.tsx como CSS var; sin esto Tailwind usaba el stack del sistema.
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", ...defaultTheme.fontFamily.sans],
+        mono: ["var(--font-geist-mono)", ...defaultTheme.fontFamily.mono],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -103,7 +103,8 @@ const config: Config = {
       },
     },
   },
-  plugins: [animate],
+  // container-queries: `@container` + variantes @sm/@md/@lg (responsive por ancho del contenedor, no del viewport).
+  plugins: [animate, containerQueries],
 };
 
 export default config;

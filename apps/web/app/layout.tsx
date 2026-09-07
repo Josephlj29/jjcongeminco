@@ -4,7 +4,7 @@
  * Monta los providers (TanStack Query) y el Toaster de Sonner.
  * No contiene lógica de autenticación — eso vive en app/(app)/layout.tsx.
  */
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
@@ -33,6 +33,21 @@ export const metadata: Metadata = {
     title: "Congeminco",
     statusBarStyle: "default",
   },
+};
+
+/**
+ * viewport-fit=cover habilita env(safe-area-inset-*) en iPhone con notch
+ * (lo usa AppBottomNav). themeColor pinta la barra del navegador del color
+ * de --background en cada tema.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#11151c" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -56,7 +56,7 @@ export default function LoginPage() {
   return (
     <div
       className={cn(
-        "flex min-h-screen items-center justify-center px-4",
+        "flex min-h-dvh items-center justify-center px-4",
         "bg-gradient-to-br from-background via-muted/30 to-muted/60",
       )}
     >

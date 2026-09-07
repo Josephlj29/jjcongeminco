@@ -318,7 +318,7 @@ export function AppSidebar({ usuario }: Props) {
   return (
     <aside
       className={cn(
-        "hidden h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 md:flex",
+        "hidden h-full flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 lg:flex",
         collapsed ? "w-16" : "w-64",
       )}
     >

@@ -119,8 +119,14 @@
   * {
     @apply border-border;
   }
+  html {
+    /* iOS Safari no debe agrandar texto al rotar; el layout ya es responsive. */
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground;
+    /* Sin rebote/pull-to-refresh: el único scroll es <main>. */
+    overscroll-behavior-y: none;
     font-feature-settings:
       "rlig" 1,
       "calt" 1;

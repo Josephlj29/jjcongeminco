@@ -3,11 +3,11 @@
 /**
  * components/layout/AppBottomNav.tsx
  *
- * Barra de navegación inferior — SOLO móvil (`md:hidden`). Da acceso con el
+ * Barra de navegación inferior — solo hasta lg (`lg:hidden`). Da acceso con el
  * pulgar a los módulos de campo (los más usados en celular) y un botón "Más"
  * que abre el nav completo en un Sheet (reutiliza AppSidebarContent).
  *
- * El desktop sigue usando AppSidebar; esta barra no se renderiza ahí.
+ * Desde lg el sidebar toma el relevo; esta barra no se renderiza ahí.
  * Cada acceso respeta el gating por rol (puedeVerModulo), igual que el sidebar.
  */
 import { useState } from "react";
@@ -75,7 +75,7 @@ export function AppBottomNav({ usuario }: { usuario: UsuarioProps }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden"
       aria-label="Navegación de campo"
     >
       {items.map((item) => (

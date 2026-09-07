@@ -117,13 +117,13 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Hamburguesa — solo mobile */}
+      {/* Hamburguesa — hasta lg (el sidebar aparece en lg:) */}
       <Sheet>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="shrink-0 md:hidden"
+            className="shrink-0 lg:hidden"
             aria-label="Abrir menú"
           >
             <Menu className="h-5 w-5" />
@@ -142,9 +142,12 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
             {crumbs.map((crumb, index) => {
               const isLast = index === crumbs.length - 1;
               return (
-                <BreadcrumbItem key={crumb.href}>
+                <BreadcrumbItem
+                    key={crumb.href}
+                    className={isLast ? "min-w-0" : "hidden sm:inline-flex"}
+                  >
                   {isLast ? (
-                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                    <BreadcrumbPage className="truncate">{crumb.label}</BreadcrumbPage>
                   ) : (
                     <>
                       <BreadcrumbLink asChild>
