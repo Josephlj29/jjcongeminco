@@ -13,3 +13,7 @@ dist/
 coverage/
 .claude/settings.local.json
 .mcp.json
+# Skill registry (generado) y screenshots responsive
+.atl/
+apps/web/.responsive-shots/
+apps/web/.auth/
