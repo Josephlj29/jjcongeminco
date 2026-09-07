@@ -58,6 +58,7 @@ import { VehiculoCombobox } from "@/components/VehiculoCombobox";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -482,9 +483,9 @@ export function DialogOrdenMantenimiento({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      {/* max-w-4xl: adentro va la tabla de repuestos, de 5 columnas. Con 2xl no
-          entraba y las celdas se comprimian hasta tapar la cantidad. */}
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      {/* size="xl": adentro va la tabla de repuestos, de 5 columnas; el ancho
+          escala hasta 6xl en 2xl para que no se compriman hasta tapar la cantidad. */}
+      <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>
             {modoEdicion ? "Editar orden de trabajo" : "Nueva orden de trabajo"}
@@ -495,268 +496,276 @@ export function DialogOrdenMantenimiento({
               : "Registra el trabajo realizado: tareas con sus fotos y los repuestos usados. La orden queda abierta y se edita cuanto haga falta; recién al culminarla pasa a aprobación (o se cierra, si no lleva repuestos)."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {borrador.restaurado && (
-            <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
-          )}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            <div className="space-y-1">
-              <Label>Tipo *</Label>
-              <Select
-                value={watch("TipoMantenimiento") ?? ""}
-                onValueChange={(v) =>
-                  setValue("TipoMantenimiento", v as CrearOrdenMantenimiento["TipoMantenimiento"], {
-                    shouldValidate: true,
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Preventivo / Correctivo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPO_MANTENIMIENTO.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {TIPO_LABEL[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.TipoMantenimiento && (
-                <p className="text-xs text-destructive">{errors.TipoMantenimiento.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="FechaOrden">Fecha *</Label>
-              <Input id="FechaOrden" type="date" {...register("FechaOrden")} />
-            </div>
-
-            <div className="space-y-1">
-              <Label>Turno *</Label>
-              <Select
-                value={watch("Turno") ?? ""}
-                onValueChange={(v) =>
-                  setValue("Turno", v as CrearOrdenMantenimiento["Turno"], { shouldValidate: true })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Turno" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TURNO.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {TURNO_LABEL[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.Turno && <p className="text-xs text-destructive">{errors.Turno.message}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            <div className="col-span-2 space-y-1 md:col-span-1">
-              <Label>Placa *</Label>
-              <VehiculoCombobox
-                value={watch("IdVehiculo") ?? null}
-                onChange={(v) => setValue("IdVehiculo", v ?? "", { shouldValidate: true })}
-                detallado
-              />
-              {errors.IdVehiculo && (
-                <p className="text-xs text-destructive">{errors.IdVehiculo.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="Kilometraje">Kilometraje</Label>
-              <Input
-                id="Kilometraje"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Opcional"
-                {...register("Kilometraje", {
-                  setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)),
-                })}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="Horometro">Horómetro</Label>
-              <Input
-                id="Horometro"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Opcional"
-                {...register("Horometro", {
-                  setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)),
-                })}
-              />
-            </div>
-          </div>
-
-          {/* Personal asignado (varios; todos por igual) */}
-          <div className="space-y-1">
-            <Label>
-              Personal asignado *{" "}
-              {idsPersonal.length > 0 && (
-                <span className="font-normal text-muted-foreground">
-                  ({idsPersonal.length} seleccionado{idsPersonal.length === 1 ? "" : "s"})
-                </span>
-              )}
-            </Label>
-            <Command className="rounded-lg border">
-              <CommandInput placeholder="Buscar personal..." />
-              <CommandList className="max-h-44">
-                <CommandEmpty>No se encontró personal.</CommandEmpty>
-                <CommandGroup>
-                  {personal?.map((p) => {
-                    const activo = idsPersonal.includes(p.Id);
-                    return (
-                      <CommandItem
-                        key={p.Id}
-                        value={p.NombreCompleto}
-                        onSelect={() => togglePersonal(p.Id)}
-                        className="gap-2"
-                      >
-                        <span
-                          className={cn(
-                            "flex h-4 w-4 items-center justify-center rounded border",
-                            activo
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-input",
-                          )}
-                        >
-                          {activo && <Check className="h-3 w-3" />}
-                        </span>
-                        <span className="flex-1">{p.NombreCompleto}</span>
-                        {p.NombreCargo && (
-                          <span className="text-xs text-muted-foreground">{p.NombreCargo}</span>
-                        )}
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-            {errors.IdsPersonal && (
-              <p className="text-xs text-destructive">{errors.IdsPersonal.message}</p>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
+            {borrador.restaurado && (
+              <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
             )}
-          </div>
-
-          <div className="space-y-1">
-            <Label>N° Orden</Label>
-            {modoEdicion ? (
-              <Input readOnly className="bg-muted font-mono" {...register("NumeroOrden")} />
-            ) : (
-              <div className="rounded-md border bg-muted px-3 py-2 text-sm">
-                {numeroArmado ? (
-                  <>
-                    <span className="font-mono font-medium">{numeroArmado}</span>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Se asigna automáticamente al guardar.
-                    </p>
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">
-                    Elige tipo, fecha y placa para ver el número.
-                  </span>
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2 @2xl:grid-cols-3">
+              <div className="space-y-1">
+                <Label>Tipo *</Label>
+                <Select
+                  value={watch("TipoMantenimiento") ?? ""}
+                  onValueChange={(v) =>
+                    setValue(
+                      "TipoMantenimiento",
+                      v as CrearOrdenMantenimiento["TipoMantenimiento"],
+                      {
+                        shouldValidate: true,
+                      },
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Preventivo / Correctivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPO_MANTENIMIENTO.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {TIPO_LABEL[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.TipoMantenimiento && (
+                  <p className="text-xs text-destructive">{errors.TipoMantenimiento.message}</p>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Trabajos realizados: cada tarea con foto opcional de antes y de después */}
-          <div className="space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <Label>Trabajos realizados</Label>
-                <p className="text-xs text-muted-foreground">
-                  Cada tarea puede llevar una foto de antes y una de después (opcionales).
-                </p>
+              <div className="space-y-1">
+                <Label htmlFor="FechaOrden">Fecha *</Label>
+                <Input id="FechaOrden" type="date" {...register("FechaOrden")} />
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setTrabajos((arr) => [...arr, nuevoTrabajo()])}
-              >
-                <Plus className="mr-1 h-3 w-3" />
-                Agregar
-              </Button>
+
+              <div className="space-y-1">
+                <Label>Turno *</Label>
+                <Select
+                  value={watch("Turno") ?? ""}
+                  onValueChange={(v) =>
+                    setValue("Turno", v as CrearOrdenMantenimiento["Turno"], {
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Turno" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TURNO.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {TURNO_LABEL[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.Turno && <p className="text-xs text-destructive">{errors.Turno.message}</p>}
+              </div>
             </div>
-            <div className="space-y-2">
-              {trabajos.map((t, i) => (
-                <div key={t.key} className="space-y-2 rounded-md border p-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}</span>
-                    <Input
-                      value={t.descripcion}
-                      placeholder="Descripción del trabajo..."
-                      onChange={(e) => editarDescripcion(t.key, e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => quitarTrabajo(t.key)}
-                      disabled={trabajos.length === 1}
-                      aria-label="Quitar tarea"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-3 pl-7">
-                    <FotoTrabajo
-                      etiqueta="Antes"
-                      foto={t.antes}
-                      onSeleccionar={(f) => ponerFoto(t.key, "antes", f)}
-                      onQuitar={() => quitarFoto(t.key, "antes")}
-                      disabled={isPending}
-                    />
-                    <FotoTrabajo
-                      etiqueta="Después"
-                      foto={t.despues}
-                      onSeleccionar={(f) => ponerFoto(t.key, "despues", f)}
-                      onQuitar={() => quitarFoto(t.key, "despues")}
-                      disabled={isPending}
-                    />
-                  </div>
+
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2 @2xl:grid-cols-3">
+              <div className="space-y-1 @md:col-span-2 @2xl:col-span-1">
+                <Label>Placa *</Label>
+                <VehiculoCombobox
+                  value={watch("IdVehiculo") ?? null}
+                  onChange={(v) => setValue("IdVehiculo", v ?? "", { shouldValidate: true })}
+                  detallado
+                />
+                {errors.IdVehiculo && (
+                  <p className="text-xs text-destructive">{errors.IdVehiculo.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="Kilometraje">Kilometraje</Label>
+                <Input
+                  id="Kilometraje"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Opcional"
+                  {...register("Kilometraje", {
+                    setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)),
+                  })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="Horometro">Horómetro</Label>
+                <Input
+                  id="Horometro"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Opcional"
+                  {...register("Horometro", {
+                    setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)),
+                  })}
+                />
+              </div>
+            </div>
+
+            {/* Personal asignado (varios; todos por igual) */}
+            <div className="space-y-1">
+              <Label>
+                Personal asignado *{" "}
+                {idsPersonal.length > 0 && (
+                  <span className="font-normal text-muted-foreground">
+                    ({idsPersonal.length} seleccionado{idsPersonal.length === 1 ? "" : "s"})
+                  </span>
+                )}
+              </Label>
+              <Command className="rounded-lg border">
+                <CommandInput placeholder="Buscar personal..." />
+                <CommandList className="max-h-44">
+                  <CommandEmpty>No se encontró personal.</CommandEmpty>
+                  <CommandGroup>
+                    {personal?.map((p) => {
+                      const activo = idsPersonal.includes(p.Id);
+                      return (
+                        <CommandItem
+                          key={p.Id}
+                          value={p.NombreCompleto}
+                          onSelect={() => togglePersonal(p.Id)}
+                          className="gap-2"
+                        >
+                          <span
+                            className={cn(
+                              "flex h-4 w-4 items-center justify-center rounded border",
+                              activo
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-input",
+                            )}
+                          >
+                            {activo && <Check className="h-3 w-3" />}
+                          </span>
+                          <span className="flex-1">{p.NombreCompleto}</span>
+                          {p.NombreCargo && (
+                            <span className="text-xs text-muted-foreground">{p.NombreCargo}</span>
+                          )}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+              {errors.IdsPersonal && (
+                <p className="text-xs text-destructive">{errors.IdsPersonal.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <Label>N° Orden</Label>
+              {modoEdicion ? (
+                <Input readOnly className="bg-muted font-mono" {...register("NumeroOrden")} />
+              ) : (
+                <div className="rounded-md border bg-muted px-3 py-2 text-sm">
+                  {numeroArmado ? (
+                    <>
+                      <span className="font-mono font-medium">{numeroArmado}</span>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Se asigna automáticamente al guardar.
+                      </p>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Elige tipo, fecha y placa para ver el número.
+                    </span>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="Observaciones">Observaciones</Label>
-            <Input id="Observaciones" placeholder="Opcional" {...register("Observaciones")} />
-          </div>
+            {/* Trabajos realizados: cada tarea con foto opcional de antes y de después */}
+            <div className="space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <Label>Trabajos realizados</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Cada tarea puede llevar una foto de antes y una de después (opcionales).
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTrabajos((arr) => [...arr, nuevoTrabajo()])}
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Agregar
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {trabajos.map((t, i) => (
+                  <div key={t.key} className="space-y-2 rounded-md border p-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}</span>
+                      <Input
+                        value={t.descripcion}
+                        placeholder="Descripción del trabajo..."
+                        onChange={(e) => editarDescripcion(t.key, e.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive md:h-8 md:w-8"
+                        onClick={() => quitarTrabajo(t.key)}
+                        disabled={trabajos.length === 1}
+                        aria-label="Quitar tarea"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-3 pl-7">
+                      <FotoTrabajo
+                        etiqueta="Antes"
+                        foto={t.antes}
+                        onSeleccionar={(f) => ponerFoto(t.key, "antes", f)}
+                        onQuitar={() => quitarFoto(t.key, "antes")}
+                        disabled={isPending}
+                      />
+                      <FotoTrabajo
+                        etiqueta="Después"
+                        foto={t.despues}
+                        onSeleccionar={(f) => ponerFoto(t.key, "despues", f)}
+                        onQuitar={() => quitarFoto(t.key, "despues")}
+                        disabled={isPending}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          {/* Borrador de repuestos (opcional). Editable mientras la OT siga "Por
+            <div className="space-y-1">
+              <Label htmlFor="Observaciones">Observaciones</Label>
+              <Input id="Observaciones" placeholder="Opcional" {...register("Observaciones")} />
+            </div>
+
+            {/* Borrador de repuestos (opcional). Editable mientras la OT siga "Por
               aprobar"; el stock se descuenta al aprobar. En edición viene
               precargado desde la orden. */}
-          <div className="space-y-3 rounded-md border p-3">
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-              <input
-                type="checkbox"
-                className="h-4 w-4"
-                checked={conConsumo}
-                onChange={(e) => setConConsumo(e.target.checked)}
-              />
-              Repuestos utilizados (opcional)
-            </label>
-            {conConsumo ? (
-              <EditorConsumoRepuestos estado={consumo} onChange={setConsumo} />
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {modoEdicion
-                  ? "Marca la opción para registrar o corregir los repuestos usados. El stock se descuenta al aprobar la orden."
-                  : "Si se usaron repuestos, regístralos acá; el stock se descuenta al aprobar la orden. Puedes agregarlos o corregirlos después, mientras la orden siga por aprobar."}
-              </p>
-            )}
-          </div>
+            <div className="space-y-3 rounded-md border p-3">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={conConsumo}
+                  onChange={(e) => setConConsumo(e.target.checked)}
+                />
+                Repuestos utilizados (opcional)
+              </label>
+              {conConsumo ? (
+                <EditorConsumoRepuestos estado={consumo} onChange={setConsumo} />
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {modoEdicion
+                    ? "Marca la opción para registrar o corregir los repuestos usados. El stock se descuenta al aprobar la orden."
+                    : "Si se usaron repuestos, regístralos acá; el stock se descuenta al aprobar la orden. Puedes agregarlos o corregirlos después, mientras la orden siga por aprobar."}
+                </p>
+              )}
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             {!modoEdicion && (

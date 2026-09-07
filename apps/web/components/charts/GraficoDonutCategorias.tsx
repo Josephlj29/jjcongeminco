@@ -13,14 +13,10 @@ interface DatoDonut {
 interface GraficoDonutCategoriasProps {
   datos: DatoDonut[];
   className?: string;
-  height?: number;
+  height?: number | string;
 }
 
-export function GraficoDonutCategorias({
-  datos,
-  className,
-  height = 300,
-}: GraficoDonutCategoriasProps) {
+export function GraficoDonutCategorias({ datos, className, height }: GraficoDonutCategoriasProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const total = useMemo(() => datos.reduce((sum, d) => sum + d.valor, 0), [datos]);

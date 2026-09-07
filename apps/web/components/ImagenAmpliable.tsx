@@ -17,7 +17,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Package, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogBody, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface ImagenAmpliableProps {
   url: string | null;
@@ -76,10 +76,10 @@ export function ImagenAmpliable({ url, size, alt = "", nombre, className }: Imag
     if (!r || typeof window === "undefined") return;
     let x = r.right + 12;
     if (x + PREVIEW > window.innerWidth) x = r.left - PREVIEW - 12; // voltea a la izquierda
-    if (x < 8) x = 8;
+    x = Math.max(8, Math.min(x, window.innerWidth - PREVIEW - 8));
     let y = r.top;
     if (y + PREVIEW + 28 > window.innerHeight) y = window.innerHeight - PREVIEW - 36;
-    if (y < 8) y = 8;
+    y = Math.max(8, Math.min(y, window.innerHeight - PREVIEW - 8));
     setCoords({ x, y });
   };
 
@@ -154,7 +154,7 @@ export function ImagenAmpliable({ url, size, alt = "", nombre, className }: Imag
         typeof document !== "undefined" &&
         createPortal(
           <div
-            className="pointer-events-none fixed z-[80] hidden animate-in fade-in-0 zoom-in-95 sm:block"
+            className="pointer-events-none fixed z-[60] hidden animate-in fade-in-0 zoom-in-95 sm:block"
             style={{ left: coords.x, top: coords.y }}
           >
             <div className="overflow-hidden rounded-lg border bg-background shadow-xl">
@@ -168,32 +168,34 @@ export function ImagenAmpliable({ url, size, alt = "", nombre, className }: Imag
 
       {/* Lightbox a pantalla (doble clic) */}
       <Dialog open={lightbox} onOpenChange={setLightbox}>
-        <DialogContent className="max-w-[95vw] overflow-hidden p-0 sm:max-w-3xl">
+        <DialogContent size="full">
           <DialogTitle className="sr-only">{nombre ?? "Imagen del producto"}</DialogTitle>
-          <div
-            className={cn(
-              "flex max-h-[85vh] items-center justify-center bg-muted/40",
-              zoom ? "overflow-auto" : "overflow-hidden",
-            )}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={url}
-              alt={alt}
-              onClick={() => setZoom((z) => !z)}
+          <DialogBody className="relative p-0 sm:p-0">
+            <div
               className={cn(
-                "select-none transition-transform duration-200",
-                zoom
-                  ? "max-w-none origin-center scale-[1.75] cursor-zoom-out"
-                  : "max-h-[85vh] w-auto cursor-zoom-in object-contain",
+                "flex max-h-[calc(100dvh-2rem)] min-h-[40dvh] items-center justify-center bg-muted/40",
+                zoom ? "overflow-auto" : "overflow-hidden",
               )}
-            />
-          </div>
-          {nombre && (
-            <p className="absolute bottom-0 left-0 right-0 truncate bg-background/90 px-4 py-2 text-sm font-medium backdrop-blur">
-              {nombre}
-            </p>
-          )}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={url}
+                alt={alt}
+                onClick={() => setZoom((z) => !z)}
+                className={cn(
+                  "select-none",
+                  zoom
+                    ? "w-[175%] max-w-none cursor-zoom-out"
+                    : "max-h-[calc(100dvh-2rem)] w-auto cursor-zoom-in object-contain",
+                )}
+              />
+            </div>
+            {nombre && (
+              <p className="absolute bottom-0 left-0 right-0 truncate bg-background/90 px-4 py-2 text-sm font-medium backdrop-blur">
+                {nombre}
+              </p>
+            )}
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </>

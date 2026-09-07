@@ -73,6 +73,8 @@ export function ProductoCombobox({
       placeholder={placeholder}
       buscarPlaceholder="Buscar por nombre, SKU o cód. proveedor..."
       className="h-auto min-h-10 px-3 py-2"
+      /* La lista muestra imagen + SKU + nombre + stock: en una celda angosta se truncaba todo. */
+      popoverClassName="sm:min-w-[420px]"
       renderSeleccion={(o) => {
         const p = porId.get(o.value);
         return (

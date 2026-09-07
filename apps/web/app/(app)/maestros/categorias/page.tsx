@@ -44,6 +44,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -101,57 +102,63 @@ function DialogCategoria({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar categoría" : "Nueva categoría"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="Codigo">Código *</Label>
-              <Input id="Codigo" placeholder="CAT-001" {...register("Codigo")} />
-              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="Codigo">Código *</Label>
+                <Input id="Codigo" placeholder="CAT-001" {...register("Codigo")} />
+                {errors.Codigo && (
+                  <p className="text-xs text-destructive">{errors.Codigo.message}</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="Nombre">Nombre *</Label>
+                <Input id="Nombre" placeholder="Filtros" {...register("Nombre")} />
+                {errors.Nombre && (
+                  <p className="text-xs text-destructive">{errors.Nombre.message}</p>
+                )}
+              </div>
             </div>
+
             <div className="space-y-1">
-              <Label htmlFor="Nombre">Nombre *</Label>
-              <Input id="Nombre" placeholder="Filtros" {...register("Nombre")} />
-              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
+              <Label>Familia padre</Label>
+              <Select
+                value={idPadre ?? SIN_PADRE}
+                onValueChange={(v) => setValue("IdCategoriaPadre", v === SIN_PADRE ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Ninguna (familia raíz)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SIN_PADRE}>Ninguna (familia raíz)</SelectItem>
+                  {categorias
+                    .filter((c) => c.Id !== categoria?.Id)
+                    .map((c) => (
+                      <SelectItem key={c.Id} value={c.Id}>
+                        {c.Codigo} — {c.Nombre}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] leading-tight text-muted-foreground">
+                Dejala vacía si es una familia de nivel superior.
+              </p>
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label>Familia padre</Label>
-            <Select
-              value={idPadre ?? SIN_PADRE}
-              onValueChange={(v) => setValue("IdCategoriaPadre", v === SIN_PADRE ? null : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Ninguna (familia raíz)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SIN_PADRE}>Ninguna (familia raíz)</SelectItem>
-                {categorias
-                  .filter((c) => c.Id !== categoria?.Id)
-                  .map((c) => (
-                    <SelectItem key={c.Id} value={c.Id}>
-                      {c.Codigo} — {c.Nombre}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] leading-tight text-muted-foreground">
-              Dejala vacía si es una familia de nivel superior.
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="Descripcion">Descripción</Label>
-            <Input
-              id="Descripcion"
-              placeholder="Descripción opcional"
-              {...register("Descripcion")}
-            />
-          </div>
+            <div className="space-y-1">
+              <Label htmlFor="Descripcion">Descripción</Label>
+              <Input
+                id="Descripcion"
+                placeholder="Descripción opcional"
+                {...register("Descripcion")}
+              />
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

@@ -13,6 +13,7 @@ import type { PrecioHistoricoConProveedor } from "@congeminco/shared";
 import { usePreciosProducto } from "@/hooks/usePreciosProducto";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -64,7 +65,7 @@ export function DialogHistorialPrecios({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>Historial de precios</DialogTitle>
           <DialogDescription>
@@ -74,76 +75,78 @@ export function DialogHistorialPrecios({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-9" />
-            ))}
-          </div>
-        ) : !precios?.length ? (
-          <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-            Este producto no tiene historial de precios registrado.
-          </div>
-        ) : (
-          <div className="max-h-[60vh] overflow-y-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Costo</TableHead>
-                  <TableHead className="text-right">Promedio result.</TableHead>
-                  <TableHead>Proveedor</TableHead>
-                  <TableHead>Origen</TableHead>
-                  <TableHead className="text-right">Remanente</TableHead>
-                  <TableHead className="w-28" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {precios.map((p) => (
-                  <TableRow key={p.Id} className={p.TieneStock ? "" : "opacity-50"}>
-                    <TableCell className="whitespace-nowrap text-xs">
-                      {fechaCorta(p.FechaPrecio)}
-                    </TableCell>
-                    <TableCell className="text-right text-xs font-medium">
-                      S/ {p.Costo.toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground">
-                      S/ {p.CostoPromedio.toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-xs">{p.NombreProveedor ?? "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={ORIGEN_VARIANTE[p.Origen]}>{ORIGEN_LABEL[p.Origen]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-xs">
-                      {p.TieneStock ? (
-                        <span className="font-medium">{p.CantidadRemanente}</span>
-                      ) : (
-                        <Badge variant="secondary">Agotado</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {p.TieneStock ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            onUsarPrecio(p.Costo);
-                            onOpenChange(false);
-                          }}
-                        >
-                          Usar este precio
-                        </Button>
-                      ) : (
-                        <span className="text-[11px] text-muted-foreground">Sin stock</span>
-                      )}
-                    </TableCell>
+        <DialogBody>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-9" />
+              ))}
+            </div>
+          ) : !precios?.length ? (
+            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+              Este producto no tiene historial de precios registrado.
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table className="min-w-[640px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead className="text-right">Costo</TableHead>
+                    <TableHead className="text-right">Promedio result.</TableHead>
+                    <TableHead>Proveedor</TableHead>
+                    <TableHead>Origen</TableHead>
+                    <TableHead className="text-right">Remanente</TableHead>
+                    <TableHead className="w-28" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                </TableHeader>
+                <TableBody>
+                  {precios.map((p) => (
+                    <TableRow key={p.Id} className={p.TieneStock ? "" : "opacity-50"}>
+                      <TableCell className="whitespace-nowrap text-xs">
+                        {fechaCorta(p.FechaPrecio)}
+                      </TableCell>
+                      <TableCell className="text-right text-xs font-medium">
+                        S/ {p.Costo.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        S/ {p.CostoPromedio.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-xs">{p.NombreProveedor ?? "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant={ORIGEN_VARIANTE[p.Origen]}>{ORIGEN_LABEL[p.Origen]}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-xs">
+                        {p.TieneStock ? (
+                          <span className="font-medium">{p.CantidadRemanente}</span>
+                        ) : (
+                          <Badge variant="secondary">Agotado</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {p.TieneStock ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              onUsarPrecio(p.Costo);
+                              onOpenChange(false);
+                            }}
+                          >
+                            Usar este precio
+                          </Button>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">Sin stock</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

@@ -15,6 +15,7 @@ import { AlertTriangle, Loader2, ShieldAlert } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -89,10 +90,10 @@ export function DialogEliminar({
           <AlertDialogHeader>
             <AlertDialogTitle>Verificando dependencias...</AlertDialogTitle>
           </AlertDialogHeader>
-          <div className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
+          <AlertDialogBody className="flex items-center gap-3 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Consultando datos enlazados a &quot;{nombre}&quot;...
-          </div>
+          </AlertDialogBody>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
@@ -138,18 +139,20 @@ export function DialogEliminar({
             </AlertDialogDescription>
           </AlertDialogHeader>
           {items.length > 0 && (
-            <ul className="space-y-1 rounded-md border bg-muted/50 px-4 py-3 text-sm">
-              {items.map(({ etiqueta, valor }) => (
-                <li key={etiqueta} className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{etiqueta}</span>
-                  <span className="font-semibold tabular-nums">{valor}</span>
+            <AlertDialogBody>
+              <ul className="space-y-1 rounded-md border bg-muted/50 px-4 py-3 text-sm">
+                {items.map(({ etiqueta, valor }) => (
+                  <li key={etiqueta} className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{etiqueta}</span>
+                    <span className="font-semibold tabular-nums">{valor}</span>
+                  </li>
+                ))}
+                <li className="flex items-center justify-between border-t pt-1 font-semibold">
+                  <span>Total</span>
+                  <span>{deps.total}</span>
                 </li>
-              ))}
-              <li className="flex items-center justify-between border-t pt-1 font-semibold">
-                <span>Total</span>
-                <span>{deps.total}</span>
-              </li>
-            </ul>
+              </ul>
+            </AlertDialogBody>
           )}
           <AlertDialogFooter>
             {/* Solo botón Cerrar — no se puede confirmar la eliminación */}

@@ -70,6 +70,11 @@ interface DataTableProps<T> {
   acciones?: AccionFila<T>[];
   /** Filas por página. 0 = sin paginar. */
   tamañoPagina?: number;
+  /**
+   * Ancho mínimo de la tabla en px. Por debajo, el contenedor hace scroll
+   * horizontal en vez de aplastar las celdas. Default: 640 si hay 5+ columnas.
+   */
+  anchoMinimo?: number;
   onClickFila?: (fila: T) => void;
   className?: string;
 }
@@ -90,6 +95,7 @@ export function DataTable<T>({
   vacio,
   acciones,
   tamañoPagina = 10,
+  anchoMinimo,
   onClickFila,
   className,
 }: DataTableProps<T>) {
@@ -100,11 +106,12 @@ export function DataTable<T>({
   const hayAcciones = (acciones?.length ?? 0) > 0;
   const totalColumnas = columnas.length + (hayAcciones ? 1 : 0);
   const filasSkeleton = tamañoPagina > 0 ? Math.min(tamañoPagina, 6) : 6;
+  const minWidth = anchoMinimo ?? (columnas.length >= 5 ? 640 : undefined);
 
   return (
     <div className={cn("space-y-4", className)}>
       <div className="rounded-lg border">
-        <Table>
+        <Table style={minWidth ? { minWidth } : undefined}>
           <TableHeader>
             <TableRow>
               {columnas.map((col) => (
@@ -213,7 +220,12 @@ function MenuAcciones<T>({ fila, acciones }: { fila: T; acciones: AccionFila<T>[
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Abrir menú de acciones">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 md:h-8 md:w-8"
+          aria-label="Abrir menú de acciones"
+        >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

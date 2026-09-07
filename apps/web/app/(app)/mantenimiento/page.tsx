@@ -393,7 +393,7 @@ export default function MantenimientoPage() {
 
               {/* Desktop: tabla densa */}
               <div className="hidden rounded-lg border md:block">
-                <Table>
+                <Table className="min-w-[880px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>

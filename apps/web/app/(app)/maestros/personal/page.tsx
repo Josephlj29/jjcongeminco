@@ -45,6 +45,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -103,73 +104,77 @@ function DialogPersonal({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar personal" : "Nuevo personal"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="NombreCompleto">Nombre completo *</Label>
-            <Input id="NombreCompleto" placeholder="Juan Pérez" {...register("NombreCompleto")} />
-            {errors.NombreCompleto && (
-              <p className="text-xs text-destructive">{errors.NombreCompleto.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="Dni">DNI</Label>
-              <Input id="Dni" placeholder="Opcional" {...register("Dni")} />
+              <Label htmlFor="NombreCompleto">Nombre completo *</Label>
+              <Input id="NombreCompleto" placeholder="Juan Pérez" {...register("NombreCompleto")} />
+              {errors.NombreCompleto && (
+                <p className="text-xs text-destructive">{errors.NombreCompleto.message}</p>
+              )}
             </div>
+
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="Dni">DNI</Label>
+                <Input id="Dni" placeholder="Opcional" {...register("Dni")} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="Telefono">Teléfono</Label>
+                <Input id="Telefono" placeholder="Opcional" {...register("Telefono")} />
+              </div>
+            </div>
+
             <div className="space-y-1">
-              <Label htmlFor="Telefono">Teléfono</Label>
-              <Input id="Telefono" placeholder="Opcional" {...register("Telefono")} />
+              <Label>Cargo *</Label>
+              <Select
+                value={idCargo ?? ""}
+                onValueChange={(v) => setValue("IdCargo", v, { shouldValidate: true })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar cargo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {cargos?.map((c) => (
+                    <SelectItem key={c.Id} value={c.Id}>
+                      {c.Nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.IdCargo && (
+                <p className="text-xs text-destructive">{errors.IdCargo.message}</p>
+              )}
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label>Cargo *</Label>
-            <Select
-              value={idCargo ?? ""}
-              onValueChange={(v) => setValue("IdCargo", v, { shouldValidate: true })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar cargo..." />
-              </SelectTrigger>
-              <SelectContent>
-                {cargos?.map((c) => (
-                  <SelectItem key={c.Id} value={c.Id}>
-                    {c.Nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.IdCargo && <p className="text-xs text-destructive">{errors.IdCargo.message}</p>}
-          </div>
-
-          <div className="space-y-1">
-            <Label>Usuario de acceso (opcional)</Label>
-            <Select
-              value={idUsuario ?? SIN_USUARIO}
-              onValueChange={(v) => setValue("IdUsuario", v === SIN_USUARIO ? null : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sin login" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={SIN_USUARIO}>Sin login (solo solicitante)</SelectItem>
-                {usuarios?.map((u) => (
-                  <SelectItem key={u.Id} value={u.Id}>
-                    {u.NombreCompleto}
-                    {u.Rol ? ` · ${u.Rol}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] leading-tight text-muted-foreground">
-              Vincula solo si esta persona entra al sistema; su rol de acceso sale del usuario.
-            </p>
-          </div>
+            <div className="space-y-1">
+              <Label>Usuario de acceso (opcional)</Label>
+              <Select
+                value={idUsuario ?? SIN_USUARIO}
+                onValueChange={(v) => setValue("IdUsuario", v === SIN_USUARIO ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin login" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SIN_USUARIO}>Sin login (solo solicitante)</SelectItem>
+                  {usuarios?.map((u) => (
+                    <SelectItem key={u.Id} value={u.Id}>
+                      {u.NombreCompleto}
+                      {u.Rol ? ` · ${u.Rol}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] leading-tight text-muted-foreground">
+                Vincula solo si esta persona entra al sistema; su rol de acceso sale del usuario.
+              </p>
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

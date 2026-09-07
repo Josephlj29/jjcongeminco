@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -99,7 +100,7 @@ export function DialogCatalogarProducto({
 
   return (
     <Dialog open={!!linea} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Registrar producto en el catálogo</DialogTitle>
           <DialogDescription>
@@ -107,96 +108,95 @@ export function DialogCatalogarProducto({
           </DialogDescription>
         </DialogHeader>
 
-        {linea && (
-          <div className="space-y-4">
-            {linea.UrlFotoLibre && (
-              <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-2">
-                <ImagenAmpliable
-                  url={linea.UrlFotoLibre}
-                  size={72}
-                  nombre={linea.DescripcionLibre ?? undefined}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Esta foto quedará como imagen principal del producto.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <Label htmlFor="nombreProducto">Nombre *</Label>
-              <Input
-                id="nombreProducto"
-                maxLength={200}
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label>SKU</Label>
-              <div className="flex h-10 items-center rounded-md border bg-muted px-3 font-mono text-sm text-muted-foreground">
-                Se genera automáticamente
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label>Categoría *</Label>
-                <Combobox
-                  opciones={(categorias ?? []).map((c) => ({ value: c.Id, label: c.Nombre }))}
-                  value={idCategoria}
-                  onChange={setIdCategoria}
-                  placeholder="Seleccionar..."
-                  buscarPlaceholder="Buscar categoría..."
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Unidad de medida *</Label>
-                <Combobox
-                  opciones={(unidades ?? []).map((u) => ({
-                    value: u.Id,
-                    label: u.Nombre,
-                    codigo: u.Codigo,
-                  }))}
-                  value={idUnidad}
-                  onChange={setIdUnidad}
-                  placeholder="Seleccionar..."
-                  buscarPlaceholder="Buscar por código o nombre..."
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2 rounded-md border p-3">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <Checkbox
-                  checked={esGeneral}
-                  onCheckedChange={(c) => setEsGeneral(c === true)}
-                />
-                Producto general (compatible con cualquier equipo)
-              </label>
-              {!esGeneral && (
-                <div className="max-h-40 space-y-1 overflow-y-auto pt-1">
-                  {(tipos ?? []).map((t) => (
-                    <label key={t.Id} className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={idsTipo.includes(t.Id)}
-                        onCheckedChange={() => toggleTipo(t.Id)}
-                      />
-                      {t.Nombre}
-                    </label>
-                  ))}
-                  {!tipos?.length && (
-                    <p className="text-xs text-muted-foreground">No hay tipos de equipo.</p>
-                  )}
+        <DialogBody>
+          {linea && (
+            <div className="space-y-4">
+              {linea.UrlFotoLibre && (
+                <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-2">
+                  <ImagenAmpliable
+                    url={linea.UrlFotoLibre}
+                    size={72}
+                    nombre={linea.DescripcionLibre ?? undefined}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Esta foto quedará como imagen principal del producto.
+                  </p>
                 </div>
               )}
-            </div>
 
-            <p className="text-xs text-muted-foreground">
-              El stock mínimo se calcula automáticamente según la flota (equipos compatibles).
-            </p>
-          </div>
-        )}
+              <div className="space-y-1">
+                <Label htmlFor="nombreProducto">Nombre *</Label>
+                <Input
+                  id="nombreProducto"
+                  maxLength={200}
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label>SKU</Label>
+                <div className="flex h-10 items-center rounded-md border bg-muted px-3 font-mono text-sm text-muted-foreground">
+                  Se genera automáticamente
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label>Categoría *</Label>
+                  <Combobox
+                    opciones={(categorias ?? []).map((c) => ({ value: c.Id, label: c.Nombre }))}
+                    value={idCategoria}
+                    onChange={setIdCategoria}
+                    placeholder="Seleccionar..."
+                    buscarPlaceholder="Buscar categoría..."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Unidad de medida *</Label>
+                  <Combobox
+                    opciones={(unidades ?? []).map((u) => ({
+                      value: u.Id,
+                      label: u.Nombre,
+                      codigo: u.Codigo,
+                    }))}
+                    value={idUnidad}
+                    onChange={setIdUnidad}
+                    placeholder="Seleccionar..."
+                    buscarPlaceholder="Buscar por código o nombre..."
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-md border p-3">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <Checkbox checked={esGeneral} onCheckedChange={(c) => setEsGeneral(c === true)} />
+                  Producto general (compatible con cualquier equipo)
+                </label>
+                {!esGeneral && (
+                  <div className="max-h-40 space-y-1 overflow-y-auto pt-1">
+                    {(tipos ?? []).map((t) => (
+                      <label key={t.Id} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={idsTipo.includes(t.Id)}
+                          onCheckedChange={() => toggleTipo(t.Id)}
+                        />
+                        {t.Nombre}
+                      </label>
+                    ))}
+                    {!tipos?.length && (
+                      <p className="text-xs text-muted-foreground">No hay tipos de equipo.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                El stock mínimo se calcula automáticamente según la flota (equipos compatibles).
+              </p>
+            </div>
+          )}
+        </DialogBody>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>

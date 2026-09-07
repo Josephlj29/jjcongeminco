@@ -499,7 +499,7 @@ export default function MovimientosPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         titulo="Movimientos"
         descripcion="Registra entradas, salidas y transferencias de inventario"
@@ -515,7 +515,7 @@ export default function MovimientosPage() {
             <CardTitle className="text-base">Documento</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1">
                 <Label>Tipo de documento</Label>
                 <Select
@@ -580,7 +580,7 @@ export default function MovimientosPage() {
               <CardTitle className="text-base">Ubicaciones</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-2">
                 {(esTransferencia || !esEntrada) && (
                   <div className="space-y-1">
                     <Label>Ubicación origen</Label>
@@ -682,7 +682,7 @@ export default function MovimientosPage() {
 
         {/* ── Sección: Detalle ── */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
             <CardTitle className="text-base">Detalle</CardTitle>
             <Button
               type="button"
@@ -696,8 +696,8 @@ export default function MovimientosPage() {
           </CardHeader>
           <CardContent>
             <Separator className="mb-4" />
-            <div className="overflow-x-auto rounded-md border">
-              <Table>
+            <div className="rounded-md border">
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-64">Producto</TableHead>

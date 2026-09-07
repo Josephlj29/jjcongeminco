@@ -41,6 +41,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -106,48 +107,52 @@ function DialogUbicacion({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar ubicación" : "Nueva ubicación"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="Codigo">Código *</Label>
-              <Input id="Codigo" placeholder="ALM-001" {...register("Codigo")} />
-              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="Codigo">Código *</Label>
+                <Input id="Codigo" placeholder="ALM-001" {...register("Codigo")} />
+                {errors.Codigo && (
+                  <p className="text-xs text-destructive">{errors.Codigo.message}</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label>Tipo *</Label>
+                <Select
+                  defaultValue={ubicacion?.Tipo ?? "proyecto"}
+                  onValueChange={(v) => setValue("Tipo", v as CrearUbicacion["Tipo"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPO_UBICACION.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {ETIQUETA_TIPO[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.Tipo && <p className="text-xs text-destructive">{errors.Tipo.message}</p>}
+              </div>
             </div>
+
             <div className="space-y-1">
-              <Label>Tipo *</Label>
-              <Select
-                defaultValue={ubicacion?.Tipo ?? "proyecto"}
-                onValueChange={(v) => setValue("Tipo", v as CrearUbicacion["Tipo"])}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPO_UBICACION.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {ETIQUETA_TIPO[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.Tipo && <p className="text-xs text-destructive">{errors.Tipo.message}</p>}
+              <Label htmlFor="Nombre">Nombre *</Label>
+              <Input id="Nombre" placeholder="Almacén principal" {...register("Nombre")} />
+              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="Nombre">Nombre *</Label>
-            <Input id="Nombre" placeholder="Almacén principal" {...register("Nombre")} />
-            {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="Direccion">Dirección</Label>
-            <Input id="Direccion" placeholder="Av. ejemplo 123" {...register("Direccion")} />
-          </div>
+            <div className="space-y-1">
+              <Label htmlFor="Direccion">Dirección</Label>
+              <Input id="Direccion" placeholder="Av. ejemplo 123" {...register("Direccion")} />
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

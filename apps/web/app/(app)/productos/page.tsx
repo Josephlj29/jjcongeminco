@@ -75,6 +75,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -393,261 +394,264 @@ function DialogProducto({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{esEdicion ? "Editar producto" : "Nuevo producto"}</DialogTitle>
         </DialogHeader>
         {cargandoEdicion ? (
-          <div className="space-y-4">
+          <DialogBody className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-10" />
             ))}
-          </div>
+          </DialogBody>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {borrador.restaurado && (
-              <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label>SKU</Label>
-                {esEdicion ? (
-                  <Input readOnly className="bg-muted font-mono" {...register("Sku")} />
-                ) : (
-                  <>
-                    <div className="flex min-h-9 items-center rounded-md border bg-muted px-3 py-1 text-sm">
-                      {skuArmado ? (
-                        <span className="font-mono font-medium">{skuArmado}</span>
-                      ) : (
-                        <span className="text-muted-foreground">Elige una categoría…</span>
-                      )}
-                    </div>
-                    <p className="text-[11px] leading-tight text-muted-foreground">
-                      Se asigna automáticamente al guardar.
-                    </p>
-                  </>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="StockMinimo">Stock mínimo</Label>
-                {/* Sin atajos: acá no se piden fracciones de envase, pero el
-                    campo comparte el parseo (acepta 1,5 y 100/4). */}
-                <Controller
-                  control={control}
-                  name="StockMinimo"
-                  render={({ field: f }) => (
-                    <InputCantidad
-                      id="StockMinimo"
-                      value={f.value ?? null}
-                      onChange={(n) => f.onChange(n ?? 0)}
-                      onBlur={f.onBlur}
-                      min={0}
-                      atajos={false}
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="Nombre">Nombre</Label>
-              <Input id="Nombre" placeholder="Descripción del producto" {...register("Nombre")} />
-              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label>Categoría</Label>
-                <Combobox
-                  opciones={(categorias ?? []).map((c) => ({
-                    value: c.Id,
-                    label: c.Nombre,
-                  }))}
-                  value={idCategoria || null}
-                  onChange={(v) => setValue("IdCategoria", v ?? "", { shouldValidate: true })}
-                  permitirLimpiar={false}
-                  buscarPlaceholder="Buscar categoría..."
-                  vacioTexto="No se encontraron categorías."
-                />
-                {errors.IdCategoria && (
-                  <p className="text-xs text-destructive">{errors.IdCategoria.message}</p>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label>Unidad de medida</Label>
-                <Combobox
-                  opciones={(unidades ?? []).map((u) => ({
-                    value: u.Id,
-                    label: u.Nombre,
-                    codigo: u.Codigo,
-                  }))}
-                  value={idUnidad || null}
-                  onChange={(v) => setValue("IdUnidadMedida", v ?? "", { shouldValidate: true })}
-                  permitirLimpiar={false}
-                  buscarPlaceholder="Buscar por código o nombre..."
-                  vacioTexto="No se encontraron unidades."
-                />
-                {errors.IdUnidadMedida && (
-                  <p className="text-xs text-destructive">{errors.IdUnidadMedida.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="CodigoProductoProveedor">Código del proveedor</Label>
-                <Input
-                  id="CodigoProductoProveedor"
-                  placeholder="Ej. X123"
-                  {...register("CodigoProductoProveedor")}
-                />
-                <p className="text-[11px] leading-tight text-muted-foreground">
-                  Con el que el proveedor identifica el producto (para comprar).
-                </p>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="CodigoBarra">Código de barra (opcional)</Label>
-                <Input id="CodigoBarra" {...register("CodigoBarra")} />
-              </div>
-            </div>
-
-            {/* Compatibilidad: general o tipos específicos */}
-            <div className="space-y-2 rounded-lg border p-3">
-              <Label>¿A qué equipos aplica?</Label>
-              <button
-                type="button"
-                onClick={() => setValue("EsGeneral", !esGeneral, { shouldValidate: true })}
-                className="flex w-full items-center gap-2 text-left text-sm"
-              >
-                <span
-                  className={`flex h-4 w-4 items-center justify-center rounded border text-xs font-bold ${
-                    esGeneral
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-muted-foreground/40"
-                  }`}
-                >
-                  {esGeneral && "✓"}
-                </span>
-                <span>General — compatible con todos los equipos</span>
-              </button>
-
-              {!esGeneral && (
-                <div className="space-y-1 pt-1">
-                  <p className="text-xs text-muted-foreground">
-                    Selecciona los tipos de equipo compatibles:
-                  </p>
-                  <Command className="rounded-lg border">
-                    <CommandInput placeholder="Buscar tipo..." />
-                    <CommandList>
-                      <CommandEmpty>No se encontraron tipos.</CommandEmpty>
-                      <CommandGroup>
-                        {tipos?.map((tipo) => {
-                          const activo = idsTipo.includes(tipo.Id);
-                          return (
-                            <CommandItem
-                              key={tipo.Id}
-                              value={tipo.Nombre}
-                              onSelect={() => toggleTipo(tipo.Id)}
-                              className="flex cursor-pointer items-center gap-2"
-                            >
-                              <span
-                                className={`flex h-4 w-4 items-center justify-center rounded border text-xs font-bold ${
-                                  activo
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-muted-foreground/40"
-                                }`}
-                              >
-                                {activo && "✓"}
-                              </span>
-                              <span className="flex-1">{tipo.Nombre}</span>
-                              <span className="font-mono text-xs text-muted-foreground">
-                                {tipo.Codigo}
-                              </span>
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                  {idsTipo.length === 0 && (
-                    <p className="text-xs text-destructive">
-                      Elige al menos un tipo, o marca el producto como general.
-                    </p>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <DialogBody className="space-y-4">
+              {borrador.restaurado && (
+                <AvisoBorrador guardadoEn={borrador.guardadoEn} onDescartar={limpiarTodo} />
+              )}
+              <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label>SKU</Label>
+                  {esEdicion ? (
+                    <Input readOnly className="bg-muted font-mono" {...register("Sku")} />
+                  ) : (
+                    <>
+                      <div className="flex min-h-9 items-center rounded-md border bg-muted px-3 py-1 text-sm">
+                        {skuArmado ? (
+                          <span className="font-mono font-medium">{skuArmado}</span>
+                        ) : (
+                          <span className="text-muted-foreground">Elige una categoría…</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] leading-tight text-muted-foreground">
+                        Se asigna automáticamente al guardar.
+                      </p>
+                    </>
                   )}
                 </div>
-              )}
-            </div>
-
-            {esEdicion ? (
-              <p className="text-xs text-muted-foreground">
-                Las imágenes (hasta {MAX_IMAGENES_PRODUCTO}) se gestionan desde la acción
-                &quot;Imágenes&quot; del producto.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                <Label>
-                  Imágenes{" "}
-                  <span className="font-normal text-muted-foreground">
-                    (opcional, hasta {MAX_IMAGENES_PRODUCTO})
-                  </span>
-                </Label>
-                {archivos.length > 0 && (
-                  <div className="flex flex-wrap gap-3 md:gap-2">
-                    {archivos.map((a, i) => (
-                      <div key={a.url} className="relative">
-                        {/* Miniatura ampliable (doble clic / mantener presionado). */}
-                        <ImagenAmpliable url={a.url} size={72} alt={`Imagen ${i + 1}`} />
-                        {i === 0 && (
-                          <Badge className="absolute -bottom-1 left-0 scale-75" variant="default">
-                            Principal
-                          </Badge>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => quitarArchivo(i)}
-                          className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive md:h-5 md:w-5"
-                          aria-label="Quitar imagen"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 md:h-3 md:w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {archivos.length < MAX_IMAGENES_PRODUCTO && (
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
-                    <label className="flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:min-h-0 md:p-3">
-                      <ImageIcon className="h-4 w-4 shrink-0" />
-                      Agregar imágenes
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={agregarArchivos}
+                <div className="space-y-1">
+                  <Label htmlFor="StockMinimo">Stock mínimo</Label>
+                  {/* Sin atajos: acá no se piden fracciones de envase, pero el
+                      campo comparte el parseo (acepta 1,5 y 100/4). */}
+                  <Controller
+                    control={control}
+                    name="StockMinimo"
+                    render={({ field: f }) => (
+                      <InputCantidad
+                        id="StockMinimo"
+                        value={f.value ?? null}
+                        onChange={(n) => f.onChange(n ?? 0)}
+                        onBlur={f.onBlur}
+                        min={0}
+                        atajos={false}
                       />
-                    </label>
-                    {/* capture abre la cámara directo en Android/iOS; en desktop no aplica. */}
-                    <label className="flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:hidden">
-                      <Camera className="h-4 w-4 shrink-0" />
-                      Tomar foto
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        onChange={agregarArchivos}
-                      />
-                    </label>
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Se suben al crear el producto. También puedes gestionarlas después desde la acción
-                  &quot;Imágenes&quot;.
-                </p>
+                    )}
+                  />
+                </div>
               </div>
-            )}
 
+              <div className="space-y-1">
+                <Label htmlFor="Nombre">Nombre</Label>
+                <Input id="Nombre" placeholder="Descripción del producto" {...register("Nombre")} />
+                {errors.Nombre && (
+                  <p className="text-xs text-destructive">{errors.Nombre.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label>Categoría</Label>
+                  <Combobox
+                    opciones={(categorias ?? []).map((c) => ({
+                      value: c.Id,
+                      label: c.Nombre,
+                    }))}
+                    value={idCategoria || null}
+                    onChange={(v) => setValue("IdCategoria", v ?? "", { shouldValidate: true })}
+                    permitirLimpiar={false}
+                    buscarPlaceholder="Buscar categoría..."
+                    vacioTexto="No se encontraron categorías."
+                  />
+                  {errors.IdCategoria && (
+                    <p className="text-xs text-destructive">{errors.IdCategoria.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <Label>Unidad de medida</Label>
+                  <Combobox
+                    opciones={(unidades ?? []).map((u) => ({
+                      value: u.Id,
+                      label: u.Nombre,
+                      codigo: u.Codigo,
+                    }))}
+                    value={idUnidad || null}
+                    onChange={(v) => setValue("IdUnidadMedida", v ?? "", { shouldValidate: true })}
+                    permitirLimpiar={false}
+                    buscarPlaceholder="Buscar por código o nombre..."
+                    vacioTexto="No se encontraron unidades."
+                  />
+                  {errors.IdUnidadMedida && (
+                    <p className="text-xs text-destructive">{errors.IdUnidadMedida.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="CodigoProductoProveedor">Código del proveedor</Label>
+                  <Input
+                    id="CodigoProductoProveedor"
+                    placeholder="Ej. X123"
+                    {...register("CodigoProductoProveedor")}
+                  />
+                  <p className="text-[11px] leading-tight text-muted-foreground">
+                    Con el que el proveedor identifica el producto (para comprar).
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="CodigoBarra">Código de barra (opcional)</Label>
+                  <Input id="CodigoBarra" {...register("CodigoBarra")} />
+                </div>
+              </div>
+
+              {/* Compatibilidad: general o tipos específicos */}
+              <div className="space-y-2 rounded-lg border p-3">
+                <Label>¿A qué equipos aplica?</Label>
+                <button
+                  type="button"
+                  onClick={() => setValue("EsGeneral", !esGeneral, { shouldValidate: true })}
+                  className="flex w-full items-center gap-2 text-left text-sm"
+                >
+                  <span
+                    className={`flex h-4 w-4 items-center justify-center rounded border text-xs font-bold ${
+                      esGeneral
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {esGeneral && "✓"}
+                  </span>
+                  <span>General — compatible con todos los equipos</span>
+                </button>
+
+                {!esGeneral && (
+                  <div className="space-y-1 pt-1">
+                    <p className="text-xs text-muted-foreground">
+                      Selecciona los tipos de equipo compatibles:
+                    </p>
+                    <Command className="rounded-lg border">
+                      <CommandInput placeholder="Buscar tipo..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontraron tipos.</CommandEmpty>
+                        <CommandGroup>
+                          {tipos?.map((tipo) => {
+                            const activo = idsTipo.includes(tipo.Id);
+                            return (
+                              <CommandItem
+                                key={tipo.Id}
+                                value={tipo.Nombre}
+                                onSelect={() => toggleTipo(tipo.Id)}
+                                className="flex cursor-pointer items-center gap-2"
+                              >
+                                <span
+                                  className={`flex h-4 w-4 items-center justify-center rounded border text-xs font-bold ${
+                                    activo
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-muted-foreground/40"
+                                  }`}
+                                >
+                                  {activo && "✓"}
+                                </span>
+                                <span className="flex-1">{tipo.Nombre}</span>
+                                <span className="font-mono text-xs text-muted-foreground">
+                                  {tipo.Codigo}
+                                </span>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                    {idsTipo.length === 0 && (
+                      <p className="text-xs text-destructive">
+                        Elige al menos un tipo, o marca el producto como general.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {esEdicion ? (
+                <p className="text-xs text-muted-foreground">
+                  Las imágenes (hasta {MAX_IMAGENES_PRODUCTO}) se gestionan desde la acción
+                  &quot;Imágenes&quot; del producto.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <Label>
+                    Imágenes{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (opcional, hasta {MAX_IMAGENES_PRODUCTO})
+                    </span>
+                  </Label>
+                  {archivos.length > 0 && (
+                    <div className="flex flex-wrap gap-3 md:gap-2">
+                      {archivos.map((a, i) => (
+                        <div key={a.url} className="relative">
+                          {/* Miniatura ampliable (doble clic / mantener presionado). */}
+                          <ImagenAmpliable url={a.url} size={72} alt={`Imagen ${i + 1}`} />
+                          {i === 0 && (
+                            <Badge className="absolute -bottom-1 left-0 scale-75" variant="default">
+                              Principal
+                            </Badge>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => quitarArchivo(i)}
+                            className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-destructive md:h-5 md:w-5"
+                            aria-label="Quitar imagen"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 md:h-3 md:w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {archivos.length < MAX_IMAGENES_PRODUCTO && (
+                    <div className="flex flex-col gap-2">
+                      <label className="flex min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:min-h-0 md:p-3">
+                        <ImageIcon className="h-4 w-4 shrink-0" />
+                        Agregar imágenes
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={agregarArchivos}
+                        />
+                      </label>
+                      {/* capture abre la cámara en Android/iOS. Se muestra por capacidad táctil (pointer:coarse), no por ancho de pantalla. */}
+                      <label className="flex hidden min-h-[3.5rem] cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 [@media(pointer:coarse)]:flex">
+                        <Camera className="h-4 w-4 shrink-0" />
+                        Tomar foto
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={agregarArchivos}
+                        />
+                      </label>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Se suben al crear el producto. También puedes gestionarlas después desde la
+                    acción &quot;Imágenes&quot;.
+                  </p>
+                </div>
+              )}
+            </DialogBody>
             <DialogFooter>
               {!esEdicion && (
                 <Button
@@ -728,79 +732,81 @@ function DialogImagenes({
 
   return (
     <Dialog open={!!idProducto} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>Imágenes del producto</DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(2)].map((_, i) => (
-              <Skeleton key={i} className="h-20" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {imagenes?.map((img) => (
-              <div key={img.Id} className="flex items-center gap-3 rounded-md border p-2">
-                <ImagenAmpliable url={img.Url} size={64} alt={`Imagen ${img.Orden}`} />
-                <div className="flex-1 text-xs text-muted-foreground">
-                  Orden: {img.Orden}
-                  {img.EsPrincipal && (
-                    <Badge className="ml-2" variant="default">
-                      Principal
-                    </Badge>
-                  )}
+        <DialogBody>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={i} className="h-20" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {imagenes?.map((img) => (
+                <div key={img.Id} className="flex items-center gap-3 rounded-md border p-2">
+                  <ImagenAmpliable url={img.Url} size={72} alt={`Imagen ${img.Orden}`} />
+                  <div className="flex-1 text-xs text-muted-foreground">
+                    Orden: {img.Orden}
+                    {img.EsPrincipal && (
+                      <Badge className="ml-2" variant="default">
+                        Principal
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() =>
+                      void eliminarImagen(img.Id).then(() => toast.success("Imagen eliminada"))
+                    }
+                  >
+                    Eliminar
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() =>
-                    void eliminarImagen(img.Id).then(() => toast.success("Imagen eliminada"))
-                  }
-                >
-                  Eliminar
-                </Button>
-              </div>
-            ))}
+              ))}
 
-            {(imagenes?.length ?? 0) < MAX_IMAGENES_PRODUCTO && (
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50">
-                  <ImageIcon className="h-4 w-4 shrink-0" />
-                  {subiendo ? "Subiendo..." : "Agregar imagen"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleSubir}
-                    disabled={subiendo}
-                  />
-                </label>
-                {/* capture abre la cámara directo en Android/iOS; en desktop no aplica. */}
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 md:hidden">
-                  <Camera className="h-4 w-4 shrink-0" />
-                  {subiendo ? "Subiendo..." : "Tomar foto"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleSubir}
-                    disabled={subiendo}
-                  />
-                </label>
-              </div>
-            )}
+              {(imagenes?.length ?? 0) < MAX_IMAGENES_PRODUCTO && (
+                <div className="flex flex-col gap-2">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50">
+                    <ImageIcon className="h-4 w-4 shrink-0" />
+                    {subiendo ? "Subiendo..." : "Agregar imagen"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleSubir}
+                      disabled={subiendo}
+                    />
+                  </label>
+                  {/* capture abre la cámara en Android/iOS. Se muestra por capacidad táctil (pointer:coarse), no por ancho de pantalla. */}
+                  <label className="flex hidden cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/50 [@media(pointer:coarse)]:flex">
+                    <Camera className="h-4 w-4 shrink-0" />
+                    {subiendo ? "Subiendo..." : "Tomar foto"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handleSubir}
+                      disabled={subiendo}
+                    />
+                  </label>
+                </div>
+              )}
 
-            {(imagenes?.length ?? 0) >= MAX_IMAGENES_PRODUCTO && (
-              <p className="text-center text-xs text-muted-foreground">
-                Límite de {MAX_IMAGENES_PRODUCTO} imágenes alcanzado.
-              </p>
-            )}
-          </div>
-        )}
+              {(imagenes?.length ?? 0) >= MAX_IMAGENES_PRODUCTO && (
+                <p className="text-center text-xs text-muted-foreground">
+                  Límite de {MAX_IMAGENES_PRODUCTO} imágenes alcanzado.
+                </p>
+              )}
+            </div>
+          )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
@@ -820,53 +826,55 @@ function DialogKardex({
 
   return (
     <Dialog open={!!idProducto} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
+      <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>Kardex — {nombreProducto}</DialogTitle>
         </DialogHeader>
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-10" />
-            ))}
-          </div>
-        ) : !kardex?.length ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No hay movimientos registrados.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Comprobante</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead className="text-right">Saldo</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {kardex.map((fila: KardexFila) => (
-                <TableRow key={fila.IdMovimientoStock}>
-                  <TableCell className="text-xs">{fechaCorta(fila.FechaMovimiento)}</TableCell>
-                  <TableCell className="text-xs capitalize">{fila.TipoDocumento}</TableCell>
-                  <TableCell className="text-xs">{fila.Comprobante ?? "—"}</TableCell>
-                  <TableCell className="text-xs">{fila.NombreUbicacion}</TableCell>
-                  <TableCell
-                    className={`text-right font-medium ${
-                      fila.Direccion === 1 ? "text-success" : "text-destructive"
-                    }`}
-                  >
-                    {fila.Direccion === 1 ? "+" : "-"}
-                    {fila.Cantidad}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">{fila.SaldoCorrido}</TableCell>
-                </TableRow>
+        <DialogBody>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-10" />
               ))}
-            </TableBody>
-          </Table>
-        )}
+            </div>
+          ) : !kardex?.length ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No hay movimientos registrados.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Comprobante</TableHead>
+                  <TableHead>Ubicación</TableHead>
+                  <TableHead className="text-right">Cantidad</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {kardex.map((fila: KardexFila) => (
+                  <TableRow key={fila.IdMovimientoStock}>
+                    <TableCell className="text-xs">{fechaCorta(fila.FechaMovimiento)}</TableCell>
+                    <TableCell className="text-xs capitalize">{fila.TipoDocumento}</TableCell>
+                    <TableCell className="text-xs">{fila.Comprobante ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{fila.NombreUbicacion}</TableCell>
+                    <TableCell
+                      className={`text-right font-medium ${
+                        fila.Direccion === 1 ? "text-success" : "text-destructive"
+                      }`}
+                    >
+                      {fila.Direccion === 1 ? "+" : "-"}
+                      {fila.Cantidad}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">{fila.SaldoCorrido}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
@@ -926,7 +934,7 @@ function DialogAsociarCategoria({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>Asociar categoría a tipo de equipo</DialogTitle>
           <p className="pt-1 text-sm text-muted-foreground">
@@ -935,7 +943,7 @@ function DialogAsociarCategoria({
           </p>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody className="space-y-4">
           <div className="space-y-1">
             <Label>Categoría</Label>
             <Combobox
@@ -974,7 +982,7 @@ function DialogAsociarCategoria({
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
@@ -1206,7 +1214,7 @@ export default function ProductosPage() {
 
       {/* Búsqueda + filtro por categoría + asociar por categoría */}
       <div className="flex flex-wrap gap-3">
-        <div className="relative w-72">
+        <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por nombre o SKU..."
@@ -1217,7 +1225,7 @@ export default function ProductosPage() {
         </div>
 
         <Combobox
-          className="w-52"
+          className="w-full sm:w-52"
           opciones={[
             { value: "__todas__", label: "Todas las categorías" },
             ...categorias.map((cat) => ({ value: cat, label: cat })),

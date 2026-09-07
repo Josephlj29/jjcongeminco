@@ -14,11 +14,7 @@
 import { useRef, useState } from "react";
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, Download, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import {
-  DECIMALES_CANTIDAD,
-  DECIMALES_COSTO,
-  type ReporteImportacion,
-} from "@congeminco/shared";
+import { DECIMALES_CANTIDAD, DECIMALES_COSTO, type ReporteImportacion } from "@congeminco/shared";
 import { redondear } from "@/lib/cantidad";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -481,7 +477,7 @@ export default function ImportarPage() {
   const esAdmin = usePermiso("catalogoAdmin");
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-3xl space-y-6">
       <PageHeader
         titulo="Importar"
         descripcion="Carga masiva desde Excel (.xlsx). Validación todo-o-nada: si una fila falla, no se aplica nada y verás el detalle por fila."

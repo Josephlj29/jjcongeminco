@@ -23,13 +23,20 @@ const PALETTE_DARK = [
   "hsl(210, 36%, 62%)",
 ];
 
+/**
+ * Alto por defecto de los gráficos: crece con el viewport entre 220px (celular)
+ * y 340px (PC). Un número fijo se veía enano en 27" y enorme en 360px.
+ */
+export const ALTURA_GRAFICO = "clamp(220px, 28vw, 340px)";
+
 interface EChartProps {
   option: EChartsOption;
   className?: string;
-  height?: number;
+  /** px (number) o cualquier valor CSS (string). Default: ALTURA_GRAFICO. */
+  height?: number | string;
 }
 
-export function EChart({ option, className, height = 300 }: EChartProps) {
+export function EChart({ option, className, height = ALTURA_GRAFICO }: EChartProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 

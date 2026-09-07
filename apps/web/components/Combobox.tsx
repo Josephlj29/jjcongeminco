@@ -114,7 +114,10 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className={cn("w-[var(--radix-popover-trigger-width)] p-0", popoverClassName)}
+        className={cn(
+          "w-auto min-w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] p-0",
+          popoverClassName,
+        )}
       >
         <Command shouldFilter={false}>
           <CommandInput

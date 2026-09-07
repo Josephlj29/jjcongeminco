@@ -179,7 +179,7 @@ export default function AprobacionesPage() {
             />
           ) : (
             <div className="rounded-lg border">
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Fecha</TableHead>
@@ -246,7 +246,7 @@ export default function AprobacionesPage() {
             />
           ) : (
             <div className="rounded-lg border">
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Fecha</TableHead>

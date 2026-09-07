@@ -14,7 +14,10 @@ interface PaginacionProps {
 
 /**
  * Componente presentacional de paginación.
- * Muestra: conteo de items + botones Anterior/Siguiente + indicador de página.
+ *
+ * Celular: una sola fila centrada con flechas (icon-only, 40px) y "Página N de M";
+ * el conteo de registros se oculta porque no entra en 320px.
+ * Desde sm: conteo a la izquierda + botones con texto a la derecha.
  */
 export function Paginacion({
   pagina,
@@ -25,8 +28,8 @@ export function Paginacion({
   onPagina,
 }: PaginacionProps) {
   return (
-    <div className="flex items-center justify-end gap-4 px-1 pb-1 pt-3">
-      <p className="text-sm text-muted-foreground">
+    <div className="flex flex-col items-center gap-2 px-1 pb-1 pt-3 sm:flex-row sm:justify-end sm:gap-4">
+      <p className="hidden text-sm text-muted-foreground sm:block">
         {totalItems === 0 ? "0 de 0 registros" : `Mostrando ${desde}–${hasta} de ${totalItems}`}
       </p>
 
@@ -34,12 +37,13 @@ export function Paginacion({
         <Button
           variant="outline"
           size="sm"
+          className="h-10 sm:h-9"
           onClick={() => onPagina(pagina - 1)}
           disabled={pagina <= 1}
           aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
-          Anterior
+          <span className="hidden sm:inline">Anterior</span>
         </Button>
 
         <span className="select-none px-3 text-sm text-muted-foreground">
@@ -49,11 +53,12 @@ export function Paginacion({
         <Button
           variant="outline"
           size="sm"
+          className="h-10 sm:h-9"
           onClick={() => onPagina(pagina + 1)}
           disabled={pagina >= totalPaginas}
           aria-label="Página siguiente"
         >
-          Siguiente
+          <span className="hidden sm:inline">Siguiente</span>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

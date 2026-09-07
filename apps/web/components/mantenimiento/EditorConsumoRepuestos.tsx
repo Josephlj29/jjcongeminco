@@ -255,7 +255,7 @@ export function EditorConsumoRepuestos({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    className="h-10 w-10 text-muted-foreground hover:text-destructive md:h-8 md:w-8"
                     onClick={() =>
                       patch({
                         lineas: lineas.length > 1 ? lineas.filter((_, idx) => idx !== i) : lineas,
@@ -288,7 +288,7 @@ export function EditorConsumoRepuestos({
       </div>
 
       {hayCompra && (
-        <div className="grid grid-cols-2 gap-4 rounded-md border border-dashed p-3">
+        <div className="grid grid-cols-1 gap-4 rounded-md border border-dashed p-3 @md:grid-cols-2">
           <div className="space-y-1">
             <Label>Proveedor (compra directa) *</Label>
             <Select value={idProveedor} onValueChange={(v) => patch({ idProveedor: v })}>

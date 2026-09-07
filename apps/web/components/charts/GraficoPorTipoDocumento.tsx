@@ -12,13 +12,13 @@ interface DatoTipoDocumento {
 interface GraficoPorTipoDocumentoProps {
   datos: DatoTipoDocumento[];
   className?: string;
-  height?: number;
+  height?: number | string;
 }
 
 export function GraficoPorTipoDocumento({
   datos,
   className,
-  height = 300,
+  height,
 }: GraficoPorTipoDocumentoProps) {
   const option = useMemo<EChartsOption>(
     () => ({

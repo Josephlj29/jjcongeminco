@@ -68,6 +68,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -95,9 +96,8 @@ export default function RequerimientosPage() {
   // Renderizamos UNA sola presentación de las líneas (cards en móvil, tabla en
   // desktop). No con CSS `hidden`: eso dejaría montados dos <input> por campo con
   // el mismo name de RHF, y reset()/setValue solo sincroniza el último ref (el
-  // oculto), dejando valores obsoletos en la vista visible. El form está detrás
-  // de `puedeCrear` (query cliente que resuelve tras el mount), así que para
-  // cuando aparece, isMobile ya refleja el viewport real: sin flash.
+  // oculto), dejando valores obsoletos en la vista visible. Mientras isMobile es
+  // `undefined` (SSR / primer render) mostramos un skeleton: sin flash de tabla.
   const isMobile = useIsMobile();
 
   const {
@@ -340,7 +340,7 @@ export default function RequerimientosPage() {
                 renderiza un <button>: no se puede anidar otro button adentro). */}
             <ImagenAmpliable
               url={foto.url}
-              size={48}
+              size={56}
               alt="Foto del producto nuevo"
               nombre={watch(`Detalle.${idx}.DescripcionLibre`) || undefined}
             />
@@ -463,7 +463,7 @@ export default function RequerimientosPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         titulo="Requerimientos"
         descripcion="Crea solicitudes de materiales asociadas a una placa"
@@ -618,7 +618,9 @@ export default function RequerimientosPage() {
                 </div>
 
                 {/* Una sola presentación montada a la vez (ver nota de isMobile). */}
-                {isMobile ? (
+                {isMobile === undefined ? (
+                  <Skeleton className="h-40 w-full rounded-lg" />
+                ) : isMobile ? (
                   /* Móvil: una tarjeta por línea */
                   <div className="space-y-3">
                     {fields.map((field, idx) => (
@@ -660,7 +662,7 @@ export default function RequerimientosPage() {
                           <Label className="text-xs">Placa</Label>
                           {renderSelectPlaca(idx, true)}
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
                           <div className="space-y-1">
                             <Label className="text-xs">Cantidad</Label>
                             {renderCampoCantidad(idx)}
@@ -692,7 +694,7 @@ export default function RequerimientosPage() {
                 ) : (
                   /* Desktop: tabla */
                   <div className="rounded-md border">
-                    <Table>
+                    <Table className="min-w-[720px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Producto</TableHead>
@@ -723,7 +725,7 @@ export default function RequerimientosPage() {
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-muted-foreground"
+                                  className="h-10 w-10 text-muted-foreground md:h-8 md:w-8"
                                   title="Duplicar línea (misma cantidad, otra placa)"
                                   onClick={() => duplicarLinea(idx)}
                                 >
@@ -733,7 +735,7 @@ export default function RequerimientosPage() {
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  className="h-10 w-10 text-muted-foreground hover:text-destructive md:h-8 md:w-8"
                                   onClick={() => eliminarLinea(idx)}
                                   disabled={fields.length === 1}
                                 >

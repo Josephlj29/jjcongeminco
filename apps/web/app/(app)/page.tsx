@@ -72,11 +72,11 @@ function TileGrafico({
       </CardHeader>
       <CardContent>
         {cargando ? (
-          <Skeleton className="h-[280px]" />
+          <Skeleton className="h-[clamp(220px,28vw,340px)]" />
         ) : error ? (
           <ErrorState compacto onReintentar={onReintentar} />
         ) : !hayDatos ? (
-          <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-[clamp(220px,28vw,340px)] items-center justify-center text-sm text-muted-foreground">
             {vacio}
           </div>
         ) : (
@@ -196,7 +196,7 @@ export default function DashboardPage() {
               vacio="Sin movimientos en el período."
               hayDatos={(data?.tendencia.length ?? 0) > 0}
             >
-              <GraficoTendencia datos={data?.tendencia ?? []} height={280} />
+              <GraficoTendencia datos={data?.tendencia ?? []} />
             </TileGrafico>
 
             <TileGrafico
@@ -208,7 +208,7 @@ export default function DashboardPage() {
               vacio="Sin datos valorizados."
               hayDatos={(data?.valorPorCategoria.length ?? 0) > 0}
             >
-              <GraficoDonutCategorias datos={data?.valorPorCategoria ?? []} height={280} />
+              <GraficoDonutCategorias datos={data?.valorPorCategoria ?? []} />
             </TileGrafico>
 
             <TileGrafico
@@ -220,12 +220,12 @@ export default function DashboardPage() {
               vacio="Sin movimientos en el período."
               hayDatos={(data?.topProductos.length ?? 0) > 0}
             >
-              <GraficoTopProductos datos={data?.topProductos ?? []} height={280} />
+              <GraficoTopProductos datos={data?.topProductos ?? []} />
             </TileGrafico>
 
             {/* Lista de bajo mínimo */}
             <Card className="lg:col-span-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 pb-2">
                 <CardTitle className="text-base">Productos bajo mínimo</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/saldos">Ver todos</Link>
@@ -241,7 +241,7 @@ export default function DashboardPage() {
                 ) : error ? (
                   <ErrorState compacto onReintentar={reintentar} />
                 ) : !data?.bajoMinimo.length ? (
-                  <div className="flex h-[220px] items-center justify-center text-center text-sm text-muted-foreground">
+                  <div className="flex h-[clamp(220px,28vw,340px)] items-center justify-center text-center text-sm text-muted-foreground">
                     No hay productos bajo mínimo. ¡Todo en orden!
                   </div>
                 ) : (

@@ -41,6 +41,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -95,55 +96,61 @@ function DialogEquipo({ equipo, onClose }: { equipo: Equipo | null; onClose: () 
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar equipo" : "Nuevo equipo"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="Codigo">Código *</Label>
-              <Input id="Codigo" placeholder="EQ-001" {...register("Codigo")} />
-              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="Codigo">Código *</Label>
+                <Input id="Codigo" placeholder="EQ-001" {...register("Codigo")} />
+                {errors.Codigo && (
+                  <p className="text-xs text-destructive">{errors.Codigo.message}</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="Nombre">Nombre *</Label>
+                <Input id="Nombre" placeholder="Excavadora CAT 320" {...register("Nombre")} />
+                {errors.Nombre && (
+                  <p className="text-xs text-destructive">{errors.Nombre.message}</p>
+                )}
+              </div>
             </div>
+
             <div className="space-y-1">
-              <Label htmlFor="Nombre">Nombre *</Label>
-              <Input id="Nombre" placeholder="Excavadora CAT 320" {...register("Nombre")} />
-              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
+              <Label>Tipo de equipo</Label>
+              <Select
+                defaultValue={equipo?.IdTipoEquipo ?? undefined}
+                onValueChange={(v) => setValue("IdTipoEquipo", v === "__ninguno__" ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__ninguno__">Sin tipo</SelectItem>
+                  {tiposEquipo?.map((t) => (
+                    <SelectItem key={t.Id} value={t.Id}>
+                      {t.Nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.IdTipoEquipo && (
+                <p className="text-xs text-destructive">{errors.IdTipoEquipo.message}</p>
+              )}
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label>Tipo de equipo</Label>
-            <Select
-              defaultValue={equipo?.IdTipoEquipo ?? undefined}
-              onValueChange={(v) => setValue("IdTipoEquipo", v === "__ninguno__" ? null : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar tipo..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__ninguno__">Sin tipo</SelectItem>
-                {tiposEquipo?.map((t) => (
-                  <SelectItem key={t.Id} value={t.Id}>
-                    {t.Nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.IdTipoEquipo && (
-              <p className="text-xs text-destructive">{errors.IdTipoEquipo.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="Descripcion">Descripción</Label>
-            <Input
-              id="Descripcion"
-              placeholder="Descripción del equipo"
-              {...register("Descripcion")}
-            />
-          </div>
+            <div className="space-y-1">
+              <Label htmlFor="Descripcion">Descripción</Label>
+              <Input
+                id="Descripcion"
+                placeholder="Descripción del equipo"
+                {...register("Descripcion")}
+              />
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

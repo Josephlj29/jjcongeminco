@@ -23,6 +23,7 @@ import { useUbicaciones } from "@/hooks/useUbicaciones";
 import { useProveedores } from "@/hooks/useProveedores";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -224,7 +225,7 @@ export function DialogAprobarRequerimiento({
 
   return (
     <Dialog open={!!idRequerimiento} onOpenChange={(o) => !o && cerrar()}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Requerimiento
@@ -242,292 +243,298 @@ export function DialogAprobarRequerimiento({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading || !req ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-10" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Fecha</p>
-                <p>{fechaCorta(req.FechaRequerimiento)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Origen</p>
-                <p>{ORIGEN_REQUERIMIENTO_LABEL[req.Origen] ?? req.Origen}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Destino</p>
-                <p>{req.Placa ?? req.NombreEquipo ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Solicitante{req.Solicitantes.length > 1 ? "s" : ""}
-                </p>
-                <p>
-                  {req.Solicitantes.length
-                    ? req.Solicitantes.map(
-                        (s) => `${s.NombreCompleto ?? "—"}${s.Cargo ? ` · ${s.Cargo}` : ""}`,
-                      ).join(", ")
-                    : "—"}
-                </p>
-              </div>
+        <DialogBody>
+          {isLoading || !req ? (
+            <div className="space-y-2">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-10" />
+              ))}
             </div>
-
-            {/* Almacén origen (solo si puede actuar) */}
-            {puedeActuar && (
-              <div className="space-y-1">
-                <Label>Almacén de origen</Label>
-                {sinAlmacenes ? (
-                  <p className="text-sm text-muted-foreground">
-                    No hay almacenes activos. Crea uno en Maestros → Almacenes.
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 text-sm @sm:grid-cols-2 @lg:grid-cols-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha</p>
+                  <p>{fechaCorta(req.FechaRequerimiento)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Origen</p>
+                  <p>{ORIGEN_REQUERIMIENTO_LABEL[req.Origen] ?? req.Origen}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Destino</p>
+                  <p>{req.Placa ?? req.NombreEquipo ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Solicitante{req.Solicitantes.length > 1 ? "s" : ""}
                   </p>
-                ) : (
-                  <Select value={idUbicacion} onValueChange={setIdUbicacion}>
-                    <SelectTrigger className="sm:w-80">
-                      <SelectValue placeholder="¿De qué almacén sale el material?" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ubicaciones?.map((u) => (
-                        <SelectItem key={u.Id} value={u.Id}>
-                          {u.Codigo} — {u.Nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                  <p>
+                    {req.Solicitantes.length
+                      ? req.Solicitantes.map(
+                          (s) => `${s.NombreCompleto ?? "—"}${s.Cargo ? ` · ${s.Cargo}` : ""}`,
+                        ).join(", ")
+                      : "—"}
+                  </p>
+                </div>
               </div>
-            )}
 
-            {/* Detalle por línea */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Producto</TableHead>
-                    <TableHead className="w-24">Placa</TableHead>
-                    <TableHead className="w-20 text-right">Solic.</TableHead>
-                    <TableHead className="w-20 text-right">Atend.</TableHead>
-                    {puedeActuar ? (
-                      <>
-                        <TableHead className="w-24">Entregar</TableHead>
-                        <TableHead className="w-40">Modo</TableHead>
-                        <TableHead className="w-28">Costo compra</TableHead>
-                      </>
-                    ) : null}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {req.Detalle.map((l) => {
-                    const st = lineas[l.Id];
-                    return (
-                      <TableRow key={l.Id}>
-                        <TableCell>
-                          {l.IdProducto === null ? (
-                            <div className="space-y-1.5">
-                              <div className="flex items-center gap-2">
-                                <ImagenAmpliable
-                                  url={l.UrlFotoLibre}
-                                  size={40}
-                                  nombre={l.DescripcionLibre ?? undefined}
-                                />
-                                <div className="min-w-0">
-                                  <p className="font-medium leading-tight">
-                                    {l.DescripcionLibre ?? "—"}
-                                  </p>
-                                  <Badge variant="warning" className="mt-0.5 text-[10px]">
-                                    No catalogado
-                                  </Badge>
+              {/* Almacén origen (solo si puede actuar) */}
+              {puedeActuar && (
+                <div className="space-y-1">
+                  <Label>Almacén de origen</Label>
+                  {sinAlmacenes ? (
+                    <p className="text-sm text-muted-foreground">
+                      No hay almacenes activos. Crea uno en Maestros → Almacenes.
+                    </p>
+                  ) : (
+                    <Select value={idUbicacion} onValueChange={setIdUbicacion}>
+                      <SelectTrigger className="sm:w-80">
+                        <SelectValue placeholder="¿De qué almacén sale el material?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ubicaciones?.map((u) => (
+                          <SelectItem key={u.Id} value={u.Id}>
+                            {u.Codigo} — {u.Nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+
+              {/* Detalle por línea */}
+              <div className="rounded-md border">
+                <Table className="min-w-[720px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Producto</TableHead>
+                      <TableHead className="w-24">Placa</TableHead>
+                      <TableHead className="w-20 text-right">Solic.</TableHead>
+                      <TableHead className="w-20 text-right">Atend.</TableHead>
+                      {puedeActuar ? (
+                        <>
+                          <TableHead className="w-24">Entregar</TableHead>
+                          <TableHead className="w-40">Modo</TableHead>
+                          <TableHead className="w-28">Costo compra</TableHead>
+                        </>
+                      ) : null}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {req.Detalle.map((l) => {
+                      const st = lineas[l.Id];
+                      return (
+                        <TableRow key={l.Id}>
+                          <TableCell>
+                            {l.IdProducto === null ? (
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <ImagenAmpliable
+                                    url={l.UrlFotoLibre}
+                                    size={40}
+                                    nombre={l.DescripcionLibre ?? undefined}
+                                  />
+                                  <div className="min-w-0">
+                                    <p className="font-medium leading-tight">
+                                      {l.DescripcionLibre ?? "—"}
+                                    </p>
+                                    <Badge variant="warning" className="mt-0.5 text-[10px]">
+                                      No catalogado
+                                    </Badge>
+                                  </div>
                                 </div>
+                                {puedeActuar && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs"
+                                    onClick={() => setLineaACatalogar(l)}
+                                  >
+                                    Registrar producto
+                                  </Button>
+                                )}
                               </div>
-                              {puedeActuar && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs"
-                                  onClick={() => setLineaACatalogar(l)}
-                                >
-                                  Registrar producto
-                                </Button>
-                              )}
-                            </div>
-                          ) : (
+                            ) : (
+                              <>
+                                <p className="font-medium leading-tight">{l.NombreProducto}</p>
+                                <p className="font-mono text-xs text-muted-foreground">{l.Sku}</p>
+                              </>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {l.Placa ?? req.Placa ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-right">{l.Cantidad}</TableCell>
+                          <TableCell className="text-right">
+                            {l.CantidadAtendida > 0 ? (
+                              <span
+                                className={restanteDe(l) === 0 ? "text-success" : "text-warning"}
+                              >
+                                {l.CantidadAtendida}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          {puedeActuar ? (
                             <>
-                              <p className="font-medium leading-tight">{l.NombreProducto}</p>
-                              <p className="font-mono text-xs text-muted-foreground">{l.Sku}</p>
-                            </>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {l.Placa ?? req.Placa ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-right">{l.Cantidad}</TableCell>
-                        <TableCell className="text-right">
-                          {l.CantidadAtendida > 0 ? (
-                            <span className={restanteDe(l) === 0 ? "text-success" : "text-warning"}>
-                              {l.CantidadAtendida}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        {puedeActuar ? (
-                          <>
-                            <TableCell>
-                              {/* Entregar "un cuarto de lo pendiente" es EL caso
+                              <TableCell>
+                                {/* Entregar "un cuarto de lo pendiente" es EL caso
                                   donde sacaban la calculadora: acá se escribe
                                   1/4 o 20/4 directo. min 0 porque 0 significa
                                   no entregar esta línea. */}
-                              <InputCantidad
-                                className="h-8"
-                                value={st?.cantidad ?? null}
-                                onChange={(n) => setLinea(l.Id, { cantidad: n })}
-                                min={0}
-                                max={restanteDe(l)}
-                                etiquetaMax="pendiente"
-                                disabled={restanteDe(l) === 0 || l.IdProducto === null}
-                                title={
-                                  l.IdProducto === null
-                                    ? "Registra el producto en el catálogo primero"
-                                    : undefined
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex rounded-md border p-0.5 text-xs">
-                                <button
-                                  type="button"
-                                  onClick={() => setLinea(l.Id, { modo: "stock" })}
-                                  className={`flex-1 rounded px-2 py-1 ${
-                                    st?.modo === "stock"
-                                      ? "bg-primary text-primary-foreground"
-                                      : "text-muted-foreground"
-                                  }`}
-                                >
-                                  Stock
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setLinea(l.Id, { modo: "compra" })}
-                                  className={`flex-1 rounded px-2 py-1 ${
-                                    st?.modo === "compra"
-                                      ? "bg-primary text-primary-foreground"
-                                      : "text-muted-foreground"
-                                  }`}
-                                >
-                                  Compra
-                                </button>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {st?.modo === "compra" ? (
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  step="0.01"
-                                  placeholder="S/"
+                                <InputCantidad
                                   className="h-8"
-                                  value={st?.costo ?? ""}
-                                  onChange={(e) => setLinea(l.Id, { costo: e.target.value })}
+                                  value={st?.cantidad ?? null}
+                                  onChange={(n) => setLinea(l.Id, { cantidad: n })}
+                                  min={0}
+                                  max={restanteDe(l)}
+                                  etiquetaMax="pendiente"
+                                  disabled={restanteDe(l) === 0 || l.IdProducto === null}
+                                  title={
+                                    l.IdProducto === null
+                                      ? "Registra el producto en el catálogo primero"
+                                      : undefined
+                                  }
                                 />
-                              ) : (
-                                <span className="text-xs text-muted-foreground">
-                                  {moneda(l.CostoPromedio)}
-                                </span>
-                              )}
-                            </TableCell>
-                          </>
-                        ) : null}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex rounded-md border p-0.5 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => setLinea(l.Id, { modo: "stock" })}
+                                    className={`flex-1 rounded px-2 py-1 ${
+                                      st?.modo === "stock"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    Stock
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setLinea(l.Id, { modo: "compra" })}
+                                    className={`flex-1 rounded px-2 py-1 ${
+                                      st?.modo === "compra"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    Compra
+                                  </button>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {st?.modo === "compra" ? (
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    placeholder="S/"
+                                    className="h-8"
+                                    value={st?.costo ?? ""}
+                                    onChange={(e) => setLinea(l.Id, { costo: e.target.value })}
+                                  />
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">
+                                    {moneda(l.CostoPromedio)}
+                                  </span>
+                                )}
+                              </TableCell>
+                            </>
+                          ) : null}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
 
-            {/* Datos de compra directa (si alguna línea es compra) */}
-            {puedeActuar && hayCompra && (
-              <div className="grid grid-cols-1 gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label>Proveedor (compra directa)</Label>
-                  <Select value={idProveedor} onValueChange={setIdProveedor}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar proveedor..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {proveedores?.map((p) => (
-                        <SelectItem key={p.Id} value={p.Id}>
-                          {p.Nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* Datos de compra directa (si alguna línea es compra) */}
+              {puedeActuar && hayCompra && (
+                <div className="grid grid-cols-1 gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>Proveedor (compra directa)</Label>
+                    <Select value={idProveedor} onValueChange={setIdProveedor}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar proveedor..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {proveedores?.map((p) => (
+                          <SelectItem key={p.Id} value={p.Id}>
+                            {p.Nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="comprobante">Comprobante</Label>
+                    <Input
+                      id="comprobante"
+                      value={comprobante}
+                      onChange={(e) => setComprobante(e.target.value)}
+                      placeholder="F001-123"
+                      maxLength={60}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="comprobante">Comprobante</Label>
+              )}
+
+              {puedeActuar && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <AlertTriangle className="h-3 w-3" />
+                    Stock consume el almacén; compra directa genera la compra + salida.
+                  </span>
+                  <span>
+                    <span className="text-muted-foreground">Total estimado:&nbsp;</span>
+                    <span className="font-semibold">{moneda(total)}</span>
+                  </span>
+                </div>
+              )}
+
+              {req.Situacion === "atendido" && (
+                <div className="flex items-start gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-sm">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                  <p>
+                    Este requerimiento ya fue atendido: la salida quedó registrada y valorizada.
+                  </p>
+                </div>
+              )}
+              {req.Situacion === "anulado" && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm">
+                  <PackageX className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                  <p>Este requerimiento fue rechazado.</p>
+                </div>
+              )}
+
+              {abierto && !puedeAprobar && (
+                <div className="rounded-lg border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
+                  Tu rol no puede aprobar ni rechazar requerimientos. Solo lectura.
+                </div>
+              )}
+
+              {puedeActuar && rechazar && (
+                <div className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                  <Label htmlFor="motivo">Motivo del rechazo (opcional)</Label>
                   <Input
-                    id="comprobante"
-                    value={comprobante}
-                    onChange={(e) => setComprobante(e.target.value)}
-                    placeholder="F001-123"
-                    maxLength={60}
+                    id="motivo"
+                    value={motivo}
+                    onChange={(e) => setMotivo(e.target.value)}
+                    placeholder="Ej. fuera de presupuesto"
+                    maxLength={500}
                   />
                 </div>
-              </div>
-            )}
-
-            {puedeActuar && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <AlertTriangle className="h-3 w-3" />
-                  Stock consume el almacén; compra directa genera la compra + salida.
-                </span>
-                <span>
-                  <span className="text-muted-foreground">Total estimado:&nbsp;</span>
-                  <span className="font-semibold">{moneda(total)}</span>
-                </span>
-              </div>
-            )}
-
-            {req.Situacion === "atendido" && (
-              <div className="flex items-start gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-sm">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                <p>Este requerimiento ya fue atendido: la salida quedó registrada y valorizada.</p>
-              </div>
-            )}
-            {req.Situacion === "anulado" && (
-              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm">
-                <PackageX className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                <p>Este requerimiento fue rechazado.</p>
-              </div>
-            )}
-
-            {abierto && !puedeAprobar && (
-              <div className="rounded-lg border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
-                Tu rol no puede aprobar ni rechazar requerimientos. Solo lectura.
-              </div>
-            )}
-
-            {puedeActuar && rechazar && (
-              <div className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-                <Label htmlFor="motivo">Motivo del rechazo (opcional)</Label>
-                <Input
-                  id="motivo"
-                  value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
-                  placeholder="Ej. fuera de presupuesto"
-                  maxLength={500}
-                />
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </DialogBody>
 
         {puedeActuar && (
-          <DialogFooter className="gap-2 sm:gap-2">
+          <DialogFooter>
             {rechazar ? (
               <>
                 <Button variant="ghost" onClick={() => setRechazar(false)} disabled={rechazando}>

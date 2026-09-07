@@ -396,7 +396,7 @@ export default function ReportesPage() {
               <CardTitle className="text-base">Filtros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1">
                   <Label htmlFor="desde">Desde</Label>
                   <Input
@@ -447,7 +447,7 @@ export default function ReportesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1">
                   <Label>Producto</Label>
                   <Combobox
@@ -579,7 +579,7 @@ export default function ReportesPage() {
                       <CardTitle className="text-base">Valor por tipo de documento</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <GraficoPorTipoDocumento datos={datosPorTipo} height={260} />
+                      <GraficoPorTipoDocumento datos={datosPorTipo} />
                     </CardContent>
                   </Card>
 
@@ -587,8 +587,8 @@ export default function ReportesPage() {
                   <div className="flex justify-end">
                     <ExportarMenu dataset={datasetMovimientos} />
                   </div>
-                  <div className="overflow-x-auto rounded-lg border">
-                    <Table>
+                  <div className="rounded-lg border">
+                    <Table className="min-w-[640px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Fecha</TableHead>
@@ -624,7 +624,7 @@ export default function ReportesPage() {
               <CardTitle className="text-base">Filtros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid max-w-md grid-cols-2 gap-4">
+              <div className="grid max-w-md grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>Categoría</Label>
                   <Select onValueChange={setCatValorizado}>
@@ -689,15 +689,15 @@ export default function ReportesPage() {
                       <CardTitle className="text-base">Valor por categoría</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <GraficoDonutCategorias datos={datosDonutVal} height={280} />
+                      <GraficoDonutCategorias datos={datosDonutVal} />
                     </CardContent>
                   </Card>
 
                   <div className="flex justify-end">
                     <ExportarMenu dataset={datasetValorizado} />
                   </div>
-                  <div className="overflow-x-auto rounded-lg border">
-                    <Table>
+                  <div className="rounded-lg border">
+                    <Table className="min-w-[640px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>SKU</TableHead>
@@ -750,7 +750,7 @@ export default function ReportesPage() {
               <CardTitle className="text-base">Filtros</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid max-w-md grid-cols-2 gap-4">
+              <div className="grid max-w-md grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>Desde</Label>
                   <Input
@@ -817,8 +817,8 @@ export default function ReportesPage() {
                     <ExportarMenu dataset={datasetRecambios} />
                   </div>
 
-                  <div className="overflow-x-auto rounded-lg border">
-                    <Table>
+                  <div className="rounded-lg border">
+                    <Table className="min-w-[640px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Equipo / Placa</TableHead>

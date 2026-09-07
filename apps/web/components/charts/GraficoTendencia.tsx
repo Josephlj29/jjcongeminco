@@ -13,10 +13,10 @@ interface DatoTendencia {
 interface GraficoTendenciaProps {
   datos: DatoTendencia[];
   className?: string;
-  height?: number;
+  height?: number | string;
 }
 
-export function GraficoTendencia({ datos, className, height = 300 }: GraficoTendenciaProps) {
+export function GraficoTendencia({ datos, className, height }: GraficoTendenciaProps) {
   const option = useMemo<EChartsOption>(
     () => ({
       xAxis: {

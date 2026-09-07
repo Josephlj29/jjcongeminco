@@ -41,6 +41,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -94,42 +95,44 @@ function DialogVehiculo({ vehiculo, onClose }: { vehiculo: Vehiculo | null; onCl
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar vehículo" : "Nuevo vehículo"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="Placa">Placa *</Label>
-              <Input id="Placa" placeholder="ABC-123" {...register("Placa")} />
-              {errors.Placa && <p className="text-xs text-destructive">{errors.Placa.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="Placa">Placa *</Label>
+                <Input id="Placa" placeholder="ABC-123" {...register("Placa")} />
+                {errors.Placa && <p className="text-xs text-destructive">{errors.Placa.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="Modelo">Modelo</Label>
+                <Input id="Modelo" placeholder="Toyota Hilux 2022" {...register("Modelo")} />
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="Modelo">Modelo</Label>
-              <Input id="Modelo" placeholder="Toyota Hilux 2022" {...register("Modelo")} />
-            </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label>Equipo</Label>
-            <Select
-              defaultValue={vehiculo?.IdEquipo ?? undefined}
-              onValueChange={(v) => setValue("IdEquipo", v === "__ninguno__" ? null : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sin equipo asignado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__ninguno__">Sin equipo</SelectItem>
-                {equipos?.map((eq) => (
-                  <SelectItem key={eq.Id} value={eq.Id}>
-                    {eq.Codigo} — {eq.Nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-1">
+              <Label>Equipo</Label>
+              <Select
+                defaultValue={vehiculo?.IdEquipo ?? undefined}
+                onValueChange={(v) => setValue("IdEquipo", v === "__ninguno__" ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin equipo asignado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__ninguno__">Sin equipo</SelectItem>
+                  {equipos?.map((eq) => (
+                    <SelectItem key={eq.Id} value={eq.Id}>
+                      {eq.Codigo} — {eq.Nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

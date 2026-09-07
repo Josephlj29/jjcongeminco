@@ -10,7 +10,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { useImagenesProducto } from "@/hooks/useImagenes";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function GaleriaProductoDialog({
@@ -62,7 +68,7 @@ export function GaleriaProductoDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {nombre ?? "Imágenes del producto"}
@@ -74,58 +80,59 @@ export function GaleriaProductoDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
-          <Skeleton className="h-[60vh] w-full" />
-        ) : total === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-2 text-muted-foreground">
-            <Package className="h-10 w-10" />
-            <p className="text-sm">Este producto no tiene imágenes cargadas.</p>
-          </div>
-        ) : (
-          <div className="relative flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={actual.Url}
-              alt={nombre ?? ""}
-              className="max-h-[70vh] w-auto rounded-md object-contain"
-            />
+        <DialogBody className="space-y-4">
+          {isLoading ? (
+            <Skeleton className="aspect-video max-h-[calc(100dvh-16rem)] w-full" />
+          ) : total === 0 ? (
+            <div className="flex h-64 flex-col items-center justify-center gap-2 text-muted-foreground">
+              <Package className="h-10 w-10" />
+              <p className="text-sm">Este producto no tiene imágenes cargadas.</p>
+            </div>
+          ) : (
+            <div className="relative flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={actual.Url}
+                alt={nombre ?? ""}
+                className="max-h-[calc(100dvh-16rem)] w-auto rounded-md object-contain"
+              />
 
-            {total > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => ir(-1)}
-                  aria-label="Anterior"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => ir(1)}
-                  aria-label="Siguiente"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
-            )}
-          </div>
-        )}
+              {total > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => ir(-1)}
+                    aria-label="Anterior"
+                    className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 shadow hover:bg-background"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => ir(1)}
+                    aria-label="Siguiente"
+                    className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 shadow hover:bg-background"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
-        {/* Tira de miniaturas (si hay varias) */}
-        {total > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {imgs.map((img, i) => (
-              <button
-                key={img.Id}
-                type="button"
-                onClick={() => setIndex(i)}
-                className={`h-14 w-14 shrink-0 overflow-hidden rounded border-2 ${
-                  i === index ? "border-primary" : "border-transparent opacity-60"
-                }`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* Tira de miniaturas (si hay varias) */}
+          {total > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {imgs.map((img, i) => (
+                <button
+                  key={img.Id}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  className={`h-14 w-14 shrink-0 overflow-hidden rounded border-2 ${
+                    i === index ? "border-primary" : "border-transparent opacity-60"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={img.Url}
                     alt=""
@@ -133,10 +140,11 @@ export function GaleriaProductoDialog({
                     decoding="async"
                     className="h-full w-full object-cover"
                   />
-              </button>
-            ))}
-          </div>
-        )}
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

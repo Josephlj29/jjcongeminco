@@ -12,10 +12,10 @@ interface DatoProducto {
 interface GraficoTopProductosProps {
   datos: DatoProducto[];
   className?: string;
-  height?: number;
+  height?: number | string;
 }
 
-export function GraficoTopProductos({ datos, className, height = 300 }: GraficoTopProductosProps) {
+export function GraficoTopProductos({ datos, className, height }: GraficoTopProductosProps) {
   const option = useMemo<EChartsOption>(
     () => ({
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },

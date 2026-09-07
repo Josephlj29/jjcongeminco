@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 /**
  * components/layout/AppTopbar.tsx
  *
@@ -47,7 +48,11 @@ const ROUTE_LABELS: Record<string, string> = {
   "/reportes": "Reportes",
   "/importar": "Importar",
   "/saldos": "Saldos",
+  "/aprobaciones": "Aprobaciones",
   "/maestros": "Maestros",
+  "/maestros/categorias": "Categorías",
+  "/maestros/personal": "Personal",
+  "/maestros/cargos": "Cargos",
   "/maestros/proveedores": "Proveedores",
   "/maestros/almacenes": "Almacenes",
   "/maestros/equipos": "Equipos",
@@ -129,7 +134,7 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 gap-0 p-0">
           <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           <AppSidebarContent usuario={usuario} collapsed={false} />
         </SheetContent>
@@ -141,22 +146,21 @@ export function AppTopbar({ usuario }: AppTopbarProps) {
           <BreadcrumbList>
             {crumbs.map((crumb, index) => {
               const isLast = index === crumbs.length - 1;
+              // El separador es un <li> hermano del ítem (anidarlo dentro era un <li> en <li>:
+              // error de hidratación). En celular solo se ve el último crumb.
               return (
-                <BreadcrumbItem
-                    key={crumb.href}
-                    className={isLast ? "min-w-0" : "hidden sm:inline-flex"}
-                  >
-                  {isLast ? (
-                    <BreadcrumbPage className="truncate">{crumb.label}</BreadcrumbPage>
-                  ) : (
-                    <>
+                <Fragment key={crumb.href}>
+                  <BreadcrumbItem className={isLast ? "min-w-0" : "hidden sm:inline-flex"}>
+                    {isLast ? (
+                      <BreadcrumbPage className="truncate">{crumb.label}</BreadcrumbPage>
+                    ) : (
                       <BreadcrumbLink asChild>
                         <Link href={crumb.href}>{crumb.label}</Link>
                       </BreadcrumbLink>
-                      <BreadcrumbSeparator />
-                    </>
-                  )}
-                </BreadcrumbItem>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast && <BreadcrumbSeparator className="hidden sm:block" />}
+                </Fragment>
               );
             })}
           </BreadcrumbList>

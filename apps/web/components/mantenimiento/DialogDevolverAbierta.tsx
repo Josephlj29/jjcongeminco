@@ -17,6 +17,7 @@ import { useState } from "react";
 import { Undo2 } from "lucide-react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -42,7 +43,7 @@ export function DialogDevolverAbierta({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onCancelar()}>
-      <DialogContent className="max-w-md">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Undo2 className="h-5 w-5" />
@@ -55,7 +56,7 @@ export function DialogDevolverAbierta({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-1">
+        <DialogBody className="space-y-1">
           <Label htmlFor="MotivoDevolucion">Motivo (opcional)</Label>
           <Input
             id="MotivoDevolucion"
@@ -67,7 +68,7 @@ export function DialogDevolverAbierta({
           <p className="text-xs text-muted-foreground">
             Queda registrado en la orden, para que quien la cargó sepa qué corregir.
           </p>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancelar} disabled={procesando}>

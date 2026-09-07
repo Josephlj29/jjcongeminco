@@ -97,7 +97,7 @@ export function AppBottomNav({ usuario }: { usuario: UsuarioProps }) {
           <Menu className="h-5 w-5 shrink-0" />
           <span>Más</span>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 gap-0 p-0">
           <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           <AppSidebarContent usuario={usuario} collapsed={false} />
         </SheetContent>

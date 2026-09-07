@@ -63,7 +63,7 @@ function DetalleSaldo({ producto }: { producto: ProductoStockConsolidado }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 @sm:grid-cols-3">
         <div className="rounded-lg border p-3">
           <p className="text-xs text-muted-foreground">Stock total</p>
           <p className="text-xl font-bold">{producto.StockTotal}</p>
@@ -222,7 +222,7 @@ export default function SaldosPage() {
   }, [saldos, busqueda, categoria]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <PageHeader titulo="Saldos" descripcion="Consulta el stock disponible de cada producto" />
 
       {/* Búsqueda grande */}
@@ -271,7 +271,7 @@ export default function SaldosPage() {
 
       {/* Resultados */}
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-20" />
           ))}
@@ -285,7 +285,7 @@ export default function SaldosPage() {
           descripcion="No se encontraron productos con esos criterios de búsqueda."
         />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filtrados.map((p) => (
             <TarjetaSaldo key={p.IdProducto} producto={p} onSelect={handleSelect} />
           ))}
@@ -294,10 +294,8 @@ export default function SaldosPage() {
 
       {/* Sheet de detalle */}
       <Sheet open={!!seleccionado} onOpenChange={(open) => !open && setSeleccionado(null)}>
-        <SheetContent
-          side="bottom"
-          className="max-h-[85vh] overflow-y-auto sm:inset-y-0 sm:bottom-auto sm:right-0 sm:h-full sm:max-h-none sm:w-3/4 sm:max-w-md"
-        >
+        {/* "panel": bottom sheet en celular, panel derecho desde sm (ver ui/sheet.tsx) */}
+        <SheetContent side="panel">
           <SheetHeader className="text-left">
             <SheetTitle>Detalle de producto</SheetTitle>
             <SheetDescription className="sr-only">

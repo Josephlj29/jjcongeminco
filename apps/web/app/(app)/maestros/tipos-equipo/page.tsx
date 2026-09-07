@@ -40,6 +40,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -90,34 +91,40 @@ function DialogTipoEquipo({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {modoEdicion ? "Editar tipo de equipo" : "Nuevo tipo de equipo"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="Codigo">Código *</Label>
-              <Input id="Codigo" placeholder="TE-001" {...register("Codigo")} />
-              {errors.Codigo && <p className="text-xs text-destructive">{errors.Codigo.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="Codigo">Código *</Label>
+                <Input id="Codigo" placeholder="TE-001" {...register("Codigo")} />
+                {errors.Codigo && (
+                  <p className="text-xs text-destructive">{errors.Codigo.message}</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="Nombre">Nombre *</Label>
+                <Input id="Nombre" placeholder="Excavadora hidráulica" {...register("Nombre")} />
+                {errors.Nombre && (
+                  <p className="text-xs text-destructive">{errors.Nombre.message}</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="Nombre">Nombre *</Label>
-              <Input id="Nombre" placeholder="Excavadora hidráulica" {...register("Nombre")} />
-              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
-            </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="Descripcion">Descripción</Label>
-            <Input
-              id="Descripcion"
-              placeholder="Descripción del tipo de equipo"
-              {...register("Descripcion")}
-            />
-          </div>
+            <div className="space-y-1">
+              <Label htmlFor="Descripcion">Descripción</Label>
+              <Input
+                id="Descripcion"
+                placeholder="Descripción del tipo de equipo"
+                {...register("Descripcion")}
+              />
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

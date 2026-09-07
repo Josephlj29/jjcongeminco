@@ -41,6 +41,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -115,163 +116,165 @@ function DialogProveedor({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{modoEdicion ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="Nombre">Nombre *</Label>
-            <Input id="Nombre" placeholder="Proveedor S.A." {...register("Nombre")} />
-            {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="Ruc">RUC</Label>
-              <Input id="Ruc" placeholder="20123456789" {...register("Ruc")} />
-              {errors.Ruc && <p className="text-xs text-destructive">{errors.Ruc.message}</p>}
+              <Label htmlFor="Nombre">Nombre *</Label>
+              <Input id="Nombre" placeholder="Proveedor S.A." {...register("Nombre")} />
+              {errors.Nombre && <p className="text-xs text-destructive">{errors.Nombre.message}</p>}
             </div>
+
+            <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="Ruc">RUC</Label>
+                <Input id="Ruc" placeholder="20123456789" {...register("Ruc")} />
+                {errors.Ruc && <p className="text-xs text-destructive">{errors.Ruc.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="Telefono">Teléfono</Label>
+                <Input id="Telefono" placeholder="+51 999 999 999" {...register("Telefono")} />
+              </div>
+            </div>
+
             <div className="space-y-1">
-              <Label htmlFor="Telefono">Teléfono</Label>
-              <Input id="Telefono" placeholder="+51 999 999 999" {...register("Telefono")} />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="Contacto">Contacto</Label>
-            <Input id="Contacto" placeholder="Nombre del contacto" {...register("Contacto")} />
-          </div>
-
-          {/* ─── Cuentas bancarias ─── */}
-          <div className="space-y-2 rounded-md border p-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Cuentas bancarias</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ ...CUENTA_VACIA })}
-              >
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                Agregar cuenta
-              </Button>
+              <Label htmlFor="Contacto">Contacto</Label>
+              <Input id="Contacto" placeholder="Nombre del contacto" {...register("Contacto")} />
             </div>
 
-            {fields.length === 0 ? (
-              <p className="py-2 text-xs text-muted-foreground">
-                Sin cuentas. Agrega una si el proveedor tiene datos bancarios.
-              </p>
-            ) : (
-              fields.map((field, i) => (
-                <div key={field.id} className="relative space-y-2 rounded-md border p-3">
-                  <button
-                    type="button"
-                    onClick={() => remove(i)}
-                    className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
-                    aria-label="Quitar cuenta"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+            {/* ─── Cuentas bancarias ─── */}
+            <div className="space-y-2 rounded-md border p-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Cuentas bancarias</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ ...CUENTA_VACIA })}
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Agregar cuenta
+                </Button>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Banco *</Label>
-                      <Input
-                        placeholder="BCP, BBVA, Interbank…"
-                        {...register(`Cuentas.${i}.Banco` as const)}
-                      />
-                      {errors.Cuentas?.[i]?.Banco && (
-                        <p className="text-xs text-destructive">
-                          {errors.Cuentas[i]?.Banco?.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+              {fields.length === 0 ? (
+                <p className="py-2 text-xs text-muted-foreground">
+                  Sin cuentas. Agrega una si el proveedor tiene datos bancarios.
+                </p>
+              ) : (
+                fields.map((field, i) => (
+                  <div key={field.id} className="relative space-y-2 rounded-md border p-3">
+                    <button
+                      type="button"
+                      onClick={() => remove(i)}
+                      className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
+                      aria-label="Quitar cuenta"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+
+                    <div className="grid grid-cols-1 gap-2 @sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">Tipo</Label>
-                        <Controller
-                          control={control}
-                          name={`Cuentas.${i}.TipoCuenta` as const}
-                          render={({ field: f }) => (
-                            <Select value={f.value} onValueChange={f.onChange}>
-                              <SelectTrigger className="h-9">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="corriente">Corriente</SelectItem>
-                                <SelectItem value="ahorros">Ahorros</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
+                        <Label className="text-xs">Banco *</Label>
+                        <Input
+                          placeholder="BCP, BBVA, Interbank…"
+                          {...register(`Cuentas.${i}.Banco` as const)}
                         />
+                        {errors.Cuentas?.[i]?.Banco && (
+                          <p className="text-xs text-destructive">
+                            {errors.Cuentas[i]?.Banco?.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 @sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Tipo</Label>
+                          <Controller
+                            control={control}
+                            name={`Cuentas.${i}.TipoCuenta` as const}
+                            render={({ field: f }) => (
+                              <Select value={f.value} onValueChange={f.onChange}>
+                                <SelectTrigger className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="corriente">Corriente</SelectItem>
+                                  <SelectItem value="ahorros">Ahorros</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Moneda</Label>
+                          <Controller
+                            control={control}
+                            name={`Cuentas.${i}.Moneda` as const}
+                            render={({ field: f }) => (
+                              <Select value={f.value} onValueChange={f.onChange}>
+                                <SelectTrigger className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="PEN">Soles</SelectItem>
+                                  <SelectItem value="USD">Dólares</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 @sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">N° de cuenta *</Label>
+                        <Input
+                          placeholder="193-1234567-0-89"
+                          {...register(`Cuentas.${i}.NumeroCuenta` as const)}
+                        />
+                        {errors.Cuentas?.[i]?.NumeroCuenta && (
+                          <p className="text-xs text-destructive">
+                            {errors.Cuentas[i]?.NumeroCuenta?.message}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Moneda</Label>
-                        <Controller
-                          control={control}
-                          name={`Cuentas.${i}.Moneda` as const}
-                          render={({ field: f }) => (
-                            <Select value={f.value} onValueChange={f.onChange}>
-                              <SelectTrigger className="h-9">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="PEN">Soles</SelectItem>
-                                <SelectItem value="USD">Dólares</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
+                        <Label className="text-xs">CCI</Label>
+                        <Input
+                          placeholder="002193001234567890"
+                          {...register(`Cuentas.${i}.Cci` as const)}
                         />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">N° de cuenta *</Label>
-                      <Input
-                        placeholder="193-1234567-0-89"
-                        {...register(`Cuentas.${i}.NumeroCuenta` as const)}
-                      />
-                      {errors.Cuentas?.[i]?.NumeroCuenta && (
-                        <p className="text-xs text-destructive">
-                          {errors.Cuentas[i]?.NumeroCuenta?.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">CCI</Label>
-                      <Input
-                        placeholder="002193001234567890"
-                        {...register(`Cuentas.${i}.Cci` as const)}
+                    <div className="grid grid-cols-1 items-end gap-2 @sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Titular (si difiere)</Label>
+                        <Input
+                          placeholder="Razón social del titular"
+                          {...register(`Cuentas.${i}.TitularCuenta` as const)}
+                        />
+                      </div>
+                      <Controller
+                        control={control}
+                        name={`Cuentas.${i}.EsPrincipal` as const}
+                        render={({ field: f }) => (
+                          <label className="flex h-9 items-center gap-2 text-sm">
+                            <Checkbox checked={f.value} onCheckedChange={f.onChange} />
+                            Cuenta principal
+                          </label>
+                        )}
                       />
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 items-end gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Titular (si difiere)</Label>
-                      <Input
-                        placeholder="Razón social del titular"
-                        {...register(`Cuentas.${i}.TitularCuenta` as const)}
-                      />
-                    </div>
-                    <Controller
-                      control={control}
-                      name={`Cuentas.${i}.EsPrincipal` as const}
-                      render={({ field: f }) => (
-                        <label className="flex h-9 items-center gap-2 text-sm">
-                          <Checkbox checked={f.value} onCheckedChange={f.onChange} />
-                          Cuenta principal
-                        </label>
-                      )}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

@@ -22,6 +22,7 @@ import { DialogOrdenMantenimiento } from "@/components/mantenimiento/DialogOrden
 import { ListaTrabajos } from "@/components/mantenimiento/ListaTrabajos";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -89,7 +90,7 @@ export function DialogReconciliarOrden({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>Reconciliar OT {orden?.NumeroOrden ?? idOrden.slice(0, 8)}</DialogTitle>
           <DialogDescription>
@@ -99,159 +100,156 @@ export function DialogReconciliarOrden({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading || !orden ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10" />
-            <Skeleton className="h-24" />
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
-              <div>
-                <span className="text-muted-foreground">Placa: </span>
-                {orden.Placa ?? "—"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Tipo: </span>
-                {orden.TipoMantenimiento === "correctivo" ? "Correctivo" : "Preventivo"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Personal: </span>
-                {orden.Personales.length
-                  ? orden.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
-                  : "—"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Turno: </span>
-                {TURNO_LABEL[orden.Turno] ?? orden.Turno}
-              </div>
+        <DialogBody>
+          {isLoading || !orden ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10" />
+              <Skeleton className="h-24" />
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm @sm:grid-cols-2">
+                <div>
+                  <span className="text-muted-foreground">Placa: </span>
+                  {orden.Placa ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Tipo: </span>
+                  {orden.TipoMantenimiento === "correctivo" ? "Correctivo" : "Preventivo"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Personal: </span>
+                  {orden.Personales.length
+                    ? orden.Personales.map((p) => p.NombreCompleto ?? "—").join(", ")
+                    : "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Turno: </span>
+                  {TURNO_LABEL[orden.Turno] ?? orden.Turno}
+                </div>
+              </div>
 
-            <div className="space-y-1 rounded-md border p-3">
-              <p className="text-sm font-medium">Trabajos realizados</p>
-              <ListaTrabajos trabajos={orden.Trabajos} />
-            </div>
+              <div className="space-y-1 rounded-md border p-3">
+                <p className="text-sm font-medium">Trabajos realizados</p>
+                <ListaTrabajos trabajos={orden.Trabajos} />
+              </div>
 
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">
-                {descontado ? "Repuestos consumidos" : "Repuestos a descontar al aprobar"}
-              </p>
-              {puedeEditar && !descontado && !rechazando && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">
+                  {descontado ? "Repuestos consumidos" : "Repuestos a descontar al aprobar"}
+                </p>
+                {puedeEditar && !descontado && !rechazando && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditando(true)}
+                    disabled={isPending}
+                  >
+                    <Pencil className="mr-1 h-3.5 w-3.5" />
+                    Editar orden
+                  </Button>
+                )}
+              </div>
+              <div className="rounded-md border">
+                <Table className="min-w-[560px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Repuesto</TableHead>
+                      <TableHead className="w-20 text-center">Cant.</TableHead>
+                      <TableHead className="w-16 text-center">U.M</TableHead>
+                      <TableHead className="w-28 text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orden.Repuestos.map((r) => (
+                      <TableRow key={r.IdProducto}>
+                        <TableCell>
+                          {r.NombreProducto}
+                          <span className="ml-1 text-xs text-muted-foreground">{r.Sku}</span>
+                        </TableCell>
+                        <TableCell className="text-center">{r.Cantidad}</TableCell>
+                        <TableCell className="text-center">{r.CodigoUnidad ?? "—"}</TableCell>
+                        <TableCell className="text-right">
+                          {moneda(r.Cantidad * r.CostoUnitario)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!orden.Repuestos.length && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">
+                          Sin repuestos
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="text-right text-sm">
+                {descontado ? "Total consumido" : "Total estimado"}:{" "}
+                <strong>{moneda(total)}</strong>
+              </div>
+
+              {rechazando && (
+                <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                  <div className="flex items-start gap-2 text-destructive">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    {descontado ? (
+                      <p className="text-xs leading-tight">
+                        Rechazar genera una <strong>entrada de reversa contable</strong> que
+                        devuelve el stock al sistema. Si el repuesto ya se instaló físicamente, el
+                        almacén mostrará stock que no está en el estante. Usa el rechazo para
+                        <strong> errores de carga</strong>.
+                      </p>
+                    ) : (
+                      <p className="text-xs leading-tight">
+                        Rechazar <strong>anula la orden</strong>. El stock no se toca porque todavía
+                        no se descontó. Si solo hay que corregir un repuesto o una tarea, usa
+                        <strong> Editar orden</strong> en vez de rechazar.
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="motivo">Motivo del rechazo *</Label>
+                    <Input
+                      id="motivo"
+                      placeholder="Ej: cantidad mal registrada"
+                      value={motivo}
+                      onChange={(e) => setMotivo(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </DialogBody>
+
+        {orden && !isLoading && (
+          <DialogFooter>
+            {!rechazando ? (
+              <>
+                <Button variant="outline" onClick={() => setRechazando(true)} disabled={isPending}>
+                  Rechazar
+                </Button>
+                <Button onClick={() => reconciliar(true)} disabled={isPending}>
+                  {isPending ? "Procesando..." : "Aprobar"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setRechazando(false)} disabled={isPending}>
+                  Volver
+                </Button>
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditando(true)}
+                  variant="destructive"
+                  onClick={() => reconciliar(false)}
                   disabled={isPending}
                 >
-                  <Pencil className="mr-1 h-3.5 w-3.5" />
-                  Editar orden
+                  {isPending ? "Procesando..." : "Confirmar rechazo"}
                 </Button>
-              )}
-            </div>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Repuesto</TableHead>
-                    <TableHead className="w-20 text-center">Cant.</TableHead>
-                    <TableHead className="w-16 text-center">U.M</TableHead>
-                    <TableHead className="w-28 text-right">Valor</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orden.Repuestos.map((r) => (
-                    <TableRow key={r.IdProducto}>
-                      <TableCell>
-                        {r.NombreProducto}
-                        <span className="ml-1 text-xs text-muted-foreground">{r.Sku}</span>
-                      </TableCell>
-                      <TableCell className="text-center">{r.Cantidad}</TableCell>
-                      <TableCell className="text-center">{r.CodigoUnidad ?? "—"}</TableCell>
-                      <TableCell className="text-right">
-                        {moneda(r.Cantidad * r.CostoUnitario)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {!orden.Repuestos.length && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground">
-                        Sin repuestos
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="text-right text-sm">
-              {descontado ? "Total consumido" : "Total estimado"}: <strong>{moneda(total)}</strong>
-            </div>
-
-            {rechazando && (
-              <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 p-3">
-                <div className="flex items-start gap-2 text-destructive">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  {descontado ? (
-                    <p className="text-xs leading-tight">
-                      Rechazar genera una <strong>entrada de reversa contable</strong> que devuelve
-                      el stock al sistema. Si el repuesto ya se instaló físicamente, el almacén
-                      mostrará stock que no está en el estante. Usa el rechazo para
-                      <strong> errores de carga</strong>.
-                    </p>
-                  ) : (
-                    <p className="text-xs leading-tight">
-                      Rechazar <strong>anula la orden</strong>. El stock no se toca porque todavía
-                      no se descontó. Si solo hay que corregir un repuesto o una tarea, usa
-                      <strong> Editar orden</strong> en vez de rechazar.
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="motivo">Motivo del rechazo *</Label>
-                  <Input
-                    id="motivo"
-                    placeholder="Ej: cantidad mal registrada"
-                    value={motivo}
-                    onChange={(e) => setMotivo(e.target.value)}
-                  />
-                </div>
-              </div>
+              </>
             )}
-
-            <DialogFooter className="gap-2">
-              {!rechazando ? (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => setRechazando(true)}
-                    disabled={isPending}
-                  >
-                    Rechazar
-                  </Button>
-                  <Button onClick={() => reconciliar(true)} disabled={isPending}>
-                    {isPending ? "Procesando..." : "Aprobar"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => setRechazando(false)}
-                    disabled={isPending}
-                  >
-                    Volver
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => reconciliar(false)}
-                    disabled={isPending}
-                  >
-                    {isPending ? "Procesando..." : "Confirmar rechazo"}
-                  </Button>
-                </>
-              )}
-            </DialogFooter>
-          </>
+          </DialogFooter>
         )}
       </DialogContent>
 
