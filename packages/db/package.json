@@ -8,7 +8,8 @@
     "migrate": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/migrate.ts",
     "seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts",
     "etl": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/etl.ts",
-    "reconcile": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/reconcile.ts"
+    "reconcile": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/reconcile.ts",
+    "excel:clasificacion": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/generar-excel-clasificacion.ts"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

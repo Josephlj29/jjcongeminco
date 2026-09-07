@@ -1,0 +1,5938 @@
+{
+  "fuente": "base de datos (producción, snapshot 2026-09-06 vía MCP de Supabase)",
+  "generadoEn": "2026-09-06T23:27:11.728Z",
+  "tiposEquipo": [
+    {
+      "Codigo": "LIN - LIV CAMION CIS",
+      "Nombre": "CISTERNA",
+      "Descripcion": "",
+      "nEquipos": 0,
+      "nProductos": 9
+    },
+    {
+      "Codigo": "LIN - LIV CAMION GRU",
+      "Nombre": "GRUA",
+      "Descripcion": "",
+      "nEquipos": 0,
+      "nProductos": 15
+    },
+    {
+      "Codigo": "LIN AMA - MINI",
+      "Nombre": "MINICARGADOR",
+      "Descripcion": "",
+      "nEquipos": 1,
+      "nProductos": 0
+    },
+    {
+      "Codigo": "LIN AMA - MOTO",
+      "Nombre": "MOTONIVELADORA",
+      "Descripcion": "",
+      "nEquipos": 1,
+      "nProductos": 12
+    },
+    {
+      "Codigo": "LIN AMA - TELE",
+      "Nombre": "TELEHANDLER",
+      "Descripcion": "",
+      "nEquipos": 2,
+      "nProductos": 0
+    },
+    {
+      "Codigo": "LIN LIV - CAMIONES",
+      "Nombre": "GRUA - CISTERNA",
+      "Descripcion": "",
+      "nEquipos": 2,
+      "nProductos": 116
+    },
+    {
+      "Codigo": "LIN LIV - CAMIONETA",
+      "Nombre": "SUPERVISION - EXPLOSIVOS",
+      "Descripcion": "",
+      "nEquipos": 2,
+      "nProductos": 75
+    },
+    {
+      "Codigo": "LIN LIV - MINIBUS",
+      "Nombre": "TRANSPORTE DE PERSONAL ",
+      "Descripcion": "",
+      "nEquipos": 2,
+      "nProductos": 118
+    }
+  ],
+  "equipos": [
+    {
+      "Codigo": "LIN AMA - MINI1",
+      "Nombre": "CAT - MINICARGADOR",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN AMA - MINI",
+      "Placas": "5L201355"
+    },
+    {
+      "Codigo": "LIN AMA - MOTO1",
+      "Nombre": "CAT - MOTONIVELADORA",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN AMA - MOTO",
+      "Placas": "HL300339"
+    },
+    {
+      "Codigo": "LIN AMA - TELE1",
+      "Nombre": "MANITOU - TELEHANDLER",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN AMA - TELE",
+      "Placas": ""
+    },
+    {
+      "Codigo": "LIN AMA - TELE2",
+      "Nombre": "MANITOU - TELEHANDLER",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN AMA - TELE",
+      "Placas": ""
+    },
+    {
+      "Codigo": "LIN LIV - CAMION1",
+      "Nombre": "EX8 - CAMION GRUA",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN LIV - CAMIONES",
+      "Placas": "VDS927"
+    },
+    {
+      "Codigo": "LIN LIV - CAMION2",
+      "Nombre": "EX8 - CAMION CISTERNA",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN LIV - CAMIONES",
+      "Placas": "VCZ891"
+    },
+    {
+      "Codigo": "LIN LIV - CAMIONETA1",
+      "Nombre": "HILUX - SUPERVICION",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN LIV - CAMIONETA",
+      "Placas": "VEX838"
+    },
+    {
+      "Codigo": "LIN LIV - CAMIONETA2",
+      "Nombre": "HILUX - EXPLOSIVOS",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN LIV - CAMIONETA",
+      "Placas": "VFG769"
+    },
+    {
+      "Codigo": "LIN LIV - MINIBUS1",
+      "Nombre": "COUNTY - TRANSPORTE DE PERSONAL ",
+      "Descripcion": "OPERACIONES",
+      "TipoCodigo": "LIN LIV - MINIBUS",
+      "Placas": "VBU158"
+    },
+    {
+      "Codigo": "LIN LIV - MINIBUS2 ",
+      "Nombre": "COUNTY - TRANSPORTE DE PERSONAL ",
+      "Descripcion": "COMPAÑIA",
+      "TipoCodigo": "LIN LIV - MINIBUS",
+      "Placas": "VCK301"
+    }
+  ],
+  "vehiculos": [
+    {
+      "Placa": "5L201355",
+      "Modelo": "CAT MINI 250 2026",
+      "EquipoCodigo": "LIN AMA - MINI1",
+      "TipoCodigo": "LIN AMA - MINI"
+    },
+    {
+      "Placa": "HL300339",
+      "Modelo": "CAT MOTO 140 2026 ",
+      "EquipoCodigo": "LIN AMA - MOTO1",
+      "TipoCodigo": "LIN AMA - MOTO"
+    },
+    {
+      "Placa": "VBU158",
+      "Modelo": "HYUNDAI COUNTY 2024",
+      "EquipoCodigo": "LIN LIV - MINIBUS1",
+      "TipoCodigo": "LIN LIV - MINIBUS"
+    },
+    {
+      "Placa": "VCK301",
+      "Modelo": "HYUNDAI COUNTY 2025",
+      "EquipoCodigo": "LIN LIV - MINIBUS2 ",
+      "TipoCodigo": "LIN LIV - MINIBUS"
+    },
+    {
+      "Placa": "VCZ891",
+      "Modelo": "HYUNDAI EX8 2022",
+      "EquipoCodigo": "LIN LIV - CAMION2",
+      "TipoCodigo": "LIN LIV - CAMIONES"
+    },
+    {
+      "Placa": "VDS927",
+      "Modelo": "HYUNDAI EX8 2024",
+      "EquipoCodigo": "LIN LIV - CAMION1",
+      "TipoCodigo": "LIN LIV - CAMIONES"
+    },
+    {
+      "Placa": "VEX838",
+      "Modelo": "TOYOTA HILUX 2026",
+      "EquipoCodigo": "LIN LIV - CAMIONETA1",
+      "TipoCodigo": "LIN LIV - CAMIONETA"
+    },
+    {
+      "Placa": "VFG769",
+      "Modelo": "TOYOTA HILUX 2027",
+      "EquipoCodigo": "LIN LIV - CAMIONETA2",
+      "TipoCodigo": "LIN LIV - CAMIONETA"
+    }
+  ],
+  "categorias": [
+    {
+      "Codigo": "CAT- CRUCETA",
+      "Nombre": "Crucetas",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 5,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-COMBUSTIBLE",
+      "Nombre": "Sistema de Combustible",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-DIRECCION",
+      "Nombre": "Dirección",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-FIJACION",
+      "Nombre": "Fijación y Sujeción",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 5,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-FILTRO",
+      "Nombre": "Filtros",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 21,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-FRENO",
+      "Nombre": "Frenos",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 9,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-MOTOR",
+      "Nombre": "Motor",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 3,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-RETEN",
+      "Nombre": "Retenes",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 13,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-RODAMIENTO",
+      "Nombre": "Rodamientos",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 11,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-SEGURIDAD",
+      "Nombre": "Seguridad",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 2,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-SUSPENSION",
+      "Nombre": "Suspensión",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-TRANSMISION",
+      "Nombre": "Transmisión",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-VARIOS",
+      "Nombre": "Varios",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-CINTA",
+      "Nombre": "Cintas",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-CON",
+      "nProductos": 12,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-QUIMICO",
+      "Nombre": "Químicos Automotrices",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-CON",
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-SELLANTE",
+      "Nombre": "Sellantes y Adhesivos",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-CON",
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "FAM-CON",
+      "Nombre": "Consumibles",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 72,
+      "nHijas": 3
+    },
+    {
+      "Codigo": "CAT-ELECTRICO",
+      "Nombre": "Componentes Eléctricos",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-ELE",
+      "nProductos": 2,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-FOCO",
+      "Nombre": "Focos",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-ELE",
+      "nProductos": 18,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-FUSIBLE",
+      "Nombre": "Fusibles",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-ELE",
+      "nProductos": 13,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-RELAY",
+      "Nombre": "Relays",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-ELE",
+      "nProductos": 3,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "CAT-TERMINAL",
+      "Nombre": "Terminales",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-ELE",
+      "nProductos": 3,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "FAM-ELE",
+      "Nombre": "Sistema Eléctrico",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 0,
+      "nHijas": 5
+    },
+    {
+      "Codigo": "CAT-HERRAMIENTA",
+      "Nombre": "Herramientas",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-HER",
+      "nProductos": 52,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "FAM-HER",
+      "Nombre": "Herramientas",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 15,
+      "nHijas": 1
+    },
+    {
+      "Codigo": "CAT-LUBRICANTE",
+      "Nombre": "Grasas y Lubricantes",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-LUB",
+      "nProductos": 13,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "FAM-LUB",
+      "Nombre": "Lubricantes",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 1,
+      "nHijas": 1
+    },
+    {
+      "Codigo": "CAT-NEUMATICO",
+      "Nombre": "Reparación de Neumáticos",
+      "Descripcion": null,
+      "PadreCodigo": "FAM-NEU",
+      "nProductos": 2,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "FAM-NEU",
+      "Nombre": "Neumáticos",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 7,
+      "nHijas": 1
+    },
+    {
+      "Codigo": "FAM-REP",
+      "Nombre": "Repuestos",
+      "Descripcion": null,
+      "PadreCodigo": null,
+      "nProductos": 50,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "FARO",
+      "Nombre": "Faro ",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 6,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "GOMA",
+      "Nombre": "Gomas",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 2,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "MUELLE",
+      "Nombre": "Muelle",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 5,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "padre",
+      "Nombre": "padre 1",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 0,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "PRECA",
+      "Nombre": "precalentador ",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 1,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "ROD",
+      "Nombre": "Rodillo",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 1,
+      "nHijas": 0
+    },
+    {
+      "Codigo": "TAPA",
+      "Nombre": "Tapa",
+      "Descripcion": "",
+      "PadreCodigo": null,
+      "nProductos": 1,
+      "nHijas": 0
+    }
+  ],
+  "productos": [
+    {
+      "Sku": "1",
+      "Nombre": "Reten de piñon de ataque ASASHI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "MH034172 A ",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CINTA-001",
+      "Nombre": "Cinta teflon",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-002",
+      "Nombre": "Cinta reflectiva amarilla",
+      "CodigoUnidad": "MTK",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-003",
+      "Nombre": "Cinta negra electrica",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-004",
+      "Nombre": "Cinta roja",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-005",
+      "Nombre": "Cinta amarilla ",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-006",
+      "Nombre": "Cinta blanca",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-007",
+      "Nombre": "Cinta reflectiva rojo y blanco",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-008",
+      "Nombre": "Cinta verde ",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-009",
+      "Nombre": "Cinta verde delgada",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-010",
+      "Nombre": "Cinta relfectiva anaranjada",
+      "CodigoUnidad": "MTR",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-011",
+      "Nombre": "Cinta schoch",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CINTA-012",
+      "Nombre": "Cinta FRAGIL",
+      "CodigoUnidad": "MTQ",
+      "CategoriaCodigo": "CAT-CINTA",
+      "CategoriaNombre": "Cintas",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-001",
+      "Nombre": "Caja para pulsador",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "BX1-1H",
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "CON-002",
+      "Nombre": "Termostato",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25510 4A750",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-003",
+      "Nombre": "Bocina claxón 12v BOSCH",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "0986AH0700",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-004",
+      "Nombre": "Bocina cláxon 24v",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "0986AH0703",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-005",
+      "Nombre": "Alarma de retroceso 12-24v ECCO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "520",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-006",
+      "Nombre": "Electro valvula",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "4305882",
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "CON-007",
+      "Nombre": " Switches Corta corriente ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "I/651915",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-008",
+      "Nombre": "Pulsador de emergencia MARILIA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "IM11036",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-009",
+      "Nombre": "Bomba de agua HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25110 48013",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-010",
+      "Nombre": "Filtro de aire acondicionado GAT FILTER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "97133 4H000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-011",
+      "Nombre": "Polea guía HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25216 48000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-012",
+      "Nombre": "Valvula de presión de freno HYUNDAI",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "59410 5A000",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-013",
+      "Nombre": "Turbo ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "28210 48001",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-014",
+      "Nombre": "Seguro de tuerca tipo lagrima N27 MAMMUTHS",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "1xra",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-015",
+      "Nombre": "Seguro de tuerca N21 MAMMUTHS",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "1xr1",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-016",
+      "Nombre": "Seguro de tuerca color anaranjado INROCA N21 ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-017",
+      "Nombre": "Pines y bujes de dirección  diametro 30x180 NKT",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "551 ",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-018",
+      "Nombre": "Faja de freno de mano HYUNDAI",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "59822 5LA00",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-019",
+      "Nombre": "Faja de freno de mano VULCANIZADO",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "59822 5LA20",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-020",
+      "Nombre": "Soporte de cardan HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "49720 5M500",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-021",
+      "Nombre": "Soporte de cardán  HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "49720 5L010",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-022",
+      "Nombre": "Bomba de agua X8. HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25100 4A855",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-023",
+      "Nombre": "Hidrostático EX8 HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25239 4C010",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-024",
+      "Nombre": "ESPÁRRAGOS PARA TOYOTA ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "9024006158",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-025",
+      "Nombre": "CLIP O PASADO DE SUJECIÓN PARA PASTILLAS DE FRENO DELANTERO ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "47749-35040",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-026",
+      "Nombre": "KIT DE RODAMIENTO PARA RUEDA ",
+      "CodigoUnidad": "KT",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "VKBA 6900 PE",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-027",
+      "Nombre": "Orrin de llanta HALTEC",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "OR-325-T",
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "CON-028",
+      "Nombre": "Turbo EX8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "28210 4C000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-029",
+      "Nombre": "Alternador EX8 HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "37300 4A900",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-030",
+      "Nombre": "Muñon RH HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "56734 5K000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-031",
+      "Nombre": "Muñon LH HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "56714 5K000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-032",
+      "Nombre": "Aveite de motor 15w40 CAT",
+      "CodigoUnidad": "GLI",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "CON-033",
+      "Nombre": "Depósito de refrigerante",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25360 58000",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-034",
+      "Nombre": "Radiador fabricado ex8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-035",
+      "Nombre": "Amortiguador delantero  KYB PREMIUM",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "444199",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-036",
+      "Nombre": "Cable de grúa",
+      "CodigoUnidad": "MTR",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "CON-037",
+      "Nombre": "Trapo industrial",
+      "CodigoUnidad": "KGM",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-038",
+      "Nombre": "Barra corta de dirección ex8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "568105M610",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-039",
+      "Nombre": "Barra corta de direccion county",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-040",
+      "Nombre": "Barra larga de dirección",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "56871 5M210",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-041",
+      "Nombre": "Pin de Kaliper",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "90240 06158",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-042",
+      "Nombre": "Kit de embrague PHC ( plato opresor , disco y collarin)",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CON-043",
+      "Nombre": "Kit de embrague PHC COUNTY( plato opresor , disco y collarin)",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-044",
+      "Nombre": "Extintor 6kg EXSUR",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-045",
+      "Nombre": "Bombin de freno delantero izquierdo",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "58120 45201",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-046",
+      "Nombre": "Bombin de freno delantero derecho",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "58220 45201",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-047",
+      "Nombre": "Bombin de freno posterior derecho",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "58420 45201",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-048",
+      "Nombre": "Bombin de freno posterior izquierdo",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "58330 45201",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-049",
+      "Nombre": "Esparragos N 12.9 c/ tuerca",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-050",
+      "Nombre": "Kit antiderrame ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 3,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN AMA - MOTO",
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-051",
+      "Nombre": "Portafusible  600v TAIWAN",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-052",
+      "Nombre": "Portafusible universal TAIWAN",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-053",
+      "Nombre": "Conectores H-M",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-054",
+      "Nombre": "Terminal macho ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-055",
+      "Nombre": "Fusible de 32v",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-056",
+      "Nombre": "Fusible de 15V color azul",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-057",
+      "Nombre": "Conector tipo ojo 5.5 -12",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-058",
+      "Nombre": "Conector tipo ojo 5.5 -10",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-059",
+      "Nombre": "Soldimix AB",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-060",
+      "Nombre": "Silicona  MEGA GREY",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-061",
+      "Nombre": "Silicina OCI GREY",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-062",
+      "Nombre": "Sellador  de silicona REINZOSIL",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-063",
+      "Nombre": "Piedra para rectificar TOTAL 5 pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-064",
+      "Nombre": "Auxiliar de arranque",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-065",
+      "Nombre": "Aflojatodo",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-066",
+      "Nombre": "Silicona para tablero",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-067",
+      "Nombre": "Terminal hembra",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-068",
+      "Nombre": "Silicona SIKA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-069",
+      "Nombre": "PARCHE PARA CÁMARA DE AIRE V-2",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "7898293150525",
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS",
+        "LIN - LIV CAMION GRU",
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-070",
+      "Nombre": "PARCHE PARA CÁMARA DE AIRE V-1",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "7898293150518",
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS",
+        "LIN - LIV CAMION GRU",
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CON-071",
+      "Nombre": "BOCAMAZA - BOOTTELLI ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "43502-KK010-BTL",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CON-072",
+      "Nombre": "Cable para instalación electrico",
+      "CodigoUnidad": "MTK",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-073",
+      "Nombre": "Super sellador para radiador",
+      "CodigoUnidad": "ONZ",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CON-074",
+      "Nombre": "Guantes azules latex",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-CON",
+      "CategoriaNombre": "Consumibles",
+      "FamiliaCodigo": "FAM-CON",
+      "FamiliaNombre": "Consumibles",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "CRUCETA-001",
+      "Nombre": "Cruceta de cardan NEAPCO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT- CRUCETA",
+      "CategoriaNombre": "Crucetas",
+      "FamiliaCodigo": "CAT- CRUCETA",
+      "FamiliaNombre": "Crucetas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "3-0188",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "CRUCETA-002",
+      "Nombre": "Cruceta se cardan PRECISO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT- CRUCETA",
+      "CategoriaNombre": "Crucetas",
+      "FamiliaCodigo": "CAT- CRUCETA",
+      "FamiliaNombre": "Crucetas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "QC ISO 9001 -- 138(38X106)",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "CRUCETA-003",
+      "Nombre": "Cruceta de cardan TOYO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT- CRUCETA",
+      "CategoriaNombre": "Crucetas",
+      "FamiliaCodigo": "CAT- CRUCETA",
+      "FamiliaNombre": "Crucetas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "32296",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CRUCETA-004",
+      "Nombre": "Cruceta de cardan principal TOYO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT- CRUCETA",
+      "CategoriaNombre": "Crucetas",
+      "FamiliaCodigo": "CAT- CRUCETA",
+      "FamiliaNombre": "Crucetas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "75417",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "CRUCETA-005",
+      "Nombre": "Cruceta cardan HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT- CRUCETA",
+      "CategoriaNombre": "Crucetas",
+      "FamiliaCodigo": "CAT- CRUCETA",
+      "FamiliaNombre": "Crucetas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "49140 5M400",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "ELECTRICO-001",
+      "Nombre": "Generador Alternador HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-ELECTRICO",
+      "CategoriaNombre": "Componentes Eléctricos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "37300 48AA2",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "ELECTRICO-002",
+      "Nombre": "Bateria 12v MOURA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-ELECTRICO",
+      "CategoriaNombre": "Componentes Eléctricos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "ME680KI",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FARO-001",
+      "Nombre": "Faro pirata",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FARO",
+      "CategoriaNombre": "Faro ",
+      "FamiliaCodigo": "FARO",
+      "FamiliaNombre": "Faro ",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "I/5027ECO",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "FARO-002",
+      "Nombre": "Faro cuadrado led multivoltaje ELILED",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FARO",
+      "CategoriaNombre": "Faro ",
+      "FamiliaCodigo": "FARO",
+      "FamiliaNombre": "Faro ",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "I/94800E",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "FARO-003",
+      "Nombre": "Faro cuadrado multivoltaje",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FARO",
+      "CategoriaNombre": "Faro ",
+      "FamiliaCodigo": "FARO",
+      "FamiliaNombre": "Faro ",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "I/5048ECO",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "FARO-004",
+      "Nombre": "Faro 2\" c/jebe ambar  multivoltaje ELILED",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FARO",
+      "CategoriaNombre": "Faro ",
+      "FamiliaCodigo": "FARO",
+      "FamiliaNombre": "Faro ",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "I/1025 AM",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FARO-005",
+      "Nombre": "Barra de les neblinero 9v /36 v",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FARO",
+      "CategoriaNombre": "Faro ",
+      "FamiliaCodigo": "FARO",
+      "FamiliaNombre": "Faro ",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "BAR36MAXAMB",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "FARO-006",
+      "Nombre": "Faro lateral cromado c/flash les ambar multivolvaje",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FARO",
+      "CategoriaNombre": "Faro ",
+      "FamiliaCodigo": "FARO",
+      "FamiliaNombre": "Faro ",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "I/1004AMFL",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FIJACION-001",
+      "Nombre": "Mecanismo de dirección cremallera YOKOMITSU",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FIJACION",
+      "CategoriaNombre": "Fijación y Sujeción",
+      "FamiliaCodigo": "CAT-FIJACION",
+      "FamiliaNombre": "Fijación y Sujeción",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "FIJACION-002",
+      "Nombre": "Amortiguador delantero  TOKICO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FIJACION",
+      "CategoriaNombre": "Fijación y Sujeción",
+      "FamiliaCodigo": "CAT-FIJACION",
+      "FamiliaNombre": "Fijación y Sujeción",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "U35115",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "FIJACION-003",
+      "Nombre": "Amortiguador posterior a gas MONROE",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FIJACION",
+      "CategoriaNombre": "Fijación y Sujeción",
+      "FamiliaCodigo": "CAT-FIJACION",
+      "FamiliaNombre": "Fijación y Sujeción",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "6803",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FIJACION-004",
+      "Nombre": "Soporte de muelle DINA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FIJACION",
+      "CategoriaNombre": "Fijación y Sujeción",
+      "FamiliaCodigo": "CAT-FIJACION",
+      "FamiliaNombre": "Fijación y Sujeción",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FIJACION-005",
+      "Nombre": "Eslinga de remolque con grillete amarillo",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FIJACION",
+      "CategoriaNombre": "Fijación y Sujeción",
+      "FamiliaCodigo": "CAT-FIJACION",
+      "FamiliaNombre": "Fijación y Sujeción",
+      "EsGeneral": false,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "Fil",
+      "Nombre": "Filtro de aceite SAKURA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "EO-28090",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "Fil 002",
+      "Nombre": "Filtro de combustible SAKURA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "F-11140",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "Fil 01",
+      "Nombre": "FIltro de combustible SAKURA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "FC-2801",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "Fil 095",
+      "Nombre": "Filtro de aceite HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "263304A001",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "Filll",
+      "Nombre": "Filtro de aceite SAKURA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "C-2810",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "Filt003",
+      "Nombre": "Filtro de aceite SAKURA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "C-2906",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FILTRO-001",
+      "Nombre": "Filtro de aire acondicionado  IHP",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "87139 28020",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "FILTRO-002",
+      "Nombre": "Filtro de cabina para aire acondicionado HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "97164 5A100",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FILTRO-003",
+      "Nombre": "Filtro separador de agua CISTERNA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS"
+      ]
+    },
+    {
+      "Sku": "FILTRO-004",
+      "Nombre": "Cartucho de filtro de aire acondicionado exterior CAT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "593-1533",
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "FILTRO-005",
+      "Nombre": "Filtro de aire CTP ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "4969846",
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "FILTRO-006",
+      "Nombre": "Filtro de aire acondicionado interior CAT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "505-0158",
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "FILTRO-007",
+      "Nombre": "Filtro de aire primario motoniveladora CTP",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "4969845",
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "FILTRO-008",
+      "Nombre": "Filtro de aire IHP",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "IHA-5M100",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FILTRO-009",
+      "Nombre": "Filtro de aire OIP",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "28130 5M100",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FILTRO-010",
+      "Nombre": "Filtro de aire HLC",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "28130 5M100",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FILTRO-011",
+      "Nombre": "Filtro de aire County",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "BAE-1024",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FILTRO-012",
+      "Nombre": "Filtro de aire ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "WA110789 WIX AIR",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "FOCO-001",
+      "Nombre": "Foco H4 24v75/70W P43t-38  NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "488923000",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FOCO-002",
+      "Nombre": "Foco H4 12V 60/55W-P43t-38 NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "488813000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-003",
+      "Nombre": "Foco P21/5W 24V/5W BAY15d",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "179253000",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FOCO-004",
+      "Nombre": "Foco P21/5W  BAY 15d NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "179163000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-005",
+      "Nombre": "Foco P21W B12V21W BA15s NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "176353000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-006",
+      "Nombre": "Foco PY21W  12V 21W BAU15sPHILIPS",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "12496NACP",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-007",
+      "Nombre": "Foco PY21W AMBER STANDAR 12V 21W NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "176383000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-008",
+      "Nombre": "Foco PY21W 24V BAU15s ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "13496MLCP",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FOCO-009",
+      "Nombre": "Foco PY21W",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "13496MLCP",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FOCO-010",
+      "Nombre": "Foco R5W 12V NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "171713000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-011",
+      "Nombre": "Foco  largo 12V60W MICHIBA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "HB3 9005",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "FOCO-012",
+      "Nombre": "Foco  H11 12V  55W PGJ19-2 NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "480723000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-013",
+      "Nombre": "Foco H3 24V 70W PK22As NARVA ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "487003000",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FOCO-014",
+      "Nombre": "Foco  H1 24V 70W NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "487023000",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FOCO-015",
+      "Nombre": "Foco 12V 55W PK22s NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "483213000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-016",
+      "Nombre": "Foco W3W 12V 3W W2 NARVA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "170973000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FOCO-017",
+      "Nombre": "Foco 24V 5W BA15S KAVTO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "Kv-67",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FOCO-018",
+      "Nombre": "Limpia contactoVISTONY",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FOCO",
+      "CategoriaNombre": "Focos",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "FRENO-001",
+      "Nombre": "Cañería  de freno izquierdo HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "583715K500",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FRENO-002",
+      "Nombre": "Cañería de freno derecho HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "58471 4K500",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FRENO-003",
+      "Nombre": "Zapata de freno integrado posterior SHP  talla:X 2pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "SKU 191003011",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "FRENO-004",
+      "Nombre": "Zapata de freno standar 2 pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "191001407",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "FRENO-005",
+      "Nombre": "Freno de motor HYUNDAI. SIN DIAFRAGMA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "59610 5M001",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "FRENO-006",
+      "Nombre": "Fajas de freno  XX FRENOSA kit 4pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "FAF 40759D XX",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FRENO-007",
+      "Nombre": "Faja de freno X FRENOSA kit 4pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "FAF 40759D-X",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FRENO-008",
+      "Nombre": "Faja de freno  PREMIUM kit 4pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "FAF 40759D",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FRENO-009",
+      "Nombre": "Remaches para zapata de freno",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FRENO",
+      "CategoriaNombre": "Frenos",
+      "FamiliaCodigo": "CAT-FRENO",
+      "FamiliaNombre": "Frenos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "FUSIBLE-001",
+      "Nombre": "Fusible de 25v blanco",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-002",
+      "Nombre": "Fusible de 10A rojo",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-003",
+      "Nombre": "Fusible 20A amarillo",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-004",
+      "Nombre": "Fusible 5 amarillo ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-005",
+      "Nombre": "Fusible 30 verde",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-006",
+      "Nombre": "Fusible 20 amarillo ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-007",
+      "Nombre": "Fusible 15A  azul",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-008",
+      "Nombre": "Fusible 15A azul",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-009",
+      "Nombre": "Fusible  10 A rojo ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-010",
+      "Nombre": "Fusible 5A",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "FUSIBLE-011",
+      "Nombre": "Fusible 10A rojo",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FUSIBLE",
+      "CategoriaNombre": "Fusibles",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "GOMA-001",
+      "Nombre": "Gomas de freno 1 1/8 SEIKEN",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "GOMA",
+      "CategoriaNombre": "Gomas",
+      "FamiliaCodigo": "GOMA",
+      "FamiliaNombre": "Gomas",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "010-04523",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "GOMA-002",
+      "Nombre": "Gomas de freno 1 1/4 SEIKEN",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "GOMA",
+      "CategoriaNombre": "Gomas",
+      "FamiliaCodigo": "GOMA",
+      "FamiliaNombre": "Gomas",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "010-30253",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "Hdhejehw",
+      "Nombre": "Filtro de combustible FLEETGUARD",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "FS19593",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "HER-001",
+      "Nombre": "Kit regulador de zapatas TOYOTA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "049430K03",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "HER-002",
+      "Nombre": "Kit caliper HYLUX",
+      "CodigoUnidad": "KT",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "04478-60050",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "HER-003",
+      "Nombre": "Torquimetro 1/4  TOPTUL",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "6-30 Nm",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-004",
+      "Nombre": "Juego de dados 18 pzs 1/4\" STANLEY",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "86-117",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-005",
+      "Nombre": "Juego de dados hexagonal  4-13 mm 24 pz 1/4\" TOPTUL",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/c",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-006",
+      "Nombre": "Amoladora 4.0 Ah DONG CHENG",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "90440302612",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-007",
+      "Nombre": "Kit engrasador WORKING",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-008",
+      "Nombre": "Valvula de inflado de llantas",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-009",
+      "Nombre": "Maneral de 1/4 CROSMAN",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-010",
+      "Nombre": "Medido de aire",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-011",
+      "Nombre": "Torquimetro de 1/2. TRUPER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-012",
+      "Nombre": "Juego de llaves mixtas STANLEY 09pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "86-974",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-013",
+      "Nombre": "Juego de llaves 14 psz WADFOW",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "WTB3313",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "HER-014",
+      "Nombre": "Dados con encastre de 3/4 N 36,34,30,32,27",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HER-015",
+      "Nombre": "Extensión para dados TOOLS",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-HER",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-001",
+      "Nombre": "Destornilladores perilleros",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "66-052",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-002",
+      "Nombre": "Vernier TRUPER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "Truper",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-003",
+      "Nombre": "Medidor de cocada de llantas",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-004",
+      "Nombre": "Juego de dados punta hexagonal  1/4\" 8pz",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "87-045",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-005",
+      "Nombre": "Caja de seguridad color rojo PANDUIT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-006",
+      "Nombre": "Gata hidráulica 32tn TRUPER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-007",
+      "Nombre": "Estractor de filtro de cadena SATA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "97451",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-008",
+      "Nombre": "Llave stilson N14 STANLEY",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-009",
+      "Nombre": "Alicate eléctrico TRUPER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-010",
+      "Nombre": "Escobilla de acero",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-011",
+      "Nombre": "Juego de llaves Halen estriados",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-012",
+      "Nombre": "Alicate en punta PRETUL",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-013",
+      "Nombre": "Alicate mecánico TRUPER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-014",
+      "Nombre": "Llave francesa",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-015",
+      "Nombre": "Alicate de corte",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-016",
+      "Nombre": "Rachet con castre 1/2 TOTAL",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-017",
+      "Nombre": "Alicate saca seguro",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-018",
+      "Nombre": "Alicate mecánico",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-019",
+      "Nombre": "Maneral cardanico 1/2",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-020",
+      "Nombre": "Juego llave TOR",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-021",
+      "Nombre": "Espatula 1/2 STANLEY",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-022",
+      "Nombre": "Acople 1/2",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-023",
+      "Nombre": "Desarmadores estrella y planas",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-024",
+      "Nombre": "Maetillo de bola",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-025",
+      "Nombre": "Combo 4lb",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-026",
+      "Nombre": "Juego de llave halen hexagonales",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-027",
+      "Nombre": "Maneral en L",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-028",
+      "Nombre": "Juego de llaves",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-029",
+      "Nombre": "Arco y sierra",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-030",
+      "Nombre": "Dado de impacto tubular N27",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-031",
+      "Nombre": "Gata tipo lagarto 3tn VIPRED",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-032",
+      "Nombre": "Caballete 4tn ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-033",
+      "Nombre": "Escobilla MANITO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-034",
+      "Nombre": "Juego de dados",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-035",
+      "Nombre": "Scanner LAUNCH",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-036",
+      "Nombre": "Pistola inhalambrica 20v ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-037",
+      "Nombre": "Gata de 24 tn  TRUPPER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-038",
+      "Nombre": "Gata de tn TRUPER ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-039",
+      "Nombre": "Compresor de resorte para HYLUX",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "700571",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "HERRAMIENTA-040",
+      "Nombre": "Cautil de soldar a bateria 12V 40W",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-041",
+      "Nombre": "Piloto STANLEY",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-042",
+      "Nombre": "Multimetro  TRUPER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "MUT 105",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-043",
+      "Nombre": "Dados largos estriados",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-044",
+      "Nombre": "Manguera hidraulica",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "HERRAMIENTA-045",
+      "Nombre": "Dados hexagonales CROSSMAN 8pz",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "HERRAMIENTA-046",
+      "Nombre": "Llave mixta N35 y 32",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-047",
+      "Nombre": "Avellanador de cañería",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-048",
+      "Nombre": "Engrasadora manual",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "HERRAMIENTA-049",
+      "Nombre": "Engrasador de motoniveladora",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "HERRAMIENTA-050",
+      "Nombre": "Eslinga verde plana 3tn 2m izaje",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "HERRAMIENTA-051",
+      "Nombre": "Eslinga verde plana.  3tn 3m izaje",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "HERRAMIENTA-052",
+      "Nombre": "Eslinga verde plana de 2tn 6m izaje",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-HERRAMIENTA",
+      "CategoriaNombre": "Herramientas",
+      "FamiliaCodigo": "FAM-HER",
+      "FamiliaNombre": "Herramientas",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "Hhhnn",
+      "Nombre": "Filtro aceite de motor FLEETGUARD",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "LF3338",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "Hjkkbv",
+      "Nombre": "Reten posterior",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "90313-T0002",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "Jdjdks",
+      "Nombre": "Reten de piñon de ataque D/L  WB",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "166630P",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "Juejjeje",
+      "Nombre": "Filtro  de aceite hidráulico",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-FILTRO",
+      "CategoriaNombre": "Filtros",
+      "FamiliaCodigo": "CAT-FILTRO",
+      "FamiliaNombre": "Filtros",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "P551551",
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "LUB-001",
+      "Nombre": "HIDROLINA (1/4 DE GALÓN) ",
+      "CodigoUnidad": "GLL",
+      "CategoriaCodigo": "FAM-LUB",
+      "CategoriaNombre": "Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "59752NUEVA ERA",
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS",
+        "LIN - LIV CAMION GRU",
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-001",
+      "Nombre": "Grasa SKF",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "VKG 1AL/1",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-002",
+      "Nombre": "Liquido de freno WAGNER",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "LUBRICANTE-003",
+      "Nombre": "hidrolina ATF 220 MOBIL ",
+      "CodigoUnidad": "LTR",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "LUBRICANTE-004",
+      "Nombre": "Aceite de motor 15w40 MOTUL",
+      "CodigoUnidad": "LTR",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-005",
+      "Nombre": "Refrigerante de motor MOTUL",
+      "CodigoUnidad": "LTR",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-006",
+      "Nombre": "Aceite de diferencial SHELL 85w-140",
+      "CodigoUnidad": "LTR",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-007",
+      "Nombre": "Aceite de transmisión 80w90 SHELL",
+      "CodigoUnidad": "LTR",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-008",
+      "Nombre": "Aceite hidraulico VISTONY",
+      "CodigoUnidad": "LTR",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-009",
+      "Nombre": "Hidrolina para gata",
+      "CodigoUnidad": "GLI",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "LUBRICANTE-010",
+      "Nombre": "Grasa azul EP2",
+      "CodigoUnidad": "KGM",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "LUBRICANTE-011",
+      "Nombre": "aceite de motor motoniveladora CAT15W40",
+      "CodigoUnidad": "LTR",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-012",
+      "Nombre": "AFLOJATODO",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "ZK-90VISTONY",
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS",
+        "LIN - LIV CAMION GRU",
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "LUBRICANTE-013",
+      "Nombre": "Liquido de freno FRENOSA DOT 3",
+      "CodigoUnidad": "ONZ",
+      "CategoriaCodigo": "CAT-LUBRICANTE",
+      "CategoriaNombre": "Grasas y Lubricantes",
+      "FamiliaCodigo": "FAM-LUB",
+      "FamiliaNombre": "Lubricantes",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "MOTOR-001",
+      "Nombre": "Arrancador de motor HYUNDAI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-MOTOR",
+      "CategoriaNombre": "Motor",
+      "FamiliaCodigo": "CAT-MOTOR",
+      "FamiliaNombre": "Motor",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "36100 4C101",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "MOTOR-002",
+      "Nombre": "Motor de arranque",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-MOTOR",
+      "CategoriaNombre": "Motor",
+      "FamiliaCodigo": "CAT-MOTOR",
+      "FamiliaNombre": "Motor",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "36100 48100",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "MOTOR-003",
+      "Nombre": "Motor de giro GRUA REPARADO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-MOTOR",
+      "CategoriaNombre": "Motor",
+      "FamiliaCodigo": "CAT-MOTOR",
+      "FamiliaNombre": "Motor",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN - LIV CAMION GRU"
+      ]
+    },
+    {
+      "Sku": "MUELLE-001",
+      "Nombre": "Paquete de muelle posterior county HY SP. ELEFANTE (01 paq incompleto)",
+      "CodigoUnidad": "PK",
+      "CategoriaCodigo": "MUELLE",
+      "CategoriaNombre": "Muelle",
+      "FamiliaCodigo": "MUELLE",
+      "FamiliaNombre": "Muelle",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "9752-01-A",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "MUELLE-002",
+      "Nombre": "Paquete de muelle delantero county TO CP ELEFANTE",
+      "CodigoUnidad": "PK",
+      "CategoriaCodigo": "MUELLE",
+      "CategoriaNombre": "Muelle",
+      "FamiliaCodigo": "MUELLE",
+      "FamiliaNombre": "Muelle",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "To cp 5766-01-D",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "MUELLE-003",
+      "Nombre": " Muelle posteriores ex8 MI CP ELEFANTE",
+      "CodigoUnidad": "PK",
+      "CategoriaCodigo": "MUELLE",
+      "CategoriaNombre": "Muelle",
+      "FamiliaCodigo": "MUELLE",
+      "FamiliaNombre": "Muelle",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "MI CP 5484-00-A",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "MUELLE-004",
+      "Nombre": "Muelle   delantero EX8 MI CD ELEFANTE ",
+      "CodigoUnidad": "PK",
+      "CategoriaCodigo": "MUELLE",
+      "CategoriaNombre": "Muelle",
+      "FamiliaCodigo": "MUELLE",
+      "FamiliaNombre": "Muelle",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "MI CD 5483 -00-LR",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "MUELLE-005",
+      "Nombre": "Muelle  posterior ELEFANTE",
+      "CodigoUnidad": "PK",
+      "CategoriaCodigo": "MUELLE",
+      "CategoriaNombre": "Muelle",
+      "FamiliaCodigo": "MUELLE",
+      "FamiliaNombre": "Muelle",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "TO AP 9872-00-A",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "NEU-001",
+      "Nombre": "Neumatico delantero 7.59 N16LT VIKRAM",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-NEU",
+      "CategoriaNombre": "Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "NEU-002",
+      "Nombre": "Neumatico USADO 7.59 N16LT DYNAPRO MT2",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-NEU",
+      "CategoriaNombre": "Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "NEU-003",
+      "Nombre": "Neumatico provisional armado",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-NEU",
+      "CategoriaNombre": "Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "NEU-005",
+      "Nombre": "Aro de neumatico de hylux",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-NEU",
+      "CategoriaNombre": "Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "NEU-006",
+      "Nombre": "Parche de neumatico N02",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-NEU",
+      "CategoriaNombre": "Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "NEU-007",
+      "Nombre": "Neumatico motoniveladora",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-NEU",
+      "CategoriaNombre": "Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "NEU-008",
+      "Nombre": "LLANTA POSTERIOR",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-NEU",
+      "CategoriaNombre": "Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS",
+        "LIN - LIV CAMION GRU",
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "NEUMATICO-001",
+      "Nombre": "Parches de camara R02 de neumático VIPAL",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-NEUMATICO",
+      "CategoriaNombre": "Reparación de Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "NEUMATICO-002",
+      "Nombre": "Parche de neumatico N03",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-NEUMATICO",
+      "CategoriaNombre": "Reparación de Neumáticos",
+      "FamiliaCodigo": "FAM-NEU",
+      "FamiliaNombre": "Neumáticos",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "PRECA-001",
+      "Nombre": "Precalentador de motor HYLUX",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "PRECA",
+      "CategoriaNombre": "precalentador ",
+      "FamiliaCodigo": "PRECA",
+      "FamiliaNombre": "precalentador ",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "36710 4A900",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "RELAY-001",
+      "Nombre": "Portarelay ARSHON",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RELAY",
+      "CategoriaNombre": "Relays",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "RELAY-002",
+      "Nombre": "Relay 80A 24V",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RELAY",
+      "CategoriaNombre": "Relays",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "RELAY-003",
+      "Nombre": "Portarelay verde (más usado)",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RELAY",
+      "CategoriaNombre": "Relays",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-001",
+      "Nombre": "TERMOSTATO ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "2551052010",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-002",
+      "Nombre": "ALTERNADOR ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-003",
+      "Nombre": "Pulsadores",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-004",
+      "Nombre": "Juego de camara de retroceso",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-005",
+      "Nombre": "Esparragos c/tuerca  12x15 para hylux",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "REP-006",
+      "Nombre": "Correa de 7pk 1720",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "7PK1720",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "REP-007",
+      "Nombre": "Correa 8PK 1840",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-008",
+      "Nombre": "Correa 8pk1710",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-009",
+      "Nombre": "Correa 7pk1715",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-010",
+      "Nombre": "Correa 7pk1715",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-011",
+      "Nombre": "Correa 7pk1740",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-012",
+      "Nombre": "Correa 7pk 2050",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-013",
+      "Nombre": "Correa 8pk1020",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-014",
+      "Nombre": "Grillete para muelle delantero",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-015",
+      "Nombre": "Esparragos c/tuerca SW27 county",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-016",
+      "Nombre": "Pines de muelle DINA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-017",
+      "Nombre": "Bujes ex8 DINA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-018",
+      "Nombre": "Grillete 1/2",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-019",
+      "Nombre": "Tuerca c/tuerca y arandela 5/8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-020",
+      "Nombre": "Arandela plano",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-021",
+      "Nombre": "Arandela a presión",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-022",
+      "Nombre": "Kit de gomas kaliper",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "04478 60050",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-023",
+      "Nombre": "Resorte seguro de zapata",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-024",
+      "Nombre": "Abrazadera de paquete de muelle posterior 5/8 X 2 3/4 X14 RFEX8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "15421092024",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-025",
+      "Nombre": "Abrazadera de paquete de muelle delantero EX8. 5/8 x 2 3/4 x12",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "15421092024",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-026",
+      "Nombre": "Abrazadera de muelle delantero county  5/8\" UNF X 2 3/4X6 DINA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "AIS10101112",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-027",
+      "Nombre": "Abrazadera N17  de grua o cisterna",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "Abrazadera para grua o cisterna",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-028",
+      "Nombre": "Resorte de balata de la faja de frenos",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "RD170",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-029",
+      "Nombre": "Abrazadera del muelle rojo pequeño ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 6,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-030",
+      "Nombre": "Bocina para muelle county",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "54148 5A300",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-031",
+      "Nombre": "Abrazadera de barra corta",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-032",
+      "Nombre": "Bujes de goma de muelle delantero NEGRO pequeño EX8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-033",
+      "Nombre": "Bujes de goma de muelle azul",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-034",
+      "Nombre": "Soporte de radiador",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-035",
+      "Nombre": "Buje compensador Gomas verde universal",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-036",
+      "Nombre": "Buje compensador para muelle  verde grande EX8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-037",
+      "Nombre": "Buje compensador azul largo county",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-038",
+      "Nombre": "Goma abrazadera de barra estabilizadora  hiylux",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "REP-039",
+      "Nombre": "Kit de seguro de balata ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-040",
+      "Nombre": "Limpia parabrisa county",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "98130 7A300",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-041",
+      "Nombre": "Pistola para combustible",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS"
+      ]
+    },
+    {
+      "Sku": "REP-042",
+      "Nombre": "Servo dirección  EX8",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "57100 5M200",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "REP-043",
+      "Nombre": "Punta de palier",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": true,
+      "StockMinimo": 10,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "FD23331-K",
+      "TiposEquipo": []
+    },
+    {
+      "Sku": "REP-044",
+      "Nombre": "Pastilla de freno FRENOSA ",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-045",
+      "Nombre": "Eslinga de remolque con grillete  CAMIONETA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "REP-046",
+      "Nombre": "Uñas de motoniveladora",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN AMA - MOTO"
+      ]
+    },
+    {
+      "Sku": "REP-047",
+      "Nombre": "Zapata de freno de camioneta",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "REP-048",
+      "Nombre": "Hidrostático COUNTY ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25239 48010",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-049",
+      "Nombre": "TENSOR DE FAJA DE POLEA HYUNDAI ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 0,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "2525752000",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "REP-050",
+      "Nombre": "ESPEJOS ALTERNATIVO",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "FAM-REP",
+      "CategoriaNombre": "Repuestos",
+      "FamiliaCodigo": "FAM-REP",
+      "FamiliaNombre": "Repuestos",
+      "EsGeneral": false,
+      "StockMinimo": 0,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": null,
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "Ret 02",
+      "Nombre": "Reten exterior posterior WB",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "133356N",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "Ret 03",
+      "Nombre": "Reten interior posterior",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "133358P",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "Ret 04",
+      "Nombre": "Reten interior delantero WB",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "183922N",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "Ret01",
+      "Nombre": "Reten posterior interior TOYOTA",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "90310-T0008",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "Ret04",
+      "Nombre": "Reten posterior interior",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "204602N",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RETEN-001",
+      "Nombre": "Reten de piñon de ataque MUSASHI",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "F4232",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "RETEN-002",
+      "Nombre": "Reten de la caja de tomafuerza GENERICO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "50x72x10",
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS"
+      ]
+    },
+    {
+      "Sku": "RETEN-003",
+      "Nombre": "Reten sigüeñal frontal GENERICO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "48x62x9",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "RETEN-004",
+      "Nombre": "RETÉN DE PUNTA DE PALIER ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "90304-T0001",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "RETEN-006",
+      "Nombre": "RETÉN DE RUEDA DELANTERA ",
+      "CodigoUnidad": "ZZ",
+      "CategoriaCodigo": "CAT-RETEN",
+      "CategoriaNombre": "Retenes",
+      "FamiliaCodigo": "CAT-RETEN",
+      "FamiliaNombre": "Retenes",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "90312T0001 ",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "ROD-001",
+      "Nombre": "Rodillo para carrete de cisterna sup-inf",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "ROD",
+      "CategoriaNombre": "Rodillo",
+      "FamiliaCodigo": "ROD",
+      "FamiliaNombre": "Rodillo",
+      "EsGeneral": false,
+      "StockMinimo": 1,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN - LIV CAMION CIS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-001",
+      "Nombre": "Rodamiento interior posterior KOYO",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "30213JR",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-002",
+      "Nombre": "Rodamiento interior posterior JTEKT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "30213JR",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-003",
+      "Nombre": "Rodamiento posterior exterior JTEKT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "33112JR",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-004",
+      "Nombre": "Rodamiento de rodillo cónico NTN",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "4T-CR-1084PX1",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-005",
+      "Nombre": "Rodamiento posterior exterior",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "4T-33112",
+      "TiposEquipo": [
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-006",
+      "Nombre": "Rodamiento posterior NSK",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "42KWD11CA",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-007",
+      "Nombre": "Rodamiento delantero exterior NKB",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "32207",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-008",
+      "Nombre": "Rodamiento delantero JTEKT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "HI-CAP32207JR",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-009",
+      "Nombre": "Rodamiento polea guía JTEKT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "62032RSCM",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-010",
+      "Nombre": "Rodamiento templador de correa JTEKT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "63032RSCM",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    },
+    {
+      "Sku": "RODAMIENTO-011",
+      "Nombre": "Kit Rodamiento para rueda",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-RODAMIENTO",
+      "CategoriaNombre": "Rodamientos",
+      "FamiliaCodigo": "CAT-RODAMIENTO",
+      "FamiliaNombre": "Rodamientos",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "VKBA6900",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "SEGURIDAD-001",
+      "Nombre": "Seguro de rueda posterior JTEKT",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-SEGURIDAD",
+      "CategoriaNombre": "Seguridad",
+      "FamiliaCodigo": "CAT-SEGURIDAD",
+      "FamiliaNombre": "Seguridad",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "76113",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONETA"
+      ]
+    },
+    {
+      "Sku": "SEGURIDAD-002",
+      "Nombre": "Seguro de rueda",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "CAT-SEGURIDAD",
+      "CategoriaNombre": "Seguridad",
+      "FamiliaCodigo": "CAT-SEGURIDAD",
+      "FamiliaNombre": "Seguridad",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "S/C",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "TAPA-001-001",
+      "Nombre": "Tapa de radiador",
+      "CodigoUnidad": "NIU",
+      "CategoriaCodigo": "TAPA",
+      "CategoriaNombre": "Tapa",
+      "FamiliaCodigo": "TAPA",
+      "FamiliaNombre": "Tapa",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "25330 1P000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "TERMINAL-001",
+      "Nombre": "Terminal de barra larga de dirección IZQUIERDO  HYUNDAI",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-TERMINAL",
+      "CategoriaNombre": "Terminales",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "56890 5A00",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "TERMINAL-002",
+      "Nombre": "Terminal de barra larga de dirección derecho  HYUNDAI",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-TERMINAL",
+      "CategoriaNombre": "Terminales",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 4,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "56880 5A000",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES",
+        "LIN LIV - MINIBUS"
+      ]
+    },
+    {
+      "Sku": "TERMINAL-003",
+      "Nombre": "Terminal de barra larga de dirección HYUNDAI",
+      "CodigoUnidad": "SET",
+      "CategoriaCodigo": "CAT-TERMINAL",
+      "CategoriaNombre": "Terminales",
+      "FamiliaCodigo": "FAM-ELE",
+      "FamiliaNombre": "Sistema Eléctrico",
+      "EsGeneral": false,
+      "StockMinimo": 2,
+      "CodigoBarra": null,
+      "CodigoProductoProveedor": "56880 5M210",
+      "TiposEquipo": [
+        "LIN LIV - CAMIONES"
+      ]
+    }
+  ]
+}
