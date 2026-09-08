@@ -15,6 +15,9 @@ export const PERMISOS = {
   productoEscritura: [ROLES.ADMIN, ROLES.ALMACENERO],
   documentoEscritura: [ROLES.ADMIN, ROLES.ALMACENERO, ROLES.SUPERVISION],
   catalogoAdmin: [ROLES.ADMIN],
+  // Corregir/anular un documento YA confirmado: anula y rehace, tocando el
+  // ledger y la valorización. Solo admin, aunque otros roles puedan registrarlo.
+  documentoCorregir: [ROLES.ADMIN],
   // Separación de funciones de requerimientos: quien pide ≠ quien aprueba.
   // Crear: el personal de campo/almacén. Aprobar: gerencia/supervisión/admin
   // (el guard "creador ≠ aprobador" lo refuerza la BD, admin exento).

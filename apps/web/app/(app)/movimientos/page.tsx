@@ -18,7 +18,7 @@
  * filtra el combobox a los productos asociados al tipo de equipo de la placa
  * (vía vehículo -> equipo -> tipo) MÁS los productos generales (sin asociaciones).
  */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Controller,
   useForm,
@@ -30,16 +30,29 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, History, Info, Package, FileText, Eraser } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  History,
+  Info,
+  Package,
+  FileText,
+  Eraser,
+  Pencil,
+  Undo2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   CrearDocumentoSchema,
   PASO_CANTIDAD,
   TIPO_DOCUMENTO,
+  esTipoCorregible,
   type CrearDocumento,
+  type DocumentoInventarioResumen,
   type ProductoStockConsolidado,
+  type TipoDocumento,
 } from "@congeminco/shared";
-import { useCrearDocumento, useDocumentos, type DocumentoResumen } from "@/hooks/useDocumentos";
+import { useCrearDocumento, useDocumentoDetalle, useDocumentos } from "@/hooks/useDocumentos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useUbicaciones } from "@/hooks/useCatalogo";
 import { useVehiculos, useEquipos } from "@/hooks/useEquipos";
@@ -55,6 +68,9 @@ import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
 import { DialogHistorialPrecios } from "@/components/productos/DialogHistorialPrecios";
 import { GaleriaProductoDialog } from "@/components/GaleriaProductoDialog";
+import { DialogCorregirDocumento } from "@/components/movimientos/DialogCorregirDocumento";
+import { DialogAnularDocumento } from "@/components/movimientos/DialogAnularDocumento";
+import { usePermiso } from "@/hooks/useYo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,8 +103,9 @@ const TIPO_LABEL: Record<string, string> = {
   ajuste: "Ajuste",
 };
 
-/* Columnas de la tabla "Documentos recientes" (solo lectura). */
-const COLUMNAS_DOCUMENTOS: ColumnaDataTable<DocumentoResumen>[] = [
+/* Columnas de la tabla "Documentos recientes". Las acciones (corregir/anular)
+   se agregan aparte porque dependen del permiso del usuario. */
+const COLUMNAS_DOCUMENTOS: ColumnaDataTable<DocumentoInventarioResumen>[] = [
   {
     id: "fecha",
     titulo: "Fecha",
@@ -117,9 +134,11 @@ const COLUMNAS_DOCUMENTOS: ColumnaDataTable<DocumentoResumen>[] = [
   {
     id: "situacion",
     titulo: "Situación",
+    /* Situacion es el estado del flujo del documento; Estado es el soft-delete
+       de auditoría. Antes se mostraba Estado y un anulado seguía diciendo "Activo". */
     celda: (d) => (
-      <Badge variant={d.Estado ? "success" : "destructive"}>
-        {d.Estado ? "Activo" : "Anulado"}
+      <Badge variant={d.Situacion === "anulado" ? "destructive" : "success"}>
+        {d.Situacion === "anulado" ? "Anulado" : "Confirmado"}
       </Badge>
     ),
   },
@@ -443,6 +462,47 @@ export default function MovimientosPage() {
   const detalleErrorMsg =
     errors.Detalle?.message ??
     (errors.Detalle as { root?: { message?: string } } | undefined)?.root?.message;
+
+  /* Corregir/anular un documento ya registrado: solo admin (documentoCorregir).
+     La acción se ofrece por Situacion + tipo; si algo se consumió lo dice la BD
+     y el diálogo muestra ese motivo. */
+  const puedeCorregir = usePermiso("documentoCorregir");
+  const [corregirId, setCorregirId] = useState<string | null>(null);
+  const [anular, setAnular] = useState<DocumentoInventarioResumen | null>(null);
+  const {
+    data: detalleCorregir,
+    isLoading: cargandoDetalle,
+    isError: errorDetalle,
+  } = useDocumentoDetalle(corregirId);
+
+  /* Si el detalle no carga (típico: falta aplicar la migración 0072), avisamos.
+     Sin esto el clic en "Corregir" no hacía nada visible. */
+  useEffect(() => {
+    if (!errorDetalle) return;
+    toast.error("No se pudo abrir la corrección del documento.");
+    setCorregirId(null);
+  }, [errorDetalle]);
+
+  const accionesDocumento = useMemo(() => {
+    if (!puedeCorregir) return undefined;
+    const editable = (d: DocumentoInventarioResumen) =>
+      d.Situacion === "confirmado" && esTipoCorregible(d.TipoDocumento as TipoDocumento);
+    return [
+      {
+        label: "Corregir",
+        icono: Pencil,
+        visible: editable,
+        onClick: (d: DocumentoInventarioResumen) => setCorregirId(d.Id),
+      },
+      {
+        label: "Anular",
+        icono: Undo2,
+        variante: "destructiva" as const,
+        visible: editable,
+        onClick: (d: DocumentoInventarioResumen) => setAnular(d),
+      },
+    ];
+  }, [puedeCorregir]);
 
   const esTransferencia = tipoDocumento === "transferencia";
   const esEntrada = tipoDocumento === "entrada" || tipoDocumento === "existencia_inicial";
@@ -779,6 +839,7 @@ export default function MovimientosPage() {
           cargando={cargandoDocs}
           error={errorDocs}
           onReintentar={() => void refetchDocs()}
+          acciones={accionesDocumento}
           vacio={{
             icono: FileText,
             titulo: "No hay documentos registrados aún",
@@ -786,6 +847,17 @@ export default function MovimientosPage() {
           }}
         />
       </div>
+
+      {/* Corrección: se monta con el detalle ya cargado (trae PuedeCorregir firme) */}
+      {corregirId && detalleCorregir && detalleCorregir.Id === corregirId && (
+        <DialogCorregirDocumento documento={detalleCorregir} onClose={() => setCorregirId(null)} />
+      )}
+
+      {corregirId && cargandoDetalle && (
+        <p className="text-sm text-muted-foreground">Abriendo el documento…</p>
+      )}
+
+      {anular && <DialogAnularDocumento documento={anular} onClose={() => setAnular(null)} />}
     </div>
   );
 }

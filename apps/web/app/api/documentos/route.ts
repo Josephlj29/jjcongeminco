@@ -8,6 +8,7 @@
  * no está en el esquema "public".
  *
  * Rol requerido para POST: documentoEscritura (admin, almacenero, supervision).
+ * Corregir/anular uno ya confirmado vive en [id]/ y pide documentoCorregir (admin).
  */
 export const runtime = "nodejs";
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     .schema("inv")
     .from("T_DocumentoInventario")
     .select(
-      "Id, TipoDocumento, FechaDocumento, NumeroDocumento, Comprobante, Referencia, Notas, Estado, FechaCreacion, UsuarioCreacion",
+      "Id, TipoDocumento, FechaDocumento, NumeroDocumento, Comprobante, Referencia, Notas, Situacion, Estado, FechaCreacion, UsuarioCreacion",
     )
     .order("FechaDocumento", { ascending: false })
     .order("FechaCreacion", { ascending: false })

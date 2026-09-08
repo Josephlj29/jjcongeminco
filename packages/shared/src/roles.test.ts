@@ -24,6 +24,16 @@ describe("puede", () => {
     expect(puede(undefined, "catalogoAdmin")).toBe(false);
   });
 
+  it("corregir un documento ya registrado es solo de admin", () => {
+    // Anular/rehacer un documento confirmado toca el ledger y la valorización:
+    // no alcanza con poder registrarlo (almacenero y supervisión sí pueden).
+    expect(puede(ROLES.ADMIN, "documentoCorregir")).toBe(true);
+    expect(puede(ROLES.ALMACENERO, "documentoCorregir")).toBe(false);
+    expect(puede(ROLES.SUPERVISION, "documentoCorregir")).toBe(false);
+    expect(puede(ROLES.GERENCIA, "documentoCorregir")).toBe(false);
+    expect(puede(ROLES.LOGISTICA, "documentoCorregir")).toBe(false);
+  });
+
   it("separación de funciones: crear vs aprobar requerimientos", () => {
     // almacenero crea pero no aprueba; gerencia aprueba pero no crea.
     expect(puede(ROLES.ALMACENERO, "requerimientoCrear")).toBe(true);

@@ -411,6 +411,50 @@ export interface ReporteRecambio {
 }
 
 /* Salida de la vista inv.V_MovimientoStock_Kardex */
+/* Estado del flujo de un documento de inventario (T_DocumentoInventario.Situacion).
+   La app siempre crea y confirma en la misma transacción, así que en la práctica
+   solo se ven 'confirmado' y 'anulado'. */
+export type SituacionDocumento = "borrador" | "confirmado" | "anulado";
+
+/* Cabecera de documento para el listado de Movimientos.
+   Sin banderas derivadas: si se puede corregir depende de si algo se consumió,
+   y evaluarlo por fila sería una consulta por documento. La UI usa Situacion +
+   esTipoCorregible para ofrecer la acción, y el detalle da la respuesta firme. */
+export interface DocumentoInventarioResumen {
+  Id: string;
+  TipoDocumento: string;
+  FechaDocumento: string;
+  NumeroDocumento: string | null;
+  Comprobante: string | null;
+  Referencia: string | null;
+  Notas: string | null;
+  Situacion: SituacionDocumento;
+  Estado: boolean;
+  FechaCreacion: string;
+  UsuarioCreacion: string;
+}
+
+/* Documento completo para precargar el formulario de corrección. */
+export interface DocumentoInventarioDetalle extends DocumentoInventarioResumen {
+  /* Derivados en el servidor por inv.FnMotivoBloqueoCorreccionDocumento (misma
+     idea que StockDescontado en las OT). La UI los muestra; la validación real
+     la repite la función de BD con la fila bloqueada. */
+  PuedeCorregir: boolean;
+  /** null cuando PuedeCorregir es true; si no, el porqué, listo para mostrar. */
+  MotivoBloqueo: string | null;
+  IdUbicacionOrigen: string | null;
+  IdUbicacionDestino: string | null;
+  IdProveedor: string | null;
+  IdVehiculo: string | null;
+  Detalle: {
+    IdProducto: string;
+    Cantidad: number;
+    CostoUnitario: number | null;
+    IdVehiculo: string | null;
+    Notas: string | null;
+  }[];
+}
+
 export interface KardexFila {
   IdMovimientoStock: string;
   IdProducto: string;

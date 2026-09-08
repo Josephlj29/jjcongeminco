@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   ActualizarOrdenMantenimientoSchema,
+  AnularDocumentoSchema,
+  CorregirDocumentoSchema,
   CrearDocumentoSchema,
   CrearOrdenMantenimientoSchema,
   DECIMALES_CANTIDAD,
@@ -87,6 +89,67 @@ describe("SITUACION_REQUERIMIENTO", () => {
 });
 
 /* Alta de OT en un paso: fotos opcionales por tarea + consumo opcional. */
+describe("CorregirDocumentoSchema", () => {
+  const entrada = {
+    TipoDocumento: "entrada",
+    FechaDocumento: "2026-08-28",
+    IdUbicacionDestino: UUID,
+    Detalle: [{ IdProducto: UUID, Cantidad: 5, CostoUnitario: 12.5 }],
+  };
+
+  it("acepta la corrección de una entrada con motivo", () => {
+    const r = CorregirDocumentoSchema.safeParse({
+      Motivo: "El costo unitario se cargó mal",
+      Documento: entrada,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("exige motivo: es el único rastro del cambio (no hay bitácora)", () => {
+    expect(CorregirDocumentoSchema.safeParse({ Documento: entrada }).success).toBe(false);
+    expect(CorregirDocumentoSchema.safeParse({ Motivo: "ups", Documento: entrada }).success).toBe(
+      false,
+    );
+  });
+
+  it("hereda las reglas del alta: salida sin placa por línea se rechaza", () => {
+    const r = CorregirDocumentoSchema.safeParse({
+      Motivo: "Cantidad equivocada",
+      Documento: {
+        TipoDocumento: "salida",
+        FechaDocumento: "2026-08-28",
+        IdUbicacionOrigen: UUID,
+        Detalle: [{ IdProducto: UUID, Cantidad: 1 }],
+      },
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("rechaza transferencias: sin rastro en el histórico de precios no se puede saber si el lote sigue intacto", () => {
+    const r = CorregirDocumentoSchema.safeParse({
+      Motivo: "Ubicación equivocada",
+      Documento: {
+        TipoDocumento: "transferencia",
+        FechaDocumento: "2026-08-28",
+        IdUbicacionOrigen: UUID,
+        IdUbicacionDestino: UUID2,
+        Detalle: [{ IdProducto: UUID, Cantidad: 1 }],
+      },
+    });
+    expect(r.success).toBe(false);
+  });
+});
+
+describe("AnularDocumentoSchema", () => {
+  it("acepta un motivo válido", () => {
+    expect(AnularDocumentoSchema.safeParse({ Motivo: "Registro duplicado" }).success).toBe(true);
+  });
+
+  it("rechaza motivo vacío", () => {
+    expect(AnularDocumentoSchema.safeParse({ Motivo: "" }).success).toBe(false);
+  });
+});
+
 describe("CrearOrdenMantenimientoSchema", () => {
   const base = {
     TipoMantenimiento: "preventivo",
@@ -189,18 +252,22 @@ describe("precisión de cantidad y costo", () => {
   });
 
   it("aplica la misma regla al detalle de documento y al consumo de la OT", () => {
-    expect(CrearDocumentoSchema.safeParse({
-      TipoDocumento: "entrada",
-      FechaDocumento: "2026-09-03",
-      IdUbicacionDestino: UUID,
-      Detalle: [linea(0.25)],
-    }).success).toBe(true);
-    expect(CrearDocumentoSchema.safeParse({
-      TipoDocumento: "entrada",
-      FechaDocumento: "2026-09-03",
-      IdUbicacionDestino: UUID,
-      Detalle: [linea(0.2555)],
-    }).success).toBe(false);
+    expect(
+      CrearDocumentoSchema.safeParse({
+        TipoDocumento: "entrada",
+        FechaDocumento: "2026-09-03",
+        IdUbicacionDestino: UUID,
+        Detalle: [linea(0.25)],
+      }).success,
+    ).toBe(true);
+    expect(
+      CrearDocumentoSchema.safeParse({
+        TipoDocumento: "entrada",
+        FechaDocumento: "2026-09-03",
+        IdUbicacionDestino: UUID,
+        Detalle: [linea(0.2555)],
+      }).success,
+    ).toBe(false);
 
     expect(LineaConsumoSchema.safeParse(linea(0.125)).success).toBe(true);
     expect(LineaConsumoSchema.safeParse(linea(0.1255)).success).toBe(false);

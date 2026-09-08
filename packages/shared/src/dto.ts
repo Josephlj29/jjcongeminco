@@ -121,6 +121,44 @@ export const CrearDocumentoSchema = z
   });
 export type CrearDocumento = z.infer<typeof CrearDocumentoSchema>;
 
+/* ─── Corrección / anulación de un documento ya confirmado (solo admin) ───
+   El ledger es append-only: "corregir" es anular el documento y volver a
+   registrarlo con los valores buenos, en una sola transacción. La BD exige
+   además que nada de ese documento se haya consumido.
+
+   Transferencia queda fuera: no deja fila en el histórico de precios, así que
+   no hay forma de evaluar si su lote sigue intacto. */
+export const TIPO_DOCUMENTO_CORREGIBLE = [
+  "entrada",
+  "existencia_inicial",
+  "ajuste",
+  "salida",
+] as const;
+export type TipoDocumentoCorregible = (typeof TIPO_DOCUMENTO_CORREGIBLE)[number];
+
+export function esTipoCorregible(tipo: TipoDocumento): tipo is TipoDocumentoCorregible {
+  return (TIPO_DOCUMENTO_CORREGIBLE as readonly TipoDocumento[]).includes(tipo);
+}
+
+/* El motivo es obligatorio: no hay tabla de bitácora, así que queda como único
+   rastro del cambio (viaja a las Notas del documento de reversa). */
+const zMotivo = () =>
+  z.string().trim().min(5, "Explica el motivo de la corrección (mínimo 5 caracteres).").max(300);
+
+export const CorregirDocumentoSchema = z
+  .object({
+    Motivo: zMotivo(),
+    Documento: CrearDocumentoSchema,
+  })
+  .refine((c) => esTipoCorregible(c.Documento.TipoDocumento), {
+    message: "Solo se corrigen entradas, existencias iniciales, ajustes y salidas.",
+    path: ["Documento", "TipoDocumento"],
+  });
+export type CorregirDocumento = z.infer<typeof CorregirDocumentoSchema>;
+
+export const AnularDocumentoSchema = z.object({ Motivo: zMotivo() });
+export type AnularDocumento = z.infer<typeof AnularDocumentoSchema>;
+
 /* ─── Proveedor ─── */
 export const TIPO_CUENTA = ["corriente", "ahorros"] as const;
 export type TipoCuenta = (typeof TIPO_CUENTA)[number];
