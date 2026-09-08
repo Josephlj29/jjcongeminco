@@ -254,8 +254,11 @@ BEGIN
 	"vUsuario" = COALESCE(auth.uid()::TEXT, 'API');
 	"vRol"     = "seg"."FnRolUsuario"();
 
-	/* Defensa en profundidad: la API ya valido el permiso documentoCorregir */
-	IF auth.uid() IS NOT NULL AND COALESCE("vRol", '') <> 'admin' THEN
+	/* Defensa en profundidad: la API ya valido el permiso documentoCorregir.
+	   Estricto a proposito: sin sesion (anon) FnRolUsuario devuelve NULL y NO pasa.
+	   En Postgres toda funcion nace con EXECUTE para PUBLIC, asi que este chequeo
+	   es la unica barrera real si alguien llega por /rest/v1/rpc sin token. */
+	IF COALESCE("vRol", '') <> 'admin' THEN
 		RAISE EXCEPTION 'Solo un administrador corrige o anula un documento confirmado.'
 			USING ERRCODE = 'insufficient_privilege';
 	END IF;
@@ -409,6 +412,7 @@ COMMENT ON FUNCTION "inv"."FnCorregirDocumentoInventario"(UUID, JSONB, VARCHAR) 
 CREATE OR REPLACE FUNCTION "inv"."FnBloquearEdicionDocumentoConfirmado"()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = "inv", "public"
 AS $$
 BEGIN
 	IF OLD."Situacion" <> 'confirmado' THEN
@@ -435,6 +439,7 @@ $$;
 CREATE OR REPLACE FUNCTION "inv"."FnBloquearEdicionDetalleConfirmado"()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = "inv", "public"
 AS $$
 BEGIN
 	IF EXISTS (
@@ -462,6 +467,13 @@ CREATE TRIGGER "TR_T_DocumentoInventarioDetalle_BloquearEdicion"
 /* ---------------------------------------------------------------------
 	6. Grants (mismo criterio que el resto de RPCs del esquema).
 --------------------------------------------------------------------- */
+/* CREATE FUNCTION otorga EXECUTE a PUBLIC por defecto, y PUBLIC incluye anon:
+   se revoca primero y se concede solo a authenticated. */
+REVOKE EXECUTE ON FUNCTION "inv"."FnRecalcularCostoPromedioProducto"(UUID) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION "inv"."FnMotivoBloqueoCorreccionDocumento"(UUID) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION "inv"."FnAnularDocumentoInventario"(UUID, VARCHAR) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION "inv"."FnCorregirDocumentoInventario"(UUID, JSONB, VARCHAR) FROM PUBLIC;
+
 GRANT EXECUTE ON FUNCTION "inv"."FnRecalcularCostoPromedioProducto"(UUID) TO "authenticated";
 GRANT EXECUTE ON FUNCTION "inv"."FnMotivoBloqueoCorreccionDocumento"(UUID) TO "authenticated";
 GRANT EXECUTE ON FUNCTION "inv"."FnAnularDocumentoInventario"(UUID, VARCHAR) TO "authenticated";
