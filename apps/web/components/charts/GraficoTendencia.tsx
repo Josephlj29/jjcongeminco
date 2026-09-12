@@ -3,6 +3,7 @@
 import type { EChartsOption } from "echarts";
 import { EChart } from "./EChart";
 import { useMemo } from "react";
+import { fechaCorta } from "@/lib/format";
 
 interface DatoTendencia {
   fecha: string;
@@ -21,7 +22,8 @@ export function GraficoTendencia({ datos, className, height }: GraficoTendenciaP
     () => ({
       xAxis: {
         type: "category",
-        data: datos.map((d) => d.fecha),
+        // `fecha` es un día calendario (DATE "YYYY-MM-DD"): se muestra dd/mm/yyyy.
+        data: datos.map((d) => fechaCorta(d.fecha)),
         boundaryGap: false,
       },
       yAxis: { type: "value" },

@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { hoyLima } from "@/lib/format";
 
 const LoginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -131,7 +132,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          JJ Congeminco © {new Date().getFullYear()}
+          JJ Congeminco © {hoyLima().slice(0, 4)}
         </p>
       </div>
     </div>

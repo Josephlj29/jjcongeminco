@@ -276,8 +276,8 @@ export default function ReportesPage() {
   /* Chips de filtros activos (movimientos). */
   const chipsFiltros = useMemo(() => {
     const chips: { campo: keyof FiltrosMovimiento; label: string }[] = [];
-    if (filtros.desde) chips.push({ campo: "desde", label: `Desde: ${filtros.desde}` });
-    if (filtros.hasta) chips.push({ campo: "hasta", label: `Hasta: ${filtros.hasta}` });
+    if (filtros.desde) chips.push({ campo: "desde", label: `Desde: ${fechaCorta(filtros.desde)}` });
+    if (filtros.hasta) chips.push({ campo: "hasta", label: `Hasta: ${fechaCorta(filtros.hasta)}` });
     if (filtros.tipoDocumento)
       chips.push({
         campo: "tipoDocumento",
@@ -370,7 +370,7 @@ export default function ReportesPage() {
       Destino: r.TargetNombre,
       Producto: r.NombreProducto,
       Sku: r.Sku,
-      Fecha: r.FechaRequerimiento,
+      Fecha: fechaCorta(r.FechaRequerimiento),
       Origen: r.Origen,
       Dias: r.DiasDesdeAnterior ?? "",
       Promedio: r.PromedioDiasPar ?? "",

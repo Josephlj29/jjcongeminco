@@ -21,7 +21,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { fechaISO } from "@/lib/format";
+import { diasEntre, hoyLima, sumarDias } from "@/lib/format";
 import {
   puedeVerModulo,
   MODULOS,
@@ -29,9 +29,6 @@ import {
   type ReporteMovimiento,
   type ResumenDashboard,
 } from "@congeminco/shared";
-
-/* Día calendario en hora de Lima (ver lib/format.ts y migración 0065). */
-const iso = fechaISO;
 
 export async function GET(request: NextRequest) {
   const { usuario, error } = await autenticarRequest();
@@ -43,12 +40,15 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const hastaParam = searchParams.get("hasta");
   const desdeParam = searchParams.get("desde");
-  const hasta = hastaParam ?? iso(new Date());
-  const desde = desdeParam ?? iso(new Date(Date.now() - 30 * 86400000));
+  const hasta = hastaParam ?? hoyLima();
+  const desde = desdeParam ?? sumarDias(hasta, -30);
 
-  // Longitud del período (en días) para calcular el rango anterior de igual tamaño.
-  const msPeriodo = new Date(hasta).getTime() - new Date(desde).getTime();
-  const desdeAnterior = iso(new Date(new Date(desde).getTime() - msPeriodo - 86400000));
+  // Período anterior de igual tamaño, pegado a `desde`: [desde, hasta] son
+  // dias+1 días inclusive, así que el anterior arranca dias+1 días antes.
+  // Aritmética de día calendario: `new Date("YYYY-MM-DD")` es medianoche UTC y
+  // formateada en Lima caía un día antes (el período anterior quedaba más largo).
+  const dias = diasEntre(desde, hasta);
+  const desdeAnterior = sumarDias(desde, -(dias + 1));
 
   const supabase = await crearClienteServidor();
 
@@ -57,8 +57,9 @@ export async function GET(request: NextRequest) {
       .schema("inv")
       .from("V_Reporte_Movimiento")
       .select("FechaMovimiento, Direccion, Cantidad, NombreProducto, ValorMovimiento")
+      // FechaMovimiento es DATE: se compara día contra día, sin hora.
       .gte("FechaMovimiento", desdeAnterior)
-      .lte("FechaMovimiento", `${hasta}T23:59:59`)
+      .lte("FechaMovimiento", hasta)
       .order("FechaMovimiento", { ascending: true })
       .limit(20000),
     supabase

@@ -1,12 +1,17 @@
 /* Tipos de fila (reflejan las tablas BSG). Cuando uses supabase gen types,
    puedes reemplazar/complementar estos con los generados. */
 
+/* ─── Convención de fechas ───
+   Las columnas DATE viajan como "YYYY-MM-DD" y son un DÍA CALENDARIO (se muestran
+   tal cual con fechaCorta, sin convertir zona). Las TIMESTAMPTZ viajan como ISO con
+   offset y son un INSTANTE (se convierten a hora Lima al mostrar). Cada campo
+   Fecha* lleva su tipo al costado. Ver apps/web/lib/format.ts y migración 0065. */
 export interface CamposAuditoria {
   Estado: boolean;
   UsuarioCreacion: string;
   UsuarioModificacion: string;
-  FechaCreacion: string;
-  FechaModificacion: string;
+  FechaCreacion: string; // TIMESTAMPTZ: instante; se muestra en hora Lima (fechaHora/fechaCorta)
+  FechaModificacion: string; // TIMESTAMPTZ: instante; se muestra en hora Lima (fechaHora/fechaCorta)
   RowVersion: number;
   IdMigracion: string | null;
 }
@@ -92,7 +97,7 @@ export interface ProductoPrecioHistorico {
   IdProducto: string;
   Costo: number;
   CostoPromedio: number;
-  FechaPrecio: string;
+  FechaPrecio: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   IdProveedor: string | null;
   IdDocumentoInventario: string | null;
   Origen: "compra" | "manual" | "ajuste";
@@ -113,7 +118,7 @@ export type SituacionRequerimiento = "pendiente" | "parcial" | "atendido" | "anu
 export interface Requerimiento extends CamposAuditoria {
   Id: string;
   NumeroRequerimiento: string | null;
-  FechaRequerimiento: string;
+  FechaRequerimiento: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   Origen: "planificado" | "desgaste_prematuro";
   IdEquipo: string | null;
   IdVehiculo: string | null;
@@ -153,7 +158,7 @@ export interface RequerimientoSolicitante {
 export interface RequerimientoConDetalle {
   Id: string;
   NumeroRequerimiento: string | null;
-  FechaRequerimiento: string;
+  FechaRequerimiento: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   Origen: "planificado" | "desgaste_prematuro";
   Situacion: SituacionRequerimiento;
   IdEquipo: string | null;
@@ -205,7 +210,7 @@ export interface OrdenMantenimientoPersonal {
 export interface OrdenMantenimientoResumen {
   Id: string;
   NumeroOrden: string | null;
-  FechaOrden: string;
+  FechaOrden: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   TipoMantenimiento: "preventivo" | "correctivo";
   Turno: "dia" | "tarde" | "noche";
   Kilometraje: number | null;
@@ -227,7 +232,7 @@ export interface OrdenMantenimientoConDetalle extends OrdenMantenimientoResumen 
   IdRequerimiento: string | null;
   IdDocumentoInventarioReversa: string | null;
   MotivoReconciliacion: string | null;
-  FechaReconciliacion: string | null;
+  FechaReconciliacion: string | null; // TIMESTAMPTZ: instante; se muestra en hora Lima (fechaHora/fechaCorta)
   /* Cabecera del borrador de repuestos (para precargar la edición). */
   IdUbicacionConsumo: string | null;
   IdProveedorCompra: string | null;
@@ -302,7 +307,7 @@ export interface ProductoStockConsolidado {
   EsGeneral: boolean;
   CodigoProductoProveedor: string | null;
   /** Última vez que el stock de este producto se movió. null = nunca tuvo saldo. */
-  UltimoMovimiento: string | null;
+  UltimoMovimiento: string | null; // TIMESTAMPTZ: instante; se muestra en hora Lima (fechaHora/fechaCorta)
 }
 
 /* Respuesta de GET /api/saldos?pagina=N — página de saldos filtrada en el servidor. */
@@ -357,14 +362,14 @@ export interface ProductoHistorialRequerimiento {
   NombreProducto: string;
   VecesPedido: number;
   CantidadTotalPedida: number;
-  UltimaFechaPedido: string | null;
+  UltimaFechaPedido: string | null; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   VecesDesgastePrematuro: number;
 }
 
 /* Salida de la vista inv.V_Reporte_Movimiento */
 export interface ReporteMovimiento {
   IdMovimiento: string;
-  FechaMovimiento: string;
+  FechaMovimiento: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   TipoDocumento: string;
   NumeroDocumento: string | null;
   Comprobante: string | null;
@@ -392,7 +397,7 @@ export interface ReporteMovimiento {
 export interface ReporteRecambio {
   IdRequerimiento: string;
   NumeroRequerimiento: string | null;
-  FechaRequerimiento: string;
+  FechaRequerimiento: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   Origen: "planificado" | "desgaste_prematuro";
   TargetId: string;
   TargetTipo: "placa" | "equipo";
@@ -423,14 +428,14 @@ export type SituacionDocumento = "borrador" | "confirmado" | "anulado";
 export interface DocumentoInventarioResumen {
   Id: string;
   TipoDocumento: string;
-  FechaDocumento: string;
+  FechaDocumento: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   NumeroDocumento: string | null;
   Comprobante: string | null;
   Referencia: string | null;
   Notas: string | null;
   Situacion: SituacionDocumento;
   Estado: boolean;
-  FechaCreacion: string;
+  FechaCreacion: string; // TIMESTAMPTZ: instante; se muestra en hora Lima (fechaHora/fechaCorta)
   UsuarioCreacion: string;
 }
 
@@ -462,7 +467,7 @@ export interface KardexFila {
   NombreProducto: string;
   IdUbicacion: string;
   NombreUbicacion: string;
-  FechaMovimiento: string;
+  FechaMovimiento: string; // DATE: día calendario "YYYY-MM-DD"; se muestra tal cual (fechaCorta)
   TipoDocumento: string;
   NumeroDocumento: string | null;
   Comprobante: string | null;
@@ -499,7 +504,7 @@ export interface ResumenDashboard {
       movimientosPeriodo: number;
     };
   };
-  tendencia: { fecha: string; entradas: number; salidas: number }[];
+  tendencia: { fecha: string; entradas: number; salidas: number }[]; // fecha: DATE
   valorPorCategoria: { nombre: string; valor: number }[];
   topProductos: { nombre: string; cantidad: number }[];
   bajoMinimo: DashboardProductoBajoMinimo[];

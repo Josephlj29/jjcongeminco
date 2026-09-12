@@ -13,7 +13,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Package, AlertTriangle, Wallet, ArrowLeftRight } from "lucide-react";
 import { useDashboard } from "@/hooks/useDashboard";
-import { moneda, fechaISO, fechaCorta } from "@/lib/format";
+import { moneda, fechaCorta, hoyLima, sumarDias } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
 import { ErrorState } from "@/components/ErrorState";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -90,11 +90,11 @@ function TileGrafico({
 export default function DashboardPage() {
   const [rango, setRango] = useState<string>("30");
 
+  // Rango en días calendario de Lima: `getDate()/setDate()` operaban en la zona
+  // del dispositivo y dos usuarios podían ver KPIs distintos para el mismo rango.
   const { desde, hasta } = useMemo(() => {
-    const fin = new Date();
-    const inicio = new Date();
-    inicio.setDate(inicio.getDate() - Number(rango));
-    return { desde: fechaISO(inicio), hasta: fechaISO(fin) };
+    const fin = hoyLima();
+    return { desde: sumarDias(fin, -Number(rango)), hasta: fin };
   }, [rango]);
 
   const { data, isLoading: cargando, isError: error, refetch } = useDashboard(desde, hasta);

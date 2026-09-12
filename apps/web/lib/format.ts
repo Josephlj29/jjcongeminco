@@ -48,6 +48,26 @@ export function hoyLima(): string {
   return FMT_ISO.format(new Date());
 }
 
+/* Aritmética de DÍA CALENDARIO sobre "YYYY-MM-DD", sin zona: se construye en UTC
+   y se serializa en UTC, así el resultado no depende de la hora ni del
+   dispositivo. Acá `toISOString()` sí es correcto porque nunca entra un
+   instante "ahora". Lo que NO se puede hacer es `fechaISO(new Date("YYYY-MM-DD"))`:
+   eso es medianoche UTC leída en Lima, y cae un día antes. */
+function utcDesdeISO(fecha: string): number {
+  const [y, m, d] = fecha.split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+/** "2026-09-11" + (-30) -> "2026-08-12". Días calendario, sin zona horaria. */
+export function sumarDias(fecha: string, dias: number): string {
+  return new Date(utcDesdeISO(fecha) + dias * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Días calendario de `desde` a `hasta` ("2026-08-12" -> "2026-09-11" = 30). */
+export function diasEntre(desde: string, hasta: string): number {
+  return Math.round((utcDesdeISO(hasta) - utcDesdeISO(desde)) / 86_400_000);
+}
+
 /* Columnas DATE de Postgres (FechaOrden, FechaDocumento, FechaRequerimiento)
    llegan como "YYYY-MM-DD" pelado. */
 const SOLO_FECHA = /^(\d{4})-(\d{2})-(\d{2})$/;

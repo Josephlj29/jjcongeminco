@@ -1,5 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { moneda, numero, fechaISO, fechaCorta, fechaHora, hoyLima, porcentaje } from "./format";
+import {
+  moneda,
+  numero,
+  fechaISO,
+  fechaCorta,
+  fechaHora,
+  hoyLima,
+  porcentaje,
+  sumarDias,
+  diasEntre,
+} from "./format";
 
 describe("moneda", () => {
   it("formatea con símbolo S/ y 2 decimales", () => {
@@ -90,6 +100,28 @@ describe("fechaCorta / fechaHora fijadas a Lima", () => {
 describe("fechaCorta", () => {
   it("formatea es-PE dd/mm/yyyy desde ISO", () => {
     expect(fechaCorta("2026-08-28T00:00:00Z")).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+  });
+});
+
+describe("sumarDias / diasEntre (aritmética de día calendario, sin zona)", () => {
+  it("suma y resta días sobre YYYY-MM-DD cruzando mes y año", () => {
+    expect(sumarDias("2026-09-11", -30)).toBe("2026-08-12");
+    expect(sumarDias("2026-01-01", -1)).toBe("2025-12-31");
+    expect(sumarDias("2026-02-28", 1)).toBe("2026-03-01");
+    expect(sumarDias("2026-09-11", 0)).toBe("2026-09-11");
+  });
+
+  it("no depende de la zona del dispositivo ni de la hora del día", () => {
+    // El bug histórico: new Date("2026-08-14") es medianoche UTC y en Lima es el
+    // día anterior. La aritmética de calendario tiene que dar siempre lo mismo.
+    expect(sumarDias("2026-08-14", -1)).toBe("2026-08-13");
+    expect(sumarDias("2026-08-14", 0)).toBe("2026-08-14");
+  });
+
+  it("cuenta los días entre dos fechas calendario", () => {
+    expect(diasEntre("2026-08-12", "2026-09-11")).toBe(30);
+    expect(diasEntre("2026-09-11", "2026-09-11")).toBe(0);
+    expect(diasEntre("2026-09-11", "2026-09-01")).toBe(-10);
   });
 });
 
