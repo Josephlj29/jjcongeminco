@@ -4,8 +4,15 @@
  * Client-only, sin dependencias: trae el detalle del requerimiento, arma un HTML
  * autocontenido y abre el diálogo de impresión del navegador. Desde ahí el
  * usuario puede imprimir o "Guardar como PDF".
+ *
+ * `construirHtml` es pura (sin `window`) para poder testearla en node; lo común
+ * con los otros documentos (escape, espera de imágenes, ventana) vive en
+ * `lib/imprimir.ts`. La fecha es una columna DATE: se muestra como día
+ * calendario con `fechaCorta`, sin pasar por la zona horaria del dispositivo.
  */
 import { ORIGEN_REQUERIMIENTO_LABEL, type RequerimientoConDetalle } from "@congeminco/shared";
+import { fechaCorta } from "@/lib/format";
+import { abrirDocumentoImpresion, esc } from "@/lib/imprimir";
 
 const SITUACION: Record<string, string> = {
   pendiente: "Pendiente",
@@ -14,26 +21,9 @@ const SITUACION: Record<string, string> = {
   anulado: "Anulado",
 };
 
-function esc(v: unknown): string {
-  return String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+export function construirHtml(r: RequerimientoConDetalle, opciones: { origen: string }): string {
+  const numero = r.NumeroRequerimiento ?? r.Id.slice(0, 8);
 
-function fecha(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-function construirHtml(r: RequerimientoConDetalle): string {
   const filas = r.Detalle.map(
     (l, i) => `
       <tr>
@@ -57,7 +47,7 @@ function construirHtml(r: RequerimientoConDetalle): string {
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<title>Solicitud ${esc(r.NumeroRequerimiento ?? r.Id.slice(0, 8))}</title>
+<title>Solicitud ${esc(numero)}</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 32px; font-size: 12px; }
@@ -83,17 +73,17 @@ function construirHtml(r: RequerimientoConDetalle): string {
 <body>
   <div class="head">
     <div>
-      <img src="${window.location.origin}/logo.svg" alt="JJ Congeminco" style="height:58px" />
+      <img src="${esc(opciones.origen)}/logo.svg" alt="JJ Congeminco" style="height:58px" />
     </div>
     <div style="text-align:right">
       <div style="font-weight:700">SOLICITUD DE REQUERIMIENTO</div>
-      <div class="mono">N° ${esc(r.NumeroRequerimiento ?? r.Id.slice(0, 8))}</div>
+      <div class="mono">N° ${esc(numero)}</div>
     </div>
   </div>
 
   <table class="meta">
     <tr>
-      <td class="k">Fecha</td><td>${fecha(r.FechaRequerimiento)}</td>
+      <td class="k">Fecha</td><td>${fechaCorta(r.FechaRequerimiento)}</td>
       <td class="k">Situación</td><td>${esc(SITUACION[r.Situacion] ?? r.Situacion)}</td>
     </tr>
     <tr>
@@ -150,14 +140,5 @@ export async function imprimirSolicitudRequerimiento(id: string): Promise<void> 
   }
   const r = (await res.json()) as RequerimientoConDetalle;
 
-  const win = window.open("", "_blank", "width=820,height=900");
-  if (!win) {
-    throw new Error("Permite las ventanas emergentes para generar el PDF.");
-  }
-  win.document.open();
-  win.document.write(construirHtml(r));
-  win.document.close();
-  win.focus();
-  // Pequeña espera para que el navegador renderice antes de imprimir.
-  setTimeout(() => win.print(), 300);
+  await abrirDocumentoImpresion(construirHtml(r, { origen: window.location.origin }));
 }
