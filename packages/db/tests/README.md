@@ -38,10 +38,26 @@ Invariantes probadas: acumulación (no sobreescritura), validación contra el sa
 pendiente (no la cantidad total), transición `pendiente → parcial → atendido`,
 trazabilidad de múltiples salidas.
 
-### 2. Guard de stock no-negativo (migración 0019)
+### 2. Guard de stock no-negativo (migraciones 0019 + 0073)
 
 Una salida (`Direccion = -1`) que dejaría el saldo < 0 lanza `check_violation` (23514).
 Vía `/api/documentos` la API la mapea a **409** (antes 500) con `mapearErrorNegocio`.
+
+Desde 0073 el mensaje además tiene que ser legible para quien está en almacén. El
+texto del `RAISE` viaja sin tocarse hasta el toast del navegador
+(`body.error` → `throw new Error` → `toast.error`), así que es interfaz de usuario,
+no solo un log. Escenario ejecutable:
+
+```bash
+psql "$DATABASE_URL" -f packages/db/tests/0073_stock_insuficiente_legible.sql
+```
+
+Crea producto y almacén de prueba, ingresa 1 unidad, intenta sacar 4 y verifica
+sobre el mensaje capturado: SQLSTATE `23514`, que aparezcan nombre y SKU del
+producto, el nombre de la ubicación, `disponible 1` / `sacar 4` / `faltan 3`, y que
+**no** aparezca ningún UUID. Todo dentro de un bloque `DO` que termina en
+`RAISE EXCEPTION` (rollback): no persiste nada. Salida esperada: una excepción
+`OK 0073: ...`; si algo falla, el mensaje enumera qué aserción se rompió.
 
 ### 3. Soft-delete atómico (migración 0057)
 
