@@ -455,6 +455,9 @@ export default function ReportesPage() {
                       value: p.IdProducto,
                       label: p.NombreProducto,
                       codigo: p.Sku,
+                      // Hace buscable el código del proveedor, igual que en el
+                      // ProductoCombobox y en el buscador de saldos.
+                      descripcion: p.CodigoProductoProveedor ?? undefined,
                     }))}
                     value={filtros.idProducto || null}
                     onChange={(v) => setFiltro("idProducto")(v ?? "")}

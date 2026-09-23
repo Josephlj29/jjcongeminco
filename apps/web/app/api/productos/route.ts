@@ -2,7 +2,7 @@
  * app/api/productos/route.ts
  *
  * GET  /api/productos  — lista desde inv.V_Producto_StockConsolidado
- *                        ?q=<texto> búsqueda por SKU o nombre
+ *                        ?q=<texto> búsqueda por SKU, nombre o código de proveedor
  *                        ?bajoMinimo=true filtra por BajoMinimo
  * POST /api/productos  — crea en inv.T_Producto (rol: admin, almacenero)
  *
@@ -32,7 +32,10 @@ export async function GET(request: NextRequest) {
 
   if (q && q.trim().length > 0) {
     const termino = `%${q.trim()}%`;
-    query = query.or(`Sku.ilike.${termino},NombreProducto.ilike.${termino}`);
+    // Mismo criterio que el buscador de saldos y el de la pantalla de productos.
+    query = query.or(
+      `Sku.ilike.${termino},NombreProducto.ilike.${termino},CodigoProductoProveedor.ilike.${termino}`,
+    );
   }
 
   const { data, error: dbError } = await query.order("NombreProducto");

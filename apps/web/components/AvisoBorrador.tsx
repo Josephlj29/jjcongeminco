@@ -28,7 +28,7 @@ export function AvisoBorrador({
       <div className="flex-1 space-y-1">
         <p className="text-xs leading-tight">
           Recuperamos lo que estabas cargando
-          {guardadoEn ? ` el ${fechaHora(guardadoEn)}` : ""}. Revisá que esté todo antes de guardar.{" "}
+          {guardadoEn ? ` el ${fechaHora(guardadoEn)}` : ""}. Revisa que esté todo antes de guardar.{" "}
           <strong>Las fotos hay que volver a adjuntarlas.</strong>
         </p>
       </div>

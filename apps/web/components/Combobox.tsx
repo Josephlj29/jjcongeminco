@@ -4,7 +4,7 @@
  * Combobox — select con búsqueda, único de la app (Popover + Command/cmdk).
  *
  * Unifica los antiguos Combobox / ComboboxBuscable / ProductoCombobox:
- * - filtra por label + codigo + descripcion, insensible a acentos;
+ * - filtra por label + codigo + descripcion (lib/buscar), insensible a acentos;
  * - `codigo` se muestra en monoespaciado (catálogos tipo SUNAT);
  * - `renderOpcion`/`renderSeleccion` para casos ricos (imagen, stock);
  * - `permitirLimpiar`: re-click en la opción seleccionada => onChange(null).
@@ -12,6 +12,7 @@
 import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { coincideBusqueda } from "@/lib/buscar";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -49,11 +50,6 @@ interface ComboboxProps {
   popoverClassName?: string;
 }
 
-/** "Cañería" -> "caneria" para búsqueda insensible a acentos. */
-function normalizar(texto: string): string {
-  return texto.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-}
-
 export function Combobox({
   opciones,
   value,
@@ -77,10 +73,7 @@ export function Combobox({
 
   const filtradas = React.useMemo(() => {
     if (!busqueda) return opciones;
-    const q = normalizar(busqueda);
-    return opciones.filter((o) =>
-      normalizar(`${o.codigo ?? ""} ${o.label} ${o.descripcion ?? ""}`).includes(q),
-    );
+    return opciones.filter((o) => coincideBusqueda([o.codigo, o.label, o.descripcion], busqueda));
   }, [opciones, busqueda]);
 
   return (

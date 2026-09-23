@@ -33,6 +33,7 @@ import { DialogEliminar } from "@/components/DialogEliminar";
 import { InputCantidad } from "@/components/InputCantidad";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { comprimirImagen } from "@/lib/image";
+import { coincideBusqueda } from "@/lib/buscar";
 import { DataTable, type ColumnaDataTable, type AccionFila } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
 import { ExportarMenu, type ExportDataset } from "@/components/ExportarMenu";
@@ -1035,16 +1036,17 @@ export default function ProductosPage() {
     return [...new Set(productos.map((p) => p.NombreCategoria))].sort();
   }, [productos]);
 
-  // Filtrado en memoria: búsqueda + categoría
+  // Filtrado en memoria: búsqueda + categoría. La búsqueda cubre nombre, SKU y
+  // código del proveedor, el mismo criterio del Combobox y del buscador de saldos.
   const productosFiltrados = useMemo(() => {
     if (!productos) return [];
-    const q = busqueda.trim().toLowerCase();
     return productos.filter((p) => {
-      const coincideBusqueda =
-        !q || p.NombreProducto.toLowerCase().includes(q) || p.Sku.toLowerCase().includes(q);
       const coincideCategoria =
         categoriaFiltro === "__todas__" || p.NombreCategoria === categoriaFiltro;
-      return coincideBusqueda && coincideCategoria;
+      return (
+        coincideCategoria &&
+        coincideBusqueda([p.NombreProducto, p.Sku, p.CodigoProductoProveedor], busqueda)
+      );
     });
   }, [productos, busqueda, categoriaFiltro]);
 
@@ -1217,7 +1219,7 @@ export default function ProductosPage() {
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre o SKU..."
+            placeholder="Buscar por nombre, SKU o código de proveedor..."
             className="pl-9"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
