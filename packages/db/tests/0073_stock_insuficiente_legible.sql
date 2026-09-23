@@ -70,7 +70,7 @@ BEGIN
 				'IdProducto', "vIdProducto", 'Cantidad', 4
 			))
 		));
-		"vFallas" = "vFallas" || 'El guard NO rechazó el egreso que deja el saldo en -3.';
+		"vFallas" = "vFallas" || 'El guard NO rechazó el egreso que deja el saldo en -3.'::TEXT;
 	EXCEPTION WHEN OTHERS THEN
 		GET STACKED DIAGNOSTICS "vMensaje" = MESSAGE_TEXT, "vEstado" = RETURNED_SQLSTATE;
 	END;
@@ -92,10 +92,10 @@ BEGIN
 
 		/* 4. Ningún UUID a la vista: es el bug que se está corrigiendo. */
 		IF POSITION("vIdProducto"::TEXT IN "vMensaje") > 0 THEN
-			"vFallas" = "vFallas" || '4) El mensaje expone el UUID del producto.';
+			"vFallas" = "vFallas" || '4) El mensaje expone el UUID del producto.'::TEXT;
 		END IF;
 		IF POSITION("vIdUbicacion"::TEXT IN "vMensaje") > 0 THEN
-			"vFallas" = "vFallas" || '4) El mensaje expone el UUID de la ubicación.';
+			"vFallas" = "vFallas" || '4) El mensaje expone el UUID de la ubicación.'::TEXT;
 		END IF;
 
 		/* 5. Dónde faltó el stock. */
@@ -105,13 +105,13 @@ BEGIN
 
 		/* 6. Cuánto hay, cuánto se pide y cuánto falta, sin ceros de relleno. */
 		IF POSITION('disponible 1,' IN "vMensaje") = 0 THEN
-			"vFallas" = "vFallas" || '6) El mensaje no informa "disponible 1".';
+			"vFallas" = "vFallas" || '6) El mensaje no informa "disponible 1".'::TEXT;
 		END IF;
 		IF POSITION('sacar 4' IN "vMensaje") = 0 THEN
-			"vFallas" = "vFallas" || '6) El mensaje no informa que se intenta sacar 4.';
+			"vFallas" = "vFallas" || '6) El mensaje no informa que se intenta sacar 4.'::TEXT;
 		END IF;
 		IF POSITION('faltan 3' IN "vMensaje") = 0 THEN
-			"vFallas" = "vFallas" || '6) El mensaje no informa que faltan 3.';
+			"vFallas" = "vFallas" || '6) El mensaje no informa que faltan 3.'::TEXT;
 		END IF;
 	END IF;
 

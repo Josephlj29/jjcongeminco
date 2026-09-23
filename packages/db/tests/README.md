@@ -46,7 +46,8 @@ Vía `/api/documentos` la API la mapea a **409** (antes 500) con `mapearErrorNeg
 Desde 0073 el mensaje además tiene que ser legible para quien está en almacén. El
 texto del `RAISE` viaja sin tocarse hasta el toast del navegador
 (`body.error` → `throw new Error` → `toast.error`), así que es interfaz de usuario,
-no solo un log. Escenario ejecutable:
+no solo un log. Escenario ejecutable, verificado en el remoto el 2026-09-23 (rojo
+contra 0019, verde con 0073 aplicada):
 
 ```bash
 psql "$DATABASE_URL" -f packages/db/tests/0073_stock_insuficiente_legible.sql
