@@ -23,6 +23,10 @@ export const PERMISOS = {
   // (el guard "creador ≠ aprobador" lo refuerza la BD, admin exento).
   requerimientoCrear: [ROLES.ADMIN, ROLES.ALMACENERO, ROLES.SUPERVISION],
   requerimientoAprobar: [ROLES.ADMIN, ROLES.GERENCIA, ROLES.SUPERVISION],
+  // Devolver a abierta una OT ya CERRADA que nunca descontó stock: deshace un
+  // cierre por error. Una cerrada es terminal para el resto de los roles, y si
+  // llegó a mover inventario ni el admin la reabre (se corrige por el ledger).
+  ordenReabrirCerrada: [ROLES.ADMIN],
 } as const;
 
 export function puede(rol: RoleCode | null | undefined, permiso: keyof typeof PERMISOS): boolean {

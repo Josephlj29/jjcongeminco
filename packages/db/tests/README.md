@@ -135,6 +135,30 @@ del aprobador aunque estuviera a medio cargar:
 5. Aprobar la que quedó `consumida` la cierra y recién ahí baja `T_SaldoStock`,
    exactamente en la cantidad del borrador.
 
+### 4d. El admin reabre una OT cerrada por error (migración 0074)
+
+Verificado en el remoto el 2026-09-24 (rojo contra 0069, verde con 0074 aplicada):
+
+```bash
+psql "$DATABASE_URL" -f packages/db/tests/0074_reabrir_orden_cerrada.sql
+```
+
+Hasta 0069 `cerrada` era terminal para todos los roles y un cierre por error solo se
+arreglaba con un UPDATE a mano. El agujero está en el flujo: una OT que se culmina
+**sin repuestos** no pasa por aprobación, va derecho a `cerrada` (ver 4c, punto 3),
+o sea que el camino menos controlado es el que deja el estado irreversible.
+
+1. `admin` devuelve a `abierta` una OT `cerrada` que nunca descontó stock.
+2. Un rol que no es admin NO puede: la función responde `42501`.
+3. Nadie reabre una `cerrada` que ya descontó stock, ni el admin. Eso se corrige por
+   el ledger (anular o corregir el documento de salida), no cambiando la situación.
+4. No se rompe el caso previo: `consumida` → `abierta` sigue disponible para
+   admin, gerencia y supervisión.
+
+El escenario simula la sesión de cada rol con `set_config('request.jwt.claims', ...)`.
+Ojo: hoy la base solo tiene usuarios con rol `admin`, `almacenero` y `logistica`, así
+que el caso negativo usa `almacenero`.
+
 ### 5. Segregación de funciones
 
 El creador de un requerimiento no puede aprobarlo/rechazarlo (admin exento);

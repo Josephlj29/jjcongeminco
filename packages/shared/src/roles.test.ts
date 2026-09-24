@@ -24,6 +24,22 @@ describe("puede", () => {
     expect(puede(undefined, "catalogoAdmin")).toBe(false);
   });
 
+  it("reabrir una OT ya cerrada es solo de admin", () => {
+    // Devolver a abierta una OT "por aprobar" lo puede hacer el aprobador
+    // (gerencia y supervisión incluidos), pero deshacer un CIERRE es otra cosa:
+    // una orden cerrada es terminal para el resto de los roles.
+    expect(puede(ROLES.ADMIN, "ordenReabrirCerrada")).toBe(true);
+    expect(puede(ROLES.GERENCIA, "ordenReabrirCerrada")).toBe(false);
+    expect(puede(ROLES.SUPERVISION, "ordenReabrirCerrada")).toBe(false);
+    expect(puede(ROLES.ALMACENERO, "ordenReabrirCerrada")).toBe(false);
+    expect(puede(ROLES.LOGISTICA, "ordenReabrirCerrada")).toBe(false);
+  });
+
+  it("gerencia y supervisión sí devuelven a abierta una OT por aprobar", () => {
+    expect(puede(ROLES.GERENCIA, "requerimientoAprobar")).toBe(true);
+    expect(puede(ROLES.SUPERVISION, "requerimientoAprobar")).toBe(true);
+  });
+
   it("corregir un documento ya registrado es solo de admin", () => {
     // Anular/rehacer un documento confirmado toca el ledger y la valorización:
     // no alcanza con poder registrarlo (almacenero y supervisión sí pueden).

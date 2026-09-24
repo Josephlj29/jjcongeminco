@@ -1,14 +1,17 @@
 /**
  * app/api/mantenimiento/[id]/reabrir/route.ts
  *
- * POST /api/mantenimiento/:id/reabrir — devuelve una OT "por aprobar" al estado
- * abierta para que se corrija, conservando el borrador de repuestos.
+ * POST /api/mantenimiento/:id/reabrir — devuelve una OT al estado abierta para
+ * que se corrija, conservando el borrador de repuestos.
  *
- * Es la salida intermedia que le faltaba al aprobador: rechazar es un veredicto
- * (anula la orden), mientras que devolver a abierta solo la saca de la bandeja de
- * aprobación. Solo aplica si la OT todavía no descontó stock.
+ * Desde "por aprobar" es la salida intermedia del aprobador: rechazar es un
+ * veredicto (anula la orden), devolver a abierta solo la saca de la bandeja.
+ * Desde "cerrada" deshace un cierre por error y es SOLO de admin (migración
+ * 0074). En ningún caso aplica si la OT ya descontó stock.
  *
- * Rol: requerimientoAprobar (admin, gerencia, supervisión).
+ * Rol: este guard deja pasar a requerimientoAprobar (admin, gerencia,
+ * supervisión); el candado de admin para las cerradas lo pone la función de la
+ * BD, que es la única que conoce la situación de la orden.
  */
 export const runtime = "nodejs";
 

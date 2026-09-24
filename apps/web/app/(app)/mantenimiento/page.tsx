@@ -110,6 +110,8 @@ function personalTexto(o: OrdenMantenimientoResumen): string {
 interface AccionesHandlers {
   puedeEscribir: boolean;
   puedeAprobar: boolean;
+  /** Solo admin: deshacer un cierre por error (ver migración 0074). */
+  puedeReabrirCerrada: boolean;
   onDetalle: (id: string) => void;
   onEditar: (id: string) => void;
   onCulminar: (o: OrdenMantenimientoResumen) => void;
@@ -127,7 +129,7 @@ function AccionesOrden({
   orden: OrdenMantenimientoResumen;
   handlers: AccionesHandlers;
 }) {
-  const { puedeEscribir, puedeAprobar } = handlers;
+  const { puedeEscribir, puedeAprobar, puedeReabrirCerrada } = handlers;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -214,6 +216,19 @@ function AccionesOrden({
             )}
           </>
         )}
+        {/* Reabrir una cerrada: deshace un cierre por error. Solo admin y solo si
+            nunca descontó stock; si movió inventario se corrige por Movimientos.
+            Una OT sin repuestos se cierra sin pasar por aprobación, así que esta
+            es la única vuelta atrás. */}
+        {o.Situacion === "cerrada" && puedeReabrirCerrada && !o.StockDescontado && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handlers.onDevolverAbierta(o)}>
+              <Undo2 className="mr-2 h-4 w-4" />
+              Reabrir orden
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -260,6 +275,7 @@ function TarjetaOrden({
 export default function MantenimientoPage() {
   const puedeEscribir = usePermiso("requerimientoCrear");
   const puedeAprobar = usePermiso("requerimientoAprobar");
+  const puedeReabrirCerrada = usePermiso("ordenReabrirCerrada");
 
   // Toda OT nueva nace "Abierta" (en curso): esa es la pestaña donde el usuario
   // busca lo que acaba de registrar y lo que le falta culminar.
@@ -326,6 +342,7 @@ export default function MantenimientoPage() {
   const handlers: AccionesHandlers = {
     puedeEscribir,
     puedeAprobar,
+    puedeReabrirCerrada,
     onDetalle: setDetalleId,
     onEditar: setEditarId,
     // Culminar confirma primero: el destino depende de si hay repuestos.
@@ -470,6 +487,7 @@ export default function MantenimientoPage() {
         <DialogDevolverAbierta
           numeroOrden={devolver.NumeroOrden}
           procesando={reabriendo}
+          desdeCerrada={devolver.Situacion === "cerrada"}
           onConfirmar={(motivo) => void devolverAbierta(devolver, motivo)}
           onCancelar={() => setDevolver(null)}
         />
