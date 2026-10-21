@@ -102,6 +102,7 @@ import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { KardexFila } from "@congeminco/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { fechaCorta, hoyLima } from "@/lib/format";
+import { CeldaRegistroMovimiento } from "@/components/CeldaRegistroMovimiento";
 
 /* ─── Tipo para producto de la vista consolidada ─── */
 interface ProductoConsolidado {
@@ -847,6 +848,7 @@ function DialogKardex({
               <TableHeader>
                 <TableRow>
                   <TableHead>Fecha</TableHead>
+                  <TableHead>Registro</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Comprobante</TableHead>
                   <TableHead>Ubicación</TableHead>
@@ -858,6 +860,11 @@ function DialogKardex({
                 {kardex.map((fila: KardexFila) => (
                   <TableRow key={fila.IdMovimientoStock}>
                     <TableCell className="text-xs">{fechaCorta(fila.FechaMovimiento)}</TableCell>
+                    <CeldaRegistroMovimiento
+                      fechaDocumento={fila.FechaMovimiento}
+                      fechaRegistro={fila.FechaRegistro}
+                      registradoPor={fila.RegistradoPor}
+                    />
                     <TableCell className="text-xs capitalize">{fila.TipoDocumento}</TableCell>
                     <TableCell className="text-xs">{fila.Comprobante ?? "—"}</TableCell>
                     <TableCell className="text-xs">{fila.NombreUbicacion}</TableCell>

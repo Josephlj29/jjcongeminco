@@ -109,6 +109,41 @@ export function fechaHora(fecha: string | Date): string {
   });
 }
 
+/**
+ * Resume CUÁNDO se cargó realmente un movimiento, contra la fecha contable del
+ * documento.
+ *
+ * Un documento puede fecharse hacia atrás, y debe poder: en un kardex la fecha
+ * del movimiento es la del hecho económico, no la de digitación. El problema es
+ * que así dos cargas muy distintas se ven idénticas. Esto devuelve el texto para
+ * mostrar al lado de la fecha contable y avisa si NO coinciden, que es la señal
+ * de que alguien fechó el documento en otro día.
+ *
+ * @param fechaDocumento DATE "YYYY-MM-DD" (día contable).
+ * @param fechaRegistro  TIMESTAMPTZ de creación; null si no se conoce.
+ */
+export function registroMovimiento(
+  fechaDocumento: string,
+  fechaRegistro: string | null | undefined,
+): { texto: string; retroactivo: boolean } {
+  if (!fechaRegistro) return { texto: "", retroactivo: false };
+  const d = new Date(fechaRegistro);
+  if (Number.isNaN(d.getTime())) return { texto: "", retroactivo: false };
+
+  // El día del registro se mide en Lima: en UTC, una carga de la tarde ya cae
+  // en el día siguiente y marcaría retroactivos que no lo son.
+  const mismoDia = fechaISO(d) === fechaDocumento;
+  const hora = d.toLocaleTimeString("es-PE", {
+    timeZone: ZONA,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return mismoDia
+    ? { texto: hora, retroactivo: false }
+    : { texto: `${fechaCorta(d)} ${hora}`, retroactivo: true };
+}
+
 /** 0.153 -> "15%" (deltas del dashboard; respeta el signo). */
 export function porcentaje(n: number, decimales = 0): string {
   return `${(n * 100).toLocaleString("es-PE", {

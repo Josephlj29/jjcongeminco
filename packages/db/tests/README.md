@@ -159,6 +159,35 @@ El escenario simula la sesión de cada rol con `set_config('request.jwt.claims',
 Ojo: hoy la base solo tiene usuarios con rol `admin`, `almacenero` y `logistica`, así
 que el caso negativo usa `almacenero`.
 
+### 6. Trazabilidad de la carga y saldo corrido del kardex (migraciones 0075 + 0076)
+
+Verificado en el remoto el 2026-10-21 (rojo antes de aplicar, verde después):
+
+```bash
+psql "$DATABASE_URL" -f packages/db/tests/0075_0076_trazabilidad_y_saldo_corrido.sql
+```
+
+Un documento se fecha con el **día contable**, que puede ser anterior al día en que
+se cargó y debe poder serlo. El efecto colateral es que dos cargas muy distintas se
+ven iguales en el kardex. Caso real (`CON-011`): la carga inicial del 02/09 08:41 y
+una entrada hecha el 04/09 23:37 pero fechada al 02/09 aparecían como "dos ingresos
+del mismo día".
+
+1. `V_MovimientoStock_Kardex` y `V_Reporte_Movimiento` exponen `FechaRegistro`
+   (TIMESTAMPTZ real de carga) y `RegistradoPor`.
+2. `seg.FnNombreUsuario` resuelve el nombre **sin abrir `seg.T_Usuario`**, cuya RLS
+   solo deja leer la fila propia salvo para admin: un JOIN directo desde una vista
+   `security_invoker` le mostraría el nombre al admin y NULL al resto. Devuelve el
+   valor tal cual si no es un uid (`API`, `Sistema`, un correo) o si el uid ya no
+   existe, y NULL solo para NULL o cadena vacía.
+3. El `SaldoCorrido` acumula en el orden en que se lee el kardex: fecha contable,
+   luego fecha real de carga. Antes desempataba por el UUID del movimiento, que es
+   **aleatorio**: con dos movimientos en la misma fecha el acumulado salía en
+   cualquier orden (`FILTRO-015` mostraba 10 → 7 → 8 → 9 → 6 con tres salidas de 1).
+   El total final nunca estuvo mal, porque la suma no depende del orden; lo que
+   fallaba era el camino, que es justo lo que se audita. Al aplicar 0076 había 33
+   movimientos afectados sobre 29 productos.
+
 ### 5. Segregación de funciones
 
 El creador de un requerimiento no puede aprobarlo/rechazarlo (admin exento);

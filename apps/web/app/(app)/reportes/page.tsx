@@ -61,7 +61,8 @@ import { GraficoPorTipoDocumento } from "@/components/charts/GraficoPorTipoDocum
 import { GraficoDonutCategorias } from "@/components/charts/GraficoDonutCategorias";
 import type { ReporteMovimiento, ProductoValorizado, ReporteRecambio } from "@congeminco/shared";
 import { TIPO_DOCUMENTO } from "@congeminco/shared";
-import { fechaCorta } from "@/lib/format";
+import { fechaCorta, fechaHora } from "@/lib/format";
+import { CeldaRegistroMovimiento } from "@/components/CeldaRegistroMovimiento";
 
 const TIPO_LABEL: Record<string, string> = {
   existencia_inicial: "Existencia inicial",
@@ -318,6 +319,8 @@ export default function ReportesPage() {
       { key: "Placa", label: "Placa" },
       { key: "Cantidad", label: "Cantidad" },
       { key: "Valor", label: "Valor (S/)" },
+      { key: "Registrado", label: "Registrado el" },
+      { key: "RegistradoPor", label: "Registrado por" },
     ],
     filas: (movimientos ?? []).map((m) => ({
       Fecha: fechaCorta(m.FechaMovimiento),
@@ -327,6 +330,8 @@ export default function ReportesPage() {
       Placa: m.Placa ?? "",
       Cantidad: m.CantidadConSigno,
       Valor: m.ValorMovimiento.toFixed(2),
+      Registrado: m.FechaRegistro ? fechaHora(m.FechaRegistro) : "",
+      RegistradoPor: m.RegistradoPor ?? "",
     })),
   });
 
@@ -595,6 +600,7 @@ export default function ReportesPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Fecha</TableHead>
+                          <TableHead>Registro</TableHead>
                           <TableHead>Tipo</TableHead>
                           <TableHead>Producto</TableHead>
                           <TableHead>Ubicación</TableHead>
@@ -608,7 +614,7 @@ export default function ReportesPage() {
                           <GrupoMovimiento key={grupo.tipo} grupo={grupo} />
                         ))}
                         <TableRow className="bg-muted/60 font-semibold">
-                          <TableCell colSpan={6}>TOTAL</TableCell>
+                          <TableCell colSpan={7}>TOTAL</TableCell>
                           <TableCell className="text-right">{moneda(totalMovValor)}</TableCell>
                         </TableRow>
                       </TableBody>
@@ -882,6 +888,11 @@ function GrupoMovimiento({
       {grupo.filas.map((m) => (
         <TableRow key={m.IdMovimiento}>
           <TableCell className="text-xs">{fechaCorta(m.FechaMovimiento)}</TableCell>
+          <CeldaRegistroMovimiento
+            fechaDocumento={m.FechaMovimiento}
+            fechaRegistro={m.FechaRegistro}
+            registradoPor={m.RegistradoPor}
+          />
           <TableCell className="text-xs capitalize">
             {TIPO_LABEL[m.TipoDocumento] ?? m.TipoDocumento}
           </TableCell>
@@ -900,7 +911,7 @@ function GrupoMovimiento({
         </TableRow>
       ))}
       <TableRow className="bg-muted/30">
-        <TableCell colSpan={6} className="text-right text-xs font-medium">
+        <TableCell colSpan={7} className="text-right text-xs font-medium">
           Subtotal {TIPO_LABEL[grupo.tipo] ?? grupo.tipo}
         </TableCell>
         <TableCell className="text-right text-xs font-semibold">{moneda(grupo.subtotal)}</TableCell>

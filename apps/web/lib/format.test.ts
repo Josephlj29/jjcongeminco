@@ -9,6 +9,7 @@ import {
   porcentaje,
   sumarDias,
   diasEntre,
+  registroMovimiento,
 } from "./format";
 
 describe("moneda", () => {
@@ -122,6 +123,41 @@ describe("sumarDias / diasEntre (aritmética de día calendario, sin zona)", () 
     expect(diasEntre("2026-08-12", "2026-09-11")).toBe(30);
     expect(diasEntre("2026-09-11", "2026-09-11")).toBe(0);
     expect(diasEntre("2026-09-11", "2026-09-01")).toBe(-10);
+  });
+});
+
+describe("registroMovimiento (fecha contable vs. fecha real de carga)", () => {
+  // El caso que lo motivó: la carga inicial del 02/09 08:41 y una entrada
+  // registrada el 04/09 23:37 pero fechada al 02/09 se veían idénticas en el
+  // kardex, porque ambas muestran la fecha del documento.
+  it("marca como retroactivo cuando se registró un día distinto al del documento", () => {
+    const r = registroMovimiento("2026-09-02", "2026-09-05T04:37:00Z"); // 04/09 23:37 en Lima
+    expect(r.retroactivo).toBe(true);
+    expect(r.texto).toBe("04/09/2026 23:37");
+  });
+
+  it("si se registró el mismo día solo muestra la hora y no es retroactivo", () => {
+    const r = registroMovimiento("2026-09-02", "2026-09-02T13:41:27Z"); // 02/09 08:41 en Lima
+    expect(r.retroactivo).toBe(false);
+    expect(r.texto).toBe("08:41");
+  });
+
+  it("compara el día en hora de Lima, no en UTC", () => {
+    // 02/09 20:30 Lima es 03/09 01:30 UTC: en UTC parecería otro día.
+    const r = registroMovimiento("2026-09-02", "2026-09-03T01:30:00Z");
+    expect(r.retroactivo).toBe(false);
+    expect(r.texto).toBe("20:30");
+  });
+
+  it("detecta también el documento fechado hacia adelante", () => {
+    const r = registroMovimiento("2026-09-10", "2026-09-05T04:37:00Z");
+    expect(r.retroactivo).toBe(true);
+    expect(r.texto).toBe("04/09/2026 23:37");
+  });
+
+  it("sin fecha de registro no afirma nada", () => {
+    expect(registroMovimiento("2026-09-02", null)).toEqual({ texto: "", retroactivo: false });
+    expect(registroMovimiento("2026-09-02", "")).toEqual({ texto: "", retroactivo: false });
   });
 });
 

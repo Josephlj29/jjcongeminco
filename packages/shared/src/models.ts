@@ -391,6 +391,11 @@ export interface ReporteMovimiento {
   CantidadConSigno: number;
   CostoUnitario: number | null;
   ValorMovimiento: number;
+  /* Trazabilidad de la carga (migración 0075): la fecha de arriba es la CONTABLE
+     y puede fecharse hacia atrás; estas dos dicen cuándo se cargó de verdad y
+     quién lo hizo. Sin esto, dos cargas muy distintas se ven idénticas. */
+  FechaRegistro: string | null; // TIMESTAMPTZ: instante; se muestra en hora Lima (registroMovimiento)
+  RegistradoPor: string | null;
 }
 
 /* Salida de la vista inv.V_Recambio_Producto (reporte de recambios prematuros) */
@@ -475,6 +480,11 @@ export interface KardexFila {
   Cantidad: number;
   CantidadConSigno: number;
   SaldoCorrido: number;
+  /* Trazabilidad de la carga (migración 0075): la fecha de arriba es la CONTABLE
+     y puede fecharse hacia atrás; estas dos dicen cuándo se cargó de verdad y
+     quién lo hizo. Sin esto, dos cargas muy distintas se ven idénticas. */
+  FechaRegistro: string | null; // TIMESTAMPTZ: instante; se muestra en hora Lima (registroMovimiento)
+  RegistradoPor: string | null;
 }
 
 /* ── Dashboard ───────────────────────────────────────────────────────────
