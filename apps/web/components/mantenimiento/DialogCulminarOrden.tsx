@@ -74,7 +74,7 @@ export function DialogCulminarOrden({
                   </p>
                   <p className="text-xs text-muted-foreground">
                     No genera movimientos de stock: queda como trabajo de solo mano de obra. Si
-                    faltaba cargar repuestos, cancelá y agregalos desde &quot;Editar&quot;.
+                    faltaba cargar repuestos, cancela y agrégalos desde &quot;Editar&quot;.
                   </p>
                 </>
               )}

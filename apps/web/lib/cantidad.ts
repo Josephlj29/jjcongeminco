@@ -54,7 +54,7 @@ export type ResultadoCantidad =
    muestra y puede reescribirse sin romper nada. */
 const MENSAJES: Record<CodigoErrorCantidad, string> = {
   vacio: "",
-  caracter_invalido: "Usá solo números y + - * /.",
+  caracter_invalido: "Usa solo números y + - * /.",
   numero_invalido: "Número mal escrito.",
   expresion_incompleta: "La operación está incompleta.",
   division_por_cero: "No se puede dividir entre cero.",
@@ -117,7 +117,7 @@ function normalizar(entrada: string): { ok: true; texto: string } | (ResultadoCa
   if (/\d\s+\d/.test(s)) return falla("expresion_incompleta");
   s = s.replace(/\s+/g, "");
 
-  // Potencia explícita: el mensaje "usá solo + - * /" es más útil que dejar que
+  // Potencia explícita: el mensaje "usa solo + - * /" es más útil que dejar que
   // el parser falle por un `*` suelto.
   if (s.includes("**")) return falla("caracter_invalido");
   // Esta lista blanca es la que descarta letras, paréntesis, % y notación

@@ -224,7 +224,7 @@ export function DialogCorregirDocumento({ documento, onClose }: Props) {
           </DialogTitle>
           <DialogDescription>
             Se anula este documento con su reversa y se registra el corregido, todo junto. El costo
-            promedio se recalcula solo. El tipo y la ubicación no se cambian acá.
+            promedio se recalcula solo. El tipo y la ubicación no se cambian aquí.
           </DialogDescription>
         </DialogHeader>
 

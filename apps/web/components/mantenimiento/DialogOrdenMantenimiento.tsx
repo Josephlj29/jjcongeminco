@@ -457,7 +457,7 @@ export function DialogOrdenMantenimiento({
         const { Situacion } = await crear(payload);
         // Toda OT nueva nace ABIERTA (en curso); la BD es la fuente de verdad.
         const final: SituacionOrden = Situacion ?? "abierta";
-        toast.success('Orden registrada y abierta. Cuando esté lista, usá "Culminar".');
+        toast.success('Orden registrada y abierta. Cuando esté lista, usa "Culminar".');
         onGuardada?.(final);
       }
       for (const t of trabajos) {
@@ -761,7 +761,7 @@ export function DialogOrdenMantenimiento({
                 <p className="text-xs text-muted-foreground">
                   {modoEdicion
                     ? "Marca la opción para registrar o corregir los repuestos usados. El stock se descuenta al aprobar la orden."
-                    : "Si se usaron repuestos, regístralos acá; el stock se descuenta al aprobar la orden. Puedes agregarlos o corregirlos después, mientras la orden siga por aprobar."}
+                    : "Si se usaron repuestos, regístralos aquí; el stock se descuenta al aprobar la orden. Puedes agregarlos o corregirlos después, mientras la orden siga por aprobar."}
                 </p>
               )}
             </div>

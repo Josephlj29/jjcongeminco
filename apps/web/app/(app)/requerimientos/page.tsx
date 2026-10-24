@@ -613,7 +613,7 @@ export default function RequerimientosPage() {
                 <div>
                   <h3 className="text-sm font-medium">Materiales solicitados</h3>
                   <p className="text-xs text-muted-foreground">
-                    ¿El mismo material para otra placa? Duplicá la línea y elegí la placa.
+                    ¿El mismo material para otra placa? Duplica la línea y elige la placa.
                   </p>
                 </div>
 

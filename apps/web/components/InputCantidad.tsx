@@ -281,7 +281,7 @@ export function InputCantidad({
                 </Button>
               </div>
               <p className="mt-2 px-1 text-[11px] leading-tight text-muted-foreground">
-                También podés escribir <span className="font-mono">1/4</span>,{" "}
+                También puedes escribir <span className="font-mono">1/4</span>,{" "}
                 <span className="font-mono">20/4</span> o{" "}
                 <span className="font-mono">1 1/2</span>.
               </p>
