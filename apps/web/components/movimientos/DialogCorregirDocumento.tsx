@@ -10,10 +10,11 @@
  * documento (emitiendo su documento inverso) y registra el corregido en la misma
  * transacción, recalculando el costo promedio. En el kardex quedan los tres.
  *
- * Por eso hay cosas que NO se editan acá:
- *   - El tipo de documento: una entrada mal cargada sigue siendo una entrada.
- *   - La ubicación: mover stock de almacén es una transferencia, no una corrección.
- * Y por eso el motivo es obligatorio: no hay bitácora, el motivo es el rastro.
+ * El tipo de documento NO se edita: una entrada mal cargada sigue siendo una entrada.
+ * El almacén SÍ: es para un documento registrado en el almacén equivocado (la
+ * reversa sale del almacén original y el corregido entra en el nuevo). Si el
+ * stock se movió de verdad entre almacenes, eso es una transferencia.
+ * El motivo es obligatorio: no hay bitácora, el motivo es el rastro.
  *
  * Solo procede si nada de lo que movió el documento se consumió. Eso lo decide la
  * BD; el aviso que se muestra acá viene de ella (MotivoBloqueo).
@@ -58,6 +59,7 @@ import { InputCantidad } from "@/components/InputCantidad";
 import { useCorregirDocumento } from "@/hooks/useDocumentos";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useProveedores } from "@/hooks/useProveedores";
+import { useUbicaciones } from "@/hooks/useCatalogo";
 import {
   CorregirDocumentoSchema,
   PASO_CANTIDAD,
@@ -162,11 +164,16 @@ function LineaCorreccion({
 export function DialogCorregirDocumento({ documento, onClose }: Props) {
   const { data: productos } = useSaldos();
   const { data: proveedores } = useProveedores();
+  const { data: ubicaciones } = useUbicaciones();
   const { mutateAsync, isPending } = useCorregirDocumento();
 
   const esSalida = documento.TipoDocumento === "salida";
   const esEntrada =
     documento.TipoDocumento === "entrada" || documento.TipoDocumento === "existencia_inicial";
+  /* Mismo criterio que el formulario de Movimientos: las entradas tienen
+     almacén de destino; salidas y ajustes, de origen. */
+  const campoAlmacen = esEntrada ? "Documento.IdUbicacionDestino" : "Documento.IdUbicacionOrigen";
+  const idAlmacenOriginal = esEntrada ? documento.IdUbicacionDestino : documento.IdUbicacionOrigen;
 
   const {
     control,
@@ -199,6 +206,9 @@ export function DialogCorregirDocumento({ documento, onClose }: Props) {
   const { fields, append, remove } = useFieldArray({ control, name: "Documento.Detalle" });
   // Los hooks van en el cuerpo, nunca dentro del JSX condicional del proveedor.
   const idProveedor = useWatch({ control, name: "Documento.IdProveedor" });
+  const idAlmacen = useWatch({ control, name: campoAlmacen });
+  const nombreAlmacen = (id: string | null | undefined) =>
+    ubicaciones?.find((u) => u.Id === id)?.Nombre ?? "—";
 
   const onSubmit = async (data: CorregirDocumento) => {
     try {
@@ -224,7 +234,7 @@ export function DialogCorregirDocumento({ documento, onClose }: Props) {
           </DialogTitle>
           <DialogDescription>
             Se anula este documento con su reversa y se registra el corregido, todo junto. El costo
-            promedio se recalcula solo. El tipo y la ubicación no se cambian aquí.
+            promedio se recalcula solo. El tipo de documento no se cambia.
           </DialogDescription>
         </DialogHeader>
 
@@ -258,6 +268,32 @@ export function DialogCorregirDocumento({ documento, onClose }: Props) {
                     placeholder="F001-00001"
                     {...register("Documento.Comprobante")}
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <Label>{esEntrada ? "Almacén de ingreso" : "Almacén de salida"}</Label>
+                  <Select
+                    value={idAlmacen ?? ""}
+                    onValueChange={(v) => setValue(campoAlmacen, v, { shouldValidate: true })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(ubicaciones ?? []).map((u) => (
+                        <SelectItem key={u.Id} value={u.Id}>
+                          {u.Nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {idAlmacen && idAlmacen !== idAlmacenOriginal && (
+                    <p className="text-xs text-muted-foreground">
+                      {esEntrada
+                        ? `Se retira de ${nombreAlmacen(idAlmacenOriginal)} y se ingresa en ${nombreAlmacen(idAlmacen)}.`
+                        : `Se devuelve a ${nombreAlmacen(idAlmacenOriginal)} y se descuenta de ${nombreAlmacen(idAlmacen)}.`}
+                    </p>
+                  )}
                 </div>
 
                 {esEntrada && (
