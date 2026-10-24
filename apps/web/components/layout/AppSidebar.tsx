@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Package,
   ArrowLeftRight,
+  History,
   Upload,
   ClipboardList,
   ClipboardCheck,
@@ -42,7 +43,14 @@ import { Logo } from "@/components/Logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { puedeVerModulo, MODULOS, type ModuloCode, type RoleCode } from "@congeminco/shared";
+import {
+  puede,
+  puedeVerModulo,
+  MODULOS,
+  type ModuloCode,
+  type PERMISOS,
+  type RoleCode,
+} from "@congeminco/shared";
 
 interface UsuarioProps {
   id: string;
@@ -64,6 +72,8 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   exact: boolean;
   modulo: ModuloCode;
+  /** Además del módulo, un permiso por rol (secciones solo admin dentro de un módulo). */
+  permiso?: keyof typeof PERMISOS;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -76,6 +86,14 @@ const NAV_ITEMS: NavItem[] = [
     icon: ArrowLeftRight,
     exact: false,
     modulo: MODULOS.MOVIMIENTOS,
+  },
+  {
+    href: "/historial",
+    label: "Historial",
+    icon: History,
+    exact: false,
+    modulo: MODULOS.MOVIMIENTOS,
+    permiso: "documentoHistorial",
   },
   {
     href: "/requerimientos",
@@ -219,7 +237,11 @@ export function AppSidebarContent({
 }) {
   // Cada módulo se muestra según los módulos asignados al rol en la BD
   // (seg.T_RolModulo). Defensa en profundidad sobre la RLS.
-  const navItems = NAV_ITEMS.filter((item) => puedeVerModulo(usuario.modulos, item.modulo));
+  const navItems = NAV_ITEMS.filter(
+    (item) =>
+      puedeVerModulo(usuario.modulos, item.modulo) &&
+      (!item.permiso || puede(usuario.rol, item.permiso)),
+  );
   const maestrosItems = MAESTROS_ITEMS.filter((item) =>
     puedeVerModulo(usuario.modulos, item.modulo),
   );

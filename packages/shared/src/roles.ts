@@ -18,6 +18,9 @@ export const PERMISOS = {
   // Corregir/anular un documento YA confirmado: anula y rehace, tocando el
   // ledger y la valorización. Solo admin, aunque otros roles puedan registrarlo.
   documentoCorregir: [ROLES.ADMIN],
+  // Historial completo de documentos con filtros: es la puerta para corregir o
+  // anular documentos viejos, así que tiene el mismo alcance que documentoCorregir.
+  documentoHistorial: [ROLES.ADMIN],
   // Separación de funciones de requerimientos: quien pide ≠ quien aprueba.
   // Crear: el personal de campo/almacén. Aprobar: gerencia/supervisión/admin
   // (el guard "creador ≠ aprobador" lo refuerza la BD, admin exento).

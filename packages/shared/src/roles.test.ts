@@ -50,6 +50,16 @@ describe("puede", () => {
     expect(puede(ROLES.LOGISTICA, "documentoCorregir")).toBe(false);
   });
 
+  it("el historial de documentos es solo de admin", () => {
+    // Es la puerta para corregir o anular documentos viejos: mismo alcance que
+    // documentoCorregir, aunque otros roles vean el módulo Movimientos.
+    expect(puede(ROLES.ADMIN, "documentoHistorial")).toBe(true);
+    expect(puede(ROLES.ALMACENERO, "documentoHistorial")).toBe(false);
+    expect(puede(ROLES.SUPERVISION, "documentoHistorial")).toBe(false);
+    expect(puede(ROLES.GERENCIA, "documentoHistorial")).toBe(false);
+    expect(puede(ROLES.LOGISTICA, "documentoHistorial")).toBe(false);
+  });
+
   it("separación de funciones: crear vs aprobar requerimientos", () => {
     // almacenero crea pero no aprueba; gerencia aprueba pero no crea.
     expect(puede(ROLES.ALMACENERO, "requerimientoCrear")).toBe(true);

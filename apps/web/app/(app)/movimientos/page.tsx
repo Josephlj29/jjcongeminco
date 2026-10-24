@@ -71,6 +71,7 @@ import { GaleriaProductoDialog } from "@/components/GaleriaProductoDialog";
 import { DialogCorregirDocumento } from "@/components/movimientos/DialogCorregirDocumento";
 import { DialogAnularDocumento } from "@/components/movimientos/DialogAnularDocumento";
 import { usePermiso } from "@/hooks/useYo";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -467,6 +468,7 @@ export default function MovimientosPage() {
      La acción se ofrece por Situacion + tipo; si algo se consumió lo dice la BD
      y el diálogo muestra ese motivo. */
   const puedeCorregir = usePermiso("documentoCorregir");
+  const puedeVerHistorial = usePermiso("documentoHistorial");
   const [corregirId, setCorregirId] = useState<string | null>(null);
   const [anular, setAnular] = useState<DocumentoInventarioResumen | null>(null);
   const {
@@ -831,7 +833,15 @@ export default function MovimientosPage() {
 
       {/* Documentos recientes */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Documentos recientes</h2>
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Documentos recientes</h2>
+          {/* Los recientes son los últimos 50: los viejos se buscan en el historial. */}
+          {puedeVerHistorial && (
+            <Button asChild variant="link" size="sm" className="px-0">
+              <Link href="/historial">Ver historial completo</Link>
+            </Button>
+          )}
+        </div>
         <DataTable
           columnas={COLUMNAS_DOCUMENTOS}
           datos={documentos}

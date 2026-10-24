@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   CorregirDocumento,
   CrearDocumento,
   DocumentoInventarioDetalle,
   DocumentoInventarioResumen,
+  PaginaHistorialDocumentos,
 } from "@congeminco/shared";
 
 /** @deprecated usar DocumentoInventarioResumen de @congeminco/shared */
@@ -17,6 +18,40 @@ export function useDocumentos(limit?: number) {
       const res = await fetch(`/api/documentos${qs}`);
       if (!res.ok) throw new Error(`Error ${res.status} al cargar documentos`);
       return res.json() as Promise<DocumentoInventarioResumen[]>;
+    },
+  });
+}
+
+export interface FiltrosHistorialDocumentos {
+  desde: string;
+  hasta: string;
+  tipo: string;
+  situacion: string;
+  /** Ya viene con debounce. */
+  q: string;
+  registradoPor: string;
+  idProducto: string | null;
+  pagina: number;
+}
+
+/**
+ * Una página del historial de documentos (solo admin), filtrada EN EL SERVIDOR.
+ * La key cuelga de ["documentos"]: corregir y anular ya la invalidan.
+ */
+export function useHistorialDocumentos(filtros: FiltrosHistorialDocumentos) {
+  return useQuery({
+    queryKey: ["documentos", "historial", filtros],
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const params = new URLSearchParams({ pagina: String(filtros.pagina) });
+      for (const clave of ["desde", "hasta", "tipo", "situacion", "q", "registradoPor"] as const) {
+        if (filtros[clave]) params.set(clave, filtros[clave]);
+      }
+      if (filtros.idProducto) params.set("idProducto", filtros.idProducto);
+
+      const res = await fetch(`/api/documentos/historial?${params.toString()}`);
+      if (!res.ok) throw new Error(`Error ${res.status} al cargar el historial`);
+      return res.json() as Promise<PaginaHistorialDocumentos>;
     },
   });
 }

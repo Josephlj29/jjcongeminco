@@ -9,7 +9,7 @@
  */
 import { redirect } from "next/navigation";
 import { obtenerUsuario } from "@/lib/supabase/server";
-import { puedeVerModulo, type ModuloCode } from "@congeminco/shared";
+import { puede, puedeVerModulo, type ModuloCode, type PERMISOS } from "@congeminco/shared";
 
 export { MODULOS } from "@congeminco/shared";
 
@@ -21,6 +21,19 @@ export async function requerirModulo(modulo: ModuloCode) {
     redirect("/login");
   }
   if (!puedeVerModulo(usuario.modulos, modulo)) {
+    redirect("/");
+  }
+  return usuario;
+}
+
+/**
+ * Además del módulo, exige un permiso por ROL (PERMISOS de @congeminco/shared).
+ * Para secciones que el RBAC por módulo no alcanza a distinguir: el historial
+ * de documentos cuelga de Movimientos pero es solo de admin.
+ */
+export async function requerirPermiso(modulo: ModuloCode, permiso: keyof typeof PERMISOS) {
+  const usuario = await requerirModulo(modulo);
+  if (!puede(usuario.rol, permiso)) {
     redirect("/");
   }
   return usuario;

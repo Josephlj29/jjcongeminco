@@ -465,6 +465,39 @@ export interface DocumentoInventarioDetalle extends DocumentoInventarioResumen {
   }[];
 }
 
+/* Fila de inv.V_Historial_DocumentoInventario (pantalla Historial, solo admin).
+   A diferencia del resumen, SÍ trae PuedeCorregir/MotivoBloqueo: la API los
+   evalúa solo para la página visible (20 filas), no para toda la tabla. */
+export interface DocumentoHistorial extends DocumentoInventarioResumen {
+  IdUbicacionOrigen: string | null;
+  NombreUbicacionOrigen: string | null;
+  IdUbicacionDestino: string | null;
+  NombreUbicacionDestino: string | null;
+  IdProveedor: string | null;
+  NombreProveedor: string | null;
+  IdVehiculo: string | null;
+  Placa: string | null;
+  /** Productos distintos que movió el documento. */
+  CantidadItems: number;
+  /** Valor al costo del ledger. Una transferencia cuenta solo su salida. */
+  ValorTotal: number;
+  FechaRegistro: string; // TIMESTAMPTZ: instante real de carga, en hora Lima
+  RegistradoPor: string | null;
+  FechaAnulacion: string | null; // TIMESTAMPTZ; solo en anulados
+  AnuladoPor: string | null;
+  PuedeCorregir: boolean;
+  MotivoBloqueo: string | null;
+}
+
+/* Respuesta de GET /api/documentos/historial */
+export interface PaginaHistorialDocumentos {
+  items: DocumentoHistorial[];
+  total: number;
+  pagina: number;
+  limit: number;
+  totalPaginas: number;
+}
+
 export interface KardexFila {
   IdMovimientoStock: string;
   IdProducto: string;
