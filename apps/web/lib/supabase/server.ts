@@ -69,6 +69,10 @@ export async function obtenerUsuario() {
 
   // Módulos del rol: fuente de verdad en seg.T_RolModulo (RBAC configurable).
   const { data: modulosData } = await supabase.schema("seg").rpc("FnModulosUsuario");
+  // Almacenes de consumo de OT del rol (seg.T_RolUbicacionConsumo). NULL = sin restricción.
+  const { data: ubicacionesConsumoData } = await supabase
+    .schema("seg")
+    .rpc("FnUbicacionesConsumoUsuario");
 
   return {
     id: authData.user.id,
@@ -77,5 +81,6 @@ export async function obtenerUsuario() {
     rol: (usuarioData.T_Rol as unknown as { Codigo: string })
       .Codigo as import("@congeminco/shared").RoleCode,
     modulos: (modulosData as string[] | null) ?? [],
+    ubicacionesConsumo: (ubicacionesConsumoData as string[] | null) ?? null,
   };
 }

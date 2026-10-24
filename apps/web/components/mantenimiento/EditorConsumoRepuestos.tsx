@@ -9,6 +9,7 @@
  * aprobar. Componente CONTROLADO: el estado vive en el padre; los catálogos
  * (saldos, ubicaciones, proveedores) los carga el editor.
  */
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { PASO_CANTIDAD, type ConsumirRepuestos } from "@congeminco/shared";
@@ -16,6 +17,8 @@ import { InputCantidad } from "@/components/InputCantidad";
 import { useSaldos } from "@/hooks/useSaldos";
 import { useUbicaciones } from "@/hooks/useUbicaciones";
 import { useProveedores } from "@/hooks/useProveedores";
+import { useYo } from "@/hooks/useYo";
+import { ubicacionConsumoPorDefecto, ubicacionesConsumo } from "@/lib/ubicaciones-consumo";
 import { ProductoCombobox } from "@/components/ProductoCombobox";
 import {
   Select,
@@ -133,11 +136,22 @@ export function EditorConsumoRepuestos({
   const { data: productos } = useSaldos();
   const { data: ubicaciones } = useUbicaciones();
   const { data: proveedores } = useProveedores();
+  const { data: yo } = useYo();
 
   const { lineas, idUbicacion, idProveedor, comprobante } = estado;
   const hayCompra = lineas.some((l) => l.modo === "compra");
+  // Hasta que llegue el usuario no se sabe qué almacenes tiene permitidos.
+  const opcionesUbicacion = yo ? ubicacionesConsumo(ubicaciones, yo.ubicacionesConsumo) : [];
 
   const patch = (p: Partial<ConsumoState>) => onChange({ ...estado, ...p });
+
+  // Con un solo almacén permitido (almacenero → Tambomayo) se elige solo, y uno
+  // que ya no está permitido se reemplaza en vez de fallar recién al guardar.
+  const ubicacionDefecto = ubicacionConsumoPorDefecto(opcionesUbicacion, idUbicacion);
+  useEffect(() => {
+    if (ubicacionDefecto !== idUbicacion) patch({ idUbicacion: ubicacionDefecto });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- patch cambia en cada render
+  }, [ubicacionDefecto, idUbicacion]);
   const setLinea = (i: number, p: Partial<LineaConsumoState>) =>
     patch({ lineas: lineas.map((l, idx) => (idx === i ? { ...l, ...p } : l)) });
 
@@ -175,7 +189,7 @@ export function EditorConsumoRepuestos({
             <SelectValue placeholder="Seleccionar almacén..." />
           </SelectTrigger>
           <SelectContent>
-            {ubicaciones?.map((u) => (
+            {opcionesUbicacion.map((u) => (
               <SelectItem key={u.Id} value={u.Id}>
                 {u.Codigo} — {u.Nombre}
               </SelectItem>

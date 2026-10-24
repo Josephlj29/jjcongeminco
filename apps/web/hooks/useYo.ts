@@ -8,6 +8,8 @@ export interface Yo {
   rol: RoleCode;
   nombreCompleto: string | null;
   modulos: string[];
+  /** Almacenes de los que puede descontar en una OT; null = sin restricción. */
+  ubicacionesConsumo: string[] | null;
 }
 
 /**

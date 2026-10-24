@@ -22,5 +22,6 @@ export async function GET() {
     rol: usuario.rol,
     nombreCompleto: usuario.nombreCompleto,
     modulos: usuario.modulos,
+    ubicacionesConsumo: usuario.ubicacionesConsumo,
   });
 }

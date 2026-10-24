@@ -188,6 +188,25 @@ del mismo día".
    fallaba era el camino, que es justo lo que se audita. Al aplicar 0076 había 33
    movimientos afectados sobre 29 productos.
 
+### 7. Almacén de consumo de OT restringido por rol (migración 0078)
+
+Verificado en el remoto el 2026-10-24 (rojo antes de aplicar; verde corriendo la
+migración y la prueba en una sola transacción, sin persistir):
+
+```bash
+psql "$DATABASE_URL" -f packages/db/tests/0078_almacen_consumo_por_rol.sql
+```
+
+`seg.T_RolUbicacionConsumo` define de qué almacenes descuenta cada rol en una OT
+(rol sin filas = sin restricción). Hoy: almacenero → Tambomayo.
+
+1. almacenero registra una OT con repuestos desde Tambomayo.
+2. almacenero NO la registra desde otro almacén: `42501` y el mensaje nombra Tambomayo.
+3. almacenero tampoco cambia el almacén al editar.
+4. una OT sin repuestos no exige almacén.
+5. admin registra desde cualquier almacén.
+6. `seg.FnUbicacionesConsumoUsuario()`: almacenero recibe solo Tambomayo; admin `NULL`.
+
 ### 5. Segregación de funciones
 
 El creador de un requerimiento no puede aprobarlo/rechazarlo (admin exento);
