@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  ActualizarLineaEquipoSchema,
   ActualizarOrdenMantenimientoSchema,
+  ActualizarTipoEquipoSchema,
   AnularDocumentoSchema,
   CorregirDocumentoSchema,
+  CrearLineaEquipoSchema,
+  CrearTipoEquipoSchema,
   CrearDocumentoSchema,
   CrearOrdenMantenimientoSchema,
   DECIMALES_CANTIDAD,
@@ -285,5 +289,89 @@ describe("precisión de cantidad y costo", () => {
     expect(PASO_COSTO).toBe(0.0001);
     expect(LineaEntregaSchema.safeParse(conCosto(12.3456)).success).toBe(true);
     expect(LineaEntregaSchema.safeParse(conCosto(12.34567)).success).toBe(false);
+  });
+});
+
+/* ─── Línea de equipo y su efecto en el tipo de equipo ───
+   La migración 0079 metió inv.T_LineaEquipo como primer nivel de la flota y
+   dejó T_TipoEquipo.IdLinea en NOT NULL sin default. Si el contrato no exige la
+   línea, el POST manda un insert que la base rechaza con not-null y crear un
+   tipo de equipo queda roto. Eso pasó en producción. */
+describe("CrearLineaEquipoSchema", () => {
+  it("acepta una línea con lo mínimo", () => {
+    const r = CrearLineaEquipoSchema.safeParse({ Codigo: "ORUGA", Nombre: "Línea oruga" });
+    expect(r.success).toBe(true);
+  });
+
+  it("acepta orden y descripción", () => {
+    const r = CrearLineaEquipoSchema.safeParse({
+      Codigo: "ORUGA",
+      Nombre: "Línea oruga",
+      Descripcion: "Excavadoras y tractores sobre orugas.",
+      Orden: 3,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("exige código y nombre", () => {
+    expect(CrearLineaEquipoSchema.safeParse({ Nombre: "Línea oruga" }).success).toBe(false);
+    expect(CrearLineaEquipoSchema.safeParse({ Codigo: "ORUGA" }).success).toBe(false);
+    expect(CrearLineaEquipoSchema.safeParse({ Codigo: "", Nombre: "X" }).success).toBe(false);
+  });
+
+  it("respeta los largos de la tabla: Codigo 20, Nombre 120, Descripcion 200", () => {
+    const largo = (n: number) => "X".repeat(n);
+    expect(
+      CrearLineaEquipoSchema.safeParse({ Codigo: largo(21), Nombre: "X" }).success,
+    ).toBe(false);
+    expect(
+      CrearLineaEquipoSchema.safeParse({ Codigo: "X", Nombre: largo(121) }).success,
+    ).toBe(false);
+    expect(
+      CrearLineaEquipoSchema.safeParse({ Codigo: "X", Nombre: "X", Descripcion: largo(201) })
+        .success,
+    ).toBe(false);
+  });
+
+  it("el orden es un entero y no negativo", () => {
+    const base = { Codigo: "ORUGA", Nombre: "Línea oruga" };
+    expect(CrearLineaEquipoSchema.safeParse({ ...base, Orden: 1.5 }).success).toBe(false);
+    expect(CrearLineaEquipoSchema.safeParse({ ...base, Orden: -1 }).success).toBe(false);
+    expect(CrearLineaEquipoSchema.safeParse({ ...base, Orden: 0 }).success).toBe(true);
+  });
+
+  it("al actualizar todo es opcional, pero un código vacío sigue siendo inválido", () => {
+    expect(ActualizarLineaEquipoSchema.safeParse({}).success).toBe(true);
+    expect(ActualizarLineaEquipoSchema.safeParse({ Nombre: "Otro nombre" }).success).toBe(true);
+    expect(ActualizarLineaEquipoSchema.safeParse({ Estado: false }).success).toBe(true);
+    expect(ActualizarLineaEquipoSchema.safeParse({ Codigo: "" }).success).toBe(false);
+  });
+});
+
+describe("CrearTipoEquipoSchema con línea obligatoria", () => {
+  it("exige la línea: sin ella la base rechaza el insert con not-null", () => {
+    const r = CrearTipoEquipoSchema.safeParse({ Codigo: "EXCAVADORA", Nombre: "Excavadora" });
+    expect(r.success).toBe(false);
+  });
+
+  it("acepta el tipo cuando trae su línea", () => {
+    const r = CrearTipoEquipoSchema.safeParse({
+      Codigo: "EXCAVADORA",
+      Nombre: "Excavadora",
+      IdLinea: UUID,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("la línea tiene que ser un UUID, no un nombre", () => {
+    expect(
+      CrearTipoEquipoSchema.safeParse({ Codigo: "X", Nombre: "X", IdLinea: "TRACKLESS" }).success,
+    ).toBe(false);
+  });
+
+  it("al actualizar un tipo la línea es opcional: se puede mover o dejar como está", () => {
+    expect(ActualizarTipoEquipoSchema.safeParse({ Nombre: "Otro" }).success).toBe(true);
+    expect(ActualizarTipoEquipoSchema.safeParse({ IdLinea: UUID }).success).toBe(true);
+    expect(ActualizarTipoEquipoSchema.safeParse({ IdLinea: "TRACKLESS" }).success).toBe(false);
   });
 });

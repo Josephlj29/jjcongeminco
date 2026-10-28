@@ -48,11 +48,26 @@ export interface Equipo extends CamposAuditoria {
   NombreTipoEquipo?: string | null;
 }
 
+/* Primer nivel de la flota. La línea era un prefijo dentro del código del tipo
+   ("LIN AMA - MINI"), así que no se podía filtrar ni agrupar por ella; la
+   migración 0079 la convirtió en dato propio. */
+export interface LineaEquipo extends CamposAuditoria {
+  Id: string;
+  Codigo: string;
+  Nombre: string;
+  Descripcion: string | null;
+  Orden: number;
+}
+
 export interface TipoEquipo extends CamposAuditoria {
   Id: string;
   Codigo: string;
   Nombre: string;
   Descripcion: string | null;
+  IdLinea: string;
+  /* Resuelto por la API para no pedir la lista de líneas en cada pantalla. */
+  NombreLinea?: string | null;
+  CodigoLinea?: string | null;
 }
 
 /* Fila de la puente producto<->tipo de equipo, con nombre del tipo (embed) */

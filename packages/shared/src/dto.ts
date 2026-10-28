@@ -248,11 +248,29 @@ export const ActualizarPersonalSchema = CrearPersonalSchema.partial().extend({
 });
 export type ActualizarPersonal = z.infer<typeof ActualizarPersonalSchema>;
 
+/* ─── Línea de equipo (primer nivel de la flota: trackless, liviana, …) ─── */
+export const CrearLineaEquipoSchema = z.object({
+  Codigo: z.string().min(1).max(20),
+  Nombre: z.string().min(1).max(120),
+  Descripcion: z.string().max(200).optional(),
+  /* Orden de presentación en los selectores. No es jerarquía, solo vista. */
+  Orden: z.number().int().min(0).optional(),
+});
+export type CrearLineaEquipo = z.infer<typeof CrearLineaEquipoSchema>;
+export const ActualizarLineaEquipoSchema = CrearLineaEquipoSchema.partial().extend({
+  Estado: z.boolean().optional(),
+});
+export type ActualizarLineaEquipo = z.infer<typeof ActualizarLineaEquipoSchema>;
+
 /* ─── Tipo de equipo ─── */
 export const CrearTipoEquipoSchema = z.object({
   Codigo: z.string().min(1).max(20),
   Nombre: z.string().min(1).max(120),
   Descripcion: z.string().max(200).optional(),
+  /* OBLIGATORIA: inv.T_TipoEquipo.IdLinea es NOT NULL sin default desde la
+     migración 0079. Si el contrato no la exige, el insert llega sin línea y la
+     base lo rechaza con not-null (23502): crear un tipo queda roto. */
+  IdLinea: z.string().uuid(),
 });
 export type CrearTipoEquipo = z.infer<typeof CrearTipoEquipoSchema>;
 export const ActualizarTipoEquipoSchema = CrearTipoEquipoSchema.partial().extend({

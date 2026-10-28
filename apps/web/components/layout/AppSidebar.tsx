@@ -30,6 +30,7 @@ import {
   Wrench,
   Car,
   Boxes,
+  Layers,
   Tags,
   FolderTree,
   Users,
@@ -167,6 +168,15 @@ const MAESTROS_ITEMS: NavItem[] = [
     href: "/maestros/vehiculos",
     label: "Vehículos",
     icon: Car,
+    exact: false,
+    modulo: MODULOS.MAESTROS_GENERAL,
+  },
+  {
+    /* La línea va antes que los tipos porque es el nivel de arriba:
+       línea > tipo de equipo > equipo > placa. */
+    href: "/maestros/lineas-equipo",
+    label: "Líneas de equipo",
+    icon: Layers,
     exact: false,
     modulo: MODULOS.MAESTROS_GENERAL,
   },

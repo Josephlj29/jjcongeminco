@@ -29,9 +29,12 @@ import {
   useActualizarTipoEquipo,
   useEliminarTipoEquipo,
 } from "@/hooks/useTiposEquipo";
+import { useLineasEquipo } from "@/hooks/useLineasEquipo";
 import { usePermiso } from "@/hooks/useYo";
+import { Combobox } from "@/components/Combobox";
 import { DataTable, type ColumnaDataTable } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,12 +58,15 @@ function DialogTipoEquipo({
   const modoEdicion = !!tipoEquipo;
   const { mutateAsync: crear, isPending: creando } = useCrearTipoEquipo();
   const { mutateAsync: actualizar, isPending: actualizando } = useActualizarTipoEquipo();
+  const { data: lineas } = useLineasEquipo();
   const isPending = creando || actualizando;
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CrearTipoEquipo>({
     resolver: zodResolver(modoEdicion ? ActualizarTipoEquipoSchema : CrearTipoEquipoSchema),
@@ -69,9 +75,12 @@ function DialogTipoEquipo({
           Codigo: tipoEquipo.Codigo,
           Nombre: tipoEquipo.Nombre,
           Descripcion: tipoEquipo.Descripcion ?? "",
+          IdLinea: tipoEquipo.IdLinea,
         }
       : {},
   });
+
+  const idLinea = watch("IdLinea");
 
   const onSubmit = async (data: CrearTipoEquipo | ActualizarTipoEquipo) => {
     try {
@@ -116,6 +125,30 @@ function DialogTipoEquipo({
               </div>
             </div>
 
+            {/* Obligatoria: un tipo sin línea no se puede guardar (la columna es
+                NOT NULL desde la 0079). Si falta alguna línea, se crea en
+                Maestros > Líneas de equipo y aparece acá sin tocar código. */}
+            <div className="space-y-1">
+              <Label>Línea *</Label>
+              <Combobox
+                opciones={(lineas ?? []).map((l) => ({
+                  value: l.Id,
+                  label: l.Nombre,
+                  codigo: l.Codigo,
+                  descripcion: l.Descripcion ?? undefined,
+                }))}
+                value={idLinea || null}
+                onChange={(v) => setValue("IdLinea", v ?? "", { shouldValidate: true })}
+                permitirLimpiar={false}
+                placeholder="Seleccionar línea..."
+                buscarPlaceholder="Buscar línea..."
+                vacioTexto="No hay líneas registradas."
+              />
+              {errors.IdLinea && (
+                <p className="text-xs text-destructive">{errors.IdLinea.message}</p>
+              )}
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="Descripcion">Descripción</Label>
               <Input
@@ -152,6 +185,11 @@ const COLUMNAS: ColumnaDataTable<TipoEquipo>[] = [
     titulo: "Nombre",
     celda: (t) => t.Nombre,
     className: "font-medium",
+  },
+  {
+    id: "linea",
+    titulo: "Línea",
+    celda: (t) => (t.NombreLinea ? <Badge variant="secondary">{t.NombreLinea}</Badge> : "—"),
   },
   {
     id: "descripcion",

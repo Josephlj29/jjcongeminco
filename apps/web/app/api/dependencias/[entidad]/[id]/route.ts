@@ -23,6 +23,7 @@ const ENTIDADES_VALIDAS = [
   "ubicacion",
   "equipo",
   "vehiculo",
+  "lineaEquipo",
   "tipoEquipo",
   "categoria",
   "cargo",

@@ -1,8 +1,13 @@
 /**
  * app/api/tipos-equipo/route.ts
  *
- * GET  /api/tipos-equipo — lista de tipos de equipo activos (inv.T_TipoEquipo)
+ * GET  /api/tipos-equipo — lista de tipos de equipo activos (inv.T_TipoEquipo),
+ *                          con la línea a la que pertenecen ya resuelta.
  * POST /api/tipos-equipo — crea tipo de equipo (rol: productoEscritura = admin, almacenero)
+ *
+ * La línea viene resuelta (CodigoLinea/NombreLinea) para que las pantallas
+ * puedan agrupar sin pedir aparte el maestro de líneas. Son dos filas, no vale
+ * la pena un embed.
  */
 export const runtime = "nodejs";
 
@@ -10,6 +15,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearTipoEquipoSchema, puede } from "@congeminco/shared";
+
+interface FilaTipo {
+  Id: string;
+  Codigo: string;
+  Nombre: string;
+  Descripcion: string | null;
+  IdLinea: string;
+}
+
+interface FilaLinea {
+  Id: string;
+  Codigo: string;
+  Nombre: string;
+}
 
 export async function GET() {
   const { error } = await autenticarRequest();
@@ -19,7 +38,7 @@ export async function GET() {
   const { data, error: dbError } = await supabase
     .schema("inv")
     .from("T_TipoEquipo")
-    .select("Id, Codigo, Nombre, Descripcion")
+    .select("Id, Codigo, Nombre, Descripcion, IdLinea")
     .eq("Estado", true)
     .order("Nombre");
 
@@ -27,7 +46,27 @@ export async function GET() {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  const { data: lineas, error: errorLineas } = await supabase
+    .schema("inv")
+    .from("T_LineaEquipo")
+    .select("Id, Codigo, Nombre")
+    .eq("Estado", true);
+
+  if (errorLineas) {
+    return NextResponse.json({ error: errorLineas.message }, { status: 500 });
+  }
+
+  const porId = new Map(((lineas as FilaLinea[]) ?? []).map((l) => [l.Id, l]));
+  const resultado = ((data as FilaTipo[]) ?? []).map((t) => {
+    const linea = porId.get(t.IdLinea);
+    return {
+      ...t,
+      CodigoLinea: linea?.Codigo ?? null,
+      NombreLinea: linea?.Nombre ?? null,
+    };
+  });
+
+  return NextResponse.json(resultado);
 }
 
 export async function POST(request: NextRequest) {
@@ -52,6 +91,9 @@ export async function POST(request: NextRequest) {
       Codigo: parsed.data.Codigo,
       Nombre: parsed.data.Nombre,
       Descripcion: parsed.data.Descripcion ?? null,
+      /* Obligatoria: T_TipoEquipo.IdLinea es NOT NULL desde la 0079. Sin esto
+         el insert se rechazaba con not-null y no se podía crear ningún tipo. */
+      IdLinea: parsed.data.IdLinea,
     })
     .select()
     .single();
