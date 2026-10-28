@@ -190,6 +190,13 @@ del mismo día".
 
 ### 7. Almacén de consumo de OT restringido por rol (migración 0078)
 
+> ⚠️ **La migración 0078 NO está aplicada en el remoto** (verificado el
+> 2026-10-28: no existen `seg.T_RolUbicacionConsumo` ni
+> `seg.FnUbicacionesConsumoUsuario`, y no figura en `schema_migrations`).
+> `apps/web/lib/supabase/server.ts` llama a esa RPC y cae a `?? null`, o sea
+> "sin restricción": **hoy el almacenero puede elegir cualquier almacén**. Este
+> escenario no se puede correr hasta aplicarla.
+
 Verificado en el remoto el 2026-10-24 (rojo antes de aplicar; verde corriendo la
 migración y la prueba en una sola transacción, sin persistir):
 
@@ -206,6 +213,62 @@ psql "$DATABASE_URL" -f packages/db/tests/0078_almacen_consumo_por_rol.sql
 4. una OT sin repuestos no exige almacén.
 5. admin registra desde cualquier almacén.
 6. `seg.FnUbicacionesConsumoUsuario()`: almacenero recibe solo Tambomayo; admin `NULL`.
+
+### 8. Flota de tres niveles y camiones opción A (migración 0079)
+
+```bash
+psql "$DATABASE_URL" -f packages/db/tests/0079_flota_lineas_tipos_equipos.sql
+```
+
+Solo LEE, así que no necesita rollback. Verificado en el remoto el 2026-10-28
+(rojo antes de 0079 con `FALLA 1a`, verde después). 24 aserciones sobre:
+
+1. `inv.T_LineaEquipo` existe con `TRACKLESS` y `LIVIANA`, y `T_TipoEquipo.IdLinea`
+   es `NOT NULL`: la línea dejó de vivir dentro del código del tipo.
+2. Ningún tipo activo conserva el prefijo `LIN`; cada línea agrupa los tipos que
+   le tocan; `CAMIONETA` y `MINIBUS` ya no se llaman por el USO de las unidades.
+3. **Opción A de camiones**: `CAMION-GRUA` tiene solo `CAMION-01/VDS927` y
+   `CAMION-CISTERNA` solo `CAMION-02/VCZ891`; cada producto del chasis quedó
+   compatible con AMBOS; **ninguna compatibilidad activa apunta a un tipo dado de
+   baja** y **ningún producto activo queda invisible para todas las placas** —
+   ese era el bug de fondo: el filtro va placa → equipo → tipo, y los tipos sin
+   equipos escondían sus productos.
+4. Los códigos de equipo son los 10 esperados, sin espacios sobrantes.
+5. `T_Equipo.IdTipoEquipo` y `T_Vehiculo.IdEquipo` son `NOT NULL`, los dos
+   telehandler tienen placa (su código interno) y ningún equipo queda sin placa.
+6. `FnContarDependencias('lineaEquipo', …)` cuenta los tipos colgados y bloquea
+   la baja de una línea en uso.
+
+### 9. Catálogo de dos niveles (migración 0080)
+
+```bash
+psql "$DATABASE_URL" -f packages/db/tests/0080_familias_categorias.sql
+```
+
+Dos bloques. El primero solo lee. El segundo prueba el trigger: si el trigger
+funciona los INSERT se rechazan y no escriben nada, y el `RAISE` del final
+deshace lo único que sí se inserta (el caso válido). Verificado en el remoto el
+2026-10-28 (rojo antes con `FALLA 1a`: solo había 6 familias).
+
+Bloque 1 — estructura: 15 familias activas (las 14 del plan **más FAM-REP**, que
+sigue en pie a propósito), todas en la raíz; las 34 categorías colgadas de la
+familia exacta que les toca; ninguna categoría suelta ni con código fuera del
+estándar; ningún tercer nivel; las 8 fusionadas y las 2 vacías dadas de baja sin
+dejar productos activos detrás; los destinos de fusión con la cantidad exacta
+(`CAT-FOCO=34`, `CAT-FRENO=11`, …) y **436 productos activos**, los mismos de
+antes: la fusión mueve, no borra.
+
+> `T_Producto` tiene 443 **filas** y 436 **activas**. No confundirlas: el Excel de
+> la reestructuración se generó con los 436 activos.
+
+Bloque 2 — el trigger `TR_T_Categoria_Jerarquia`: rechaza colgar una categoría de
+otra categoría (tercer nivel), **permite** colgarla de una familia, rechaza que
+sea su propio padre y rechaza que una familia con hijas pase a ser categoría.
+
+> Pendiente fuera de alcance: los 94 productos colgados directo de `FAM-CON` y los
+> 67 de `FAM-REP` se reparten uno por uno con `Revision-catalogo-productos.xlsx`.
+> El test lo fija como aserción (`FALLA 7a`) para que nadie los "limpie" sin esa
+> decisión.
 
 ### 5. Segregación de funciones
 
