@@ -1058,48 +1058,22 @@ async function generarExcelCatalogo(s: Snapshot, ruta: string) {
     porTipoAlerta.set(k, (porTipoAlerta.get(k) ?? 0) + 1);
   }
 
-  hojaLeeme(wb, "Revisión del catálogo de productos: familia y nivel de incertidumbre", [
-    `RESUMEN. ${s.productos.length} productos activos. Incertidumbre BAJA: ${conteo.Baja} (solo confirmar). MEDIA: ${conteo.Media} (mirar un segundo y aceptar o corregir). ALTA: ${conteo.Alta} (decidir a mano). Cambian de familia: ${cambian}. Con alguna alerta de calidad: ${conAlertas}.`,
-    "",
-    "QUÉ ES ESTO. Un renglón por producto con la FAMILIA PROPUESTA, la CATEGORÍA PROPUESTA y un NIVEL DE INCERTIDUMBRE. La propuesta sale de palabras clave del nombre del producto; la columna 'Motivo' dice exactamente por qué, para que no haya que adivinar.",
-    "",
-    "DOS COSAS DISTINTAS. La INCERTIDUMBRE mide qué tan seguro está el sistema de la familia propuesta. 'CAMBIA DE FAMILIA' dice si el producto se mueve de donde está hoy. 'Turbo EX8' que hoy vive colgado en 'Consumibles' es incertidumbre BAJA (es motor, sin discusión) y cambia de familia = Sí. Filtrá la columna 'Cambia' para ver solo los movimientos.",
-    "",
-    "CÓMO COMPLETARLO. Solo las columnas grises:",
-    "  • Incertidumbre BAJA (verde): la propuesta es segura. Marcá 'Confirmado OK' = Sí. Si igual no estás de acuerdo, elegí la familia correcta y eso manda.",
-    "  • Incertidumbre MEDIA (amarillo): hay dos lecturas posibles, o el nombre no dice nada y se mantiene donde está. Mirá el Motivo y elegí la 'Familia correcta' si difiere, o marcá OK.",
-    "  • Incertidumbre ALTA (rojo): no hay de dónde inferir y hoy está en un cajón de sastre. Elegí la 'Familia correcta' del desplegable; es obligatorio.",
-    "  • 'Categoría correcta' es opcional: si no la ponés, se usa la propuesta o la categoría genérica de la familia.",
-    "  • 'Tipos correctos': los códigos NUEVOS de tipo (hoja 'Tipos de equipo' del otro Excel), separados por punto y coma. Si el producto sirve para todo, poné GENERAL.",
-    "",
-    "ALERTAS DE CALIDAD. La columna 'Alertas' marca lo que hay que arreglar además de la familia: SKU irregulares ('Fil 095', 'Hdhejehw', '1'), unidad ZZ (sin definir), productos compatibles solo con tipos que no tienen equipos (hoy no aparecen para ninguna placa), posibles duplicados por mismo código de proveedor o mismo nombre, y nombres con espacios sobrantes. Usá 'Observación' para decir qué hacer con cada uno (por ejemplo, 'fusionar con REP-022').",
-    "",
-    "REGLA DE ORO. La familia dice QUÉ ES la pieza (freno, filtro, eléctrico), no PARA QUÉ MÁQUINA es. Para qué máquina es se marca en 'Tipos de equipo' (compatibilidad), que también está en esta hoja para que lo revises de paso.",
-    "",
-    "DESPUÉS. Con el archivo devuelto se genera la planilla de importación (modo actualizar) y se recarga el catálogo. Los SKU regulares no cambian: 'CON-013 Turbo' puede terminar en Motor y sigue siendo el mismo producto. Los SKU irregulares se regeneran con la categoría final.",
-  ], s);
+  /* Las pestañas salen en el ORDEN EN QUE SE CREAN. ExcelJS no tiene API para
+     reordenarlas: su `orderNo` es interno y ni siquiera está en sus tipos, así que
+     escribirlo era apoyarse en algo que puede cambiar sin aviso y romper el orden
+     en silencio. Productos se arma PRIMERO porque es la hoja que se trabaja. */
 
-  /* Referencia para los desplegables */
-  const wsF = wb.addWorksheet("Familias");
-  wsF.columns = [
-    { header: "Código familia", key: "codigo", width: 14 },
-    { header: "Nombre", key: "nombre", width: 40 },
-    { header: "Definición", key: "def", width: 80 },
-  ];
-  for (const f of FAMILIAS) wsF.addRow({ codigo: f.codigo, nombre: f.nombre, def: f.definicion });
-  wsF.getRow(1).font = { bold: true };
-  wsF.getRow(1).fill = relleno(AZUL);
-
-  const wsK = wb.addWorksheet("Categorías");
-  wsK.columns = [
-    { header: "Código categoría", key: "codigo", width: 20 },
-    { header: "Nombre", key: "nombre", width: 70 },
-    { header: "Familia", key: "familia", width: 14 },
-    { header: "¿Ya existe?", key: "existe", width: 10 },
-  ];
-  for (const f of FAMILIAS) for (const c of f.categorias) wsK.addRow({ codigo: c.codigo, nombre: c.nombre, familia: f.codigo, existe: c.existente ? "Sí" : "Nueva" });
-  wsK.getRow(1).font = { bold: true };
-  wsK.getRow(1).fill = relleno(AZUL);
+  /* Categorías de referencia: se calculan acá, no se leen de la hoja "Categorías"
+     (que todavía no existe), para que el rango del desplegable y las filas de esa
+     hoja salgan de la misma fuente y no puedan desincronizarse. */
+  const filasCategorias = FAMILIAS.flatMap((f) =>
+    f.categorias.map((c) => ({
+      codigo: c.codigo,
+      nombre: c.nombre,
+      familia: f.codigo,
+      existe: c.existente ? "Sí" : "Nueva",
+    })),
+  );
 
   /* Productos */
   const columnas: Col[] = [
@@ -1146,8 +1120,10 @@ async function generarExcelCatalogo(s: Snapshot, ruta: string) {
   const ws = hoja(wb, "Productos", columnas, filas);
   const ultima = ws.rowCount;
   const col = (key: string) => columnas.findIndex((c) => c.key === key) + 1;
+  /* Los rangos apuntan a hojas que se crean más abajo: en Excel la referencia se
+     resuelve al abrir el archivo, no al escribirlo. +1 por la fila de cabecera. */
   desplegable(ws, col("famOk"), 2, ultima, "Familias!$A$2:$A$" + (FAMILIAS.length + 1));
-  desplegable(ws, col("catOk"), 2, ultima, "'Categorías'!$A$2:$A$" + wsK.rowCount);
+  desplegable(ws, col("catOk"), 2, ultima, "'Categorías'!$A$2:$A$" + (filasCategorias.length + 1));
   desplegable(ws, col("ok"), 2, ultima, SI_NO);
   for (let r = 2; r <= ultima; r += 1) {
     const celdaInc = ws.getCell(`${letra(col("inc"))}${r}`);
@@ -1157,8 +1133,49 @@ async function generarExcelCatalogo(s: Snapshot, ruta: string) {
     const celdaAlertas = ws.getCell(`${letra(col("alertas"))}${r}`);
     if (celdaAlertas.value) celdaAlertas.fill = relleno(AMARILLO);
   }
-  /* La hoja Productos va primero: es la que se trabaja. */
-  ws.orderNo = 0;
+
+  hojaLeeme(wb, "Revisión del catálogo de productos: familia y nivel de incertidumbre", [
+    `RESUMEN. ${s.productos.length} productos activos. Incertidumbre BAJA: ${conteo.Baja} (solo confirmar). MEDIA: ${conteo.Media} (mirar un segundo y aceptar o corregir). ALTA: ${conteo.Alta} (decidir a mano). Cambian de familia: ${cambian}. Con alguna alerta de calidad: ${conAlertas}.`,
+    "",
+    "QUÉ ES ESTO. Un renglón por producto con la FAMILIA PROPUESTA, la CATEGORÍA PROPUESTA y un NIVEL DE INCERTIDUMBRE. La propuesta sale de palabras clave del nombre del producto; la columna 'Motivo' dice exactamente por qué, para que no haya que adivinar.",
+    "",
+    "DOS COSAS DISTINTAS. La INCERTIDUMBRE mide qué tan seguro está el sistema de la familia propuesta. 'CAMBIA DE FAMILIA' dice si el producto se mueve de donde está hoy. 'Turbo EX8' que hoy vive colgado en 'Consumibles' es incertidumbre BAJA (es motor, sin discusión) y cambia de familia = Sí. Filtrá la columna 'Cambia' para ver solo los movimientos.",
+    "",
+    "CÓMO COMPLETARLO. Solo las columnas grises:",
+    "  • Incertidumbre BAJA (verde): la propuesta es segura. Marcá 'Confirmado OK' = Sí. Si igual no estás de acuerdo, elegí la familia correcta y eso manda.",
+    "  • Incertidumbre MEDIA (amarillo): hay dos lecturas posibles, o el nombre no dice nada y se mantiene donde está. Mirá el Motivo y elegí la 'Familia correcta' si difiere, o marcá OK.",
+    "  • Incertidumbre ALTA (rojo): no hay de dónde inferir y hoy está en un cajón de sastre. Elegí la 'Familia correcta' del desplegable; es obligatorio.",
+    "  • 'Categoría correcta' es opcional: si no la ponés, se usa la propuesta o la categoría genérica de la familia.",
+    "  • 'Tipos correctos': los códigos NUEVOS de tipo (hoja 'Tipos de equipo' del otro Excel), separados por punto y coma. Si el producto sirve para todo, poné GENERAL.",
+    "",
+    "ALERTAS DE CALIDAD. La columna 'Alertas' marca lo que hay que arreglar además de la familia: SKU irregulares ('Fil 095', 'Hdhejehw', '1'), unidad ZZ (sin definir), productos compatibles solo con tipos que no tienen equipos (hoy no aparecen para ninguna placa), posibles duplicados por mismo código de proveedor o mismo nombre, y nombres con espacios sobrantes. Usá 'Observación' para decir qué hacer con cada uno (por ejemplo, 'fusionar con REP-022').",
+    "",
+    "REGLA DE ORO. La familia dice QUÉ ES la pieza (freno, filtro, eléctrico), no PARA QUÉ MÁQUINA es. Para qué máquina es se marca en 'Tipos de equipo' (compatibilidad), que también está en esta hoja para que lo revises de paso.",
+    "",
+    "DESPUÉS. Con el archivo devuelto se genera la planilla de importación (modo actualizar) y se recarga el catálogo. Los SKU regulares no cambian: 'CON-013 Turbo' puede terminar en Motor y sigue siendo el mismo producto. Los SKU irregulares se regeneran con la categoría final.",
+  ], s);
+
+  /* Referencia para los desplegables */
+  const wsF = wb.addWorksheet("Familias");
+  wsF.columns = [
+    { header: "Código familia", key: "codigo", width: 14 },
+    { header: "Nombre", key: "nombre", width: 40 },
+    { header: "Definición", key: "def", width: 80 },
+  ];
+  for (const f of FAMILIAS) wsF.addRow({ codigo: f.codigo, nombre: f.nombre, def: f.definicion });
+  wsF.getRow(1).font = { bold: true };
+  wsF.getRow(1).fill = relleno(AZUL);
+
+  const wsK = wb.addWorksheet("Categorías");
+  wsK.columns = [
+    { header: "Código categoría", key: "codigo", width: 20 },
+    { header: "Nombre", key: "nombre", width: 70 },
+    { header: "Familia", key: "familia", width: 14 },
+    { header: "¿Ya existe?", key: "existe", width: 10 },
+  ];
+  for (const fila of filasCategorias) wsK.addRow(fila);
+  wsK.getRow(1).font = { bold: true };
+  wsK.getRow(1).fill = relleno(AZUL);
 
   /* Resumen */
   const porFamilia = new Map<string, number>();
