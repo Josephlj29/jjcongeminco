@@ -6,6 +6,7 @@
   "description": "Migraciones SQL, seed y ETL del inventario JJ Congeminco",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
     "migrate": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/migrate.ts",
     "seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts",
     "etl": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/etl.ts",
@@ -17,6 +18,8 @@
     "postgres": "^3.4.5"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2"
+    "@types/node": "^22.10.2",
+    "eslint": "^9.39.5",
+    "typescript-eslint": "^8.68.0"
   }
 }

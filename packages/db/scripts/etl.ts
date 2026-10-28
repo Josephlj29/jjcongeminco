@@ -32,10 +32,8 @@ function familyOf(file: string): string {
 
 function cellText(v: unknown): string {
   if (v == null) return "";
-  if (typeof v === "object" && v !== null && "text" in (v as any))
-    return String((v as any).text).trim();
-  if (typeof v === "object" && v !== null && "result" in (v as any))
-    return String((v as any).result).trim();
+  if (typeof v === "object" && "text" in v) return String(v.text).trim();
+  if (typeof v === "object" && "result" in v) return String(v.result).trim();
   return String(v).trim();
 }
 
