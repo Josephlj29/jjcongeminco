@@ -26,6 +26,7 @@ import {
   Percent,
 } from "lucide-react";
 import { useCategorias, useProveedores } from "@/hooks/useCatalogo";
+import { opcionesParaFiltrar } from "@/lib/categorias";
 import { useEquipos, useVehiculos } from "@/hooks/useEquipos";
 import { useProductos } from "@/hooks/useProductos";
 import { ExportarMenu, type ExportDataset } from "@/components/ExportarMenu";
@@ -442,9 +443,15 @@ export default function ReportesPage() {
                       <SelectValue placeholder="Todas..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {categorias?.map((c) => (
-                        <SelectItem key={c.Id} value={c.Id}>
-                          {c.Nombre}
+                      {/* Filtrar por familia es válido, pero el nombre solo no
+                          alcanza: la familia FAM-FIL y la categoría CAT-FILTRO
+                          se llaman las dos "Filtros". El código las separa. */}
+                      {opcionesParaFiltrar(categorias).map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {o.codigo}
+                          </span>{" "}
+                          {o.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

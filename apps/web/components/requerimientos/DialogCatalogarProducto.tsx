@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import type { RequerimientoDetalleLinea } from "@congeminco/shared";
 import { useCatalogarLinea } from "@/hooks/useRequerimientos";
 import { useCategorias, useUnidades } from "@/hooks/useCatalogo";
+import { opcionesParaAsignar } from "@/lib/categorias";
 import { useTiposEquipo } from "@/hooks/useTiposEquipo";
 import { ImagenAmpliable } from "@/components/ImagenAmpliable";
 import { Combobox } from "@/components/Combobox";
@@ -144,12 +145,14 @@ export function DialogCatalogarProducto({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>Categoría *</Label>
+                  {/* Solo categorías reales: una familia no es destino de un
+                      producto, es el nivel de arriba. */}
                   <Combobox
-                    opciones={(categorias ?? []).map((c) => ({ value: c.Id, label: c.Nombre }))}
+                    opciones={opcionesParaAsignar(categorias)}
                     value={idCategoria}
                     onChange={setIdCategoria}
                     placeholder="Seleccionar..."
-                    buscarPlaceholder="Buscar categoría..."
+                    buscarPlaceholder="Buscar categoría o familia..."
                   />
                 </div>
                 <div className="space-y-1">

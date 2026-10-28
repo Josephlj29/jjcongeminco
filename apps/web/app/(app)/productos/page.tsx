@@ -52,6 +52,12 @@ import {
   useEliminarImagenProducto,
 } from "@/hooks/useImagenes";
 import { useCategorias, useUnidades } from "@/hooks/useCatalogo";
+import {
+  esSinCategoriaReal,
+  idsFamilias,
+  opcionesParaAsignar,
+  opcionesParaFiltrar,
+} from "@/lib/categorias";
 import { useKardex } from "@/hooks/useKardex";
 import {
   useTiposEquipo,
@@ -464,15 +470,15 @@ function DialogProducto({
               <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
                 <div className="space-y-1">
                   <Label>Categoría</Label>
+                  {/* Solo categorías reales: un producto va en una categoría, no
+                      en una familia. Ofrecer la familia es lo que dejó 189
+                      productos colgados del primer nivel. */}
                   <Combobox
-                    opciones={(categorias ?? []).map((c) => ({
-                      value: c.Id,
-                      label: c.Nombre,
-                    }))}
+                    opciones={opcionesParaAsignar(categorias)}
                     value={idCategoria || null}
                     onChange={(v) => setValue("IdCategoria", v ?? "", { shouldValidate: true })}
                     permitirLimpiar={false}
-                    buscarPlaceholder="Buscar categoría..."
+                    buscarPlaceholder="Buscar categoría o familia..."
                     vacioTexto="No se encontraron categorías."
                   />
                   {errors.IdCategoria && (
@@ -954,16 +960,15 @@ function DialogAsociarCategoria({
         <DialogBody className="space-y-4">
           <div className="space-y-1">
             <Label>Categoría</Label>
+            {/* Acá la familia SÍ es una elección válida ("todos los
+                consumibles"), pero tiene que verse como familia. */}
             <Combobox
-              opciones={(categorias ?? []).map((c) => ({
-                value: c.Id,
-                label: c.Nombre,
-              }))}
+              opciones={opcionesParaFiltrar(categorias)}
               value={idCategoriaSeleccionada || null}
               onChange={(v) => setIdCategoriaSeleccionada(v ?? "")}
               permitirLimpiar={false}
               placeholder="Seleccionar categoría..."
-              buscarPlaceholder="Buscar categoría..."
+              buscarPlaceholder="Buscar categoría o familia..."
               vacioTexto="No se encontraron categorías."
             />
           </div>
@@ -1008,6 +1013,11 @@ function DialogAsociarCategoria({
   );
 }
 
+/* Valor centinela del filtro de categoría: los productos que cuelgan de una
+   FAMILIA en vez de una categoría real. No es el nombre de ninguna categoría,
+   así que no puede chocar con una. */
+const FILTRO_SIN_CATEGORIA = "__sin_categoria_real__";
+
 /* ─── Página principal ─── */
 export default function ProductosPage() {
   const [busqueda, setBusqueda] = useState("");
@@ -1022,6 +1032,12 @@ export default function ProductosPage() {
   const { data: productos, isLoading: cargando, isError: error, refetch } = useProductos();
   const puedeEscribir = usePermiso("productoEscritura");
   const { mutateAsync: eliminarProducto } = useEliminarProducto();
+
+  /* El catálogo con la jerarquía, para distinguir familia de categoría. Sin
+     esto no hay forma de ver cuáles productos quedaron colgados del primer
+     nivel, que son los que hay que repartir a mano. */
+  const { data: catalogoCategorias } = useCategorias();
+  const familias = useMemo(() => idsFamilias(catalogoCategorias), [catalogoCategorias]);
 
   // Una sola query para TODA la puente producto<->tipo
   const { data: todasAsociaciones } = useAsociacionesTiposEquipo();
@@ -1043,19 +1059,32 @@ export default function ProductosPage() {
     return [...new Set(productos.map((p) => p.NombreCategoria))].sort();
   }, [productos]);
 
+  /* Los que quedaron colgados de una familia: la cola del reparto manual.
+     Se cuenta siempre, para poder mostrar el número en el filtro. */
+  const cantidadSinCategoriaReal = useMemo(() => {
+    if (!productos) return 0;
+    return productos.filter((p) =>
+      esSinCategoriaReal((p as ProductoConsolidado).IdCategoria, familias),
+    ).length;
+  }, [productos, familias]);
+
   // Filtrado en memoria: búsqueda + categoría. La búsqueda cubre nombre, SKU y
   // código del proveedor, el mismo criterio del Combobox y del buscador de saldos.
   const productosFiltrados = useMemo(() => {
     if (!productos) return [];
     return productos.filter((p) => {
       const coincideCategoria =
-        categoriaFiltro === "__todas__" || p.NombreCategoria === categoriaFiltro;
+        categoriaFiltro === "__todas__"
+          ? true
+          : categoriaFiltro === FILTRO_SIN_CATEGORIA
+            ? esSinCategoriaReal((p as ProductoConsolidado).IdCategoria, familias)
+            : p.NombreCategoria === categoriaFiltro;
       return (
         coincideCategoria &&
         coincideBusqueda([p.NombreProducto, p.Sku, p.CodigoProductoProveedor], busqueda)
       );
     });
-  }, [productos, busqueda, categoriaFiltro]);
+  }, [productos, busqueda, categoriaFiltro, familias]);
 
   // El tipo local del hook useProductos no incluye IdCategoria; lo casteamos
   // desde ProductoStockConsolidado que sí lo tiene (la API lo devuelve).
@@ -1069,7 +1098,9 @@ export default function ProductosPage() {
     const sufijo =
       categoriaFiltro === "__todas__"
         ? ""
-        : `-${categoriaFiltro.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}`;
+        : categoriaFiltro === FILTRO_SIN_CATEGORIA
+          ? "-sin-categoria-real"
+          : `-${categoriaFiltro.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}`;
     return {
       nombreArchivo: `catalogo-productos${sufijo}-${hoyLima()}`,
       nombreHoja: "Catálogo",
@@ -1237,6 +1268,19 @@ export default function ProductosPage() {
           className="w-full sm:w-52"
           opciones={[
             { value: "__todas__", label: "Todas las categorías" },
+            /* La cola del reparto manual. Sin este filtro no había forma de
+               encontrar los productos que quedaron colgados de una familia:
+               aparecían desparramados entre "Repuestos", "Consumibles" y el
+               resto, y nadie sabía cuáles faltaban. */
+            ...(cantidadSinCategoriaReal > 0
+              ? [
+                  {
+                    value: FILTRO_SIN_CATEGORIA,
+                    label: `Sin categoría real (${cantidadSinCategoriaReal})`,
+                    descripcion: "Cuelgan de una familia: hay que asignarles una categoría",
+                  },
+                ]
+              : []),
             ...categorias.map((cat) => ({ value: cat, label: cat })),
           ]}
           value={categoriaFiltro}
