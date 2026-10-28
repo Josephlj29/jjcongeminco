@@ -1,5 +1,5 @@
 /*
-	Prueba de integración SQL — migración 0078
+	Prueba de integración SQL — migración 0081
 	Objeto: seg.T_RolUbicacionConsumo + seg.FnUbicacionesConsumoUsuario
 	        + inv.FnGuardarRepuestosOrdenMantenimiento (vía alta y edición de OT)
 
@@ -18,9 +18,9 @@
 	Cómo correrla (psql o el SQL editor de Supabase); termina en ROLLBACK, no
 	persiste nada:
 
-		\i packages/db/tests/0078_almacen_consumo_por_rol.sql
+		\i packages/db/tests/0081_almacen_consumo_por_rol.sql
 
-	Resultado esperado: una única excepción final "OK 0078: ... (rollback de la
+	Resultado esperado: una única excepción final "OK 0081: ... (rollback de la
 	prueba)". Cualquier otra cosa enumera la aserción que falló.
 */
 DO $$
@@ -51,9 +51,9 @@ BEGIN
 		json_build_object('sub', "vAlmacenero", 'role', 'authenticated')::text, true);
 	BEGIN
 		"vIdOrden" = "inv"."FnRegistrarOrdenMantenimiento"(JSONB_BUILD_OBJECT(
-			'NumeroOrden', 'TEST-0078-TAM', 'TipoMantenimiento', 'correctivo',
+			'NumeroOrden', 'TEST-0081-TAM', 'TipoMantenimiento', 'correctivo',
 			'FechaOrden', CURRENT_DATE, 'Turno', 'dia', 'IdVehiculo', "vIdVehiculo",
-			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0078')), 'IdsPersonal', "vPersonal",
+			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0081')), 'IdsPersonal', "vPersonal",
 			'Consumo', JSONB_BUILD_OBJECT('IdUbicacionOrigen', "vTambomayo",
 				'Lineas', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('IdProducto', "vIdProducto", 'Cantidad', 1, 'Modo', 'stock')))
 		));
@@ -65,9 +65,9 @@ BEGIN
 	/* ── 2. almacenero NO registra desde otro almacén ──────────────────── */
 	BEGIN
 		PERFORM "inv"."FnRegistrarOrdenMantenimiento"(JSONB_BUILD_OBJECT(
-			'NumeroOrden', 'TEST-0078-OTRO', 'TipoMantenimiento', 'correctivo',
+			'NumeroOrden', 'TEST-0081-OTRO', 'TipoMantenimiento', 'correctivo',
 			'FechaOrden', CURRENT_DATE, 'Turno', 'dia', 'IdVehiculo', "vIdVehiculo",
-			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0078')), 'IdsPersonal', "vPersonal",
+			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0081')), 'IdsPersonal', "vPersonal",
 			'Consumo', JSONB_BUILD_OBJECT('IdUbicacionOrigen', "vOtro",
 				'Lineas', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('IdProducto', "vIdProducto", 'Cantidad', 1, 'Modo', 'stock')))
 		));
@@ -83,9 +83,9 @@ BEGIN
 	IF "vIdOrden" IS NOT NULL THEN
 		BEGIN
 			PERFORM "inv"."FnActualizarOrdenMantenimiento"("vIdOrden", JSONB_BUILD_OBJECT(
-				'NumeroOrden', 'TEST-0078-TAM', 'TipoMantenimiento', 'correctivo',
+				'NumeroOrden', 'TEST-0081-TAM', 'TipoMantenimiento', 'correctivo',
 				'FechaOrden', CURRENT_DATE, 'Turno', 'dia', 'IdVehiculo', "vIdVehiculo",
-				'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0078')), 'IdsPersonal', "vPersonal",
+				'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0081')), 'IdsPersonal', "vPersonal",
 				'Consumo', JSONB_BUILD_OBJECT('IdUbicacionOrigen', "vOtro",
 					'Lineas', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('IdProducto', "vIdProducto", 'Cantidad', 1, 'Modo', 'stock')))
 			));
@@ -101,9 +101,9 @@ BEGIN
 	/* ── 4. sin repuestos no se exige almacén ──────────────────────────── */
 	BEGIN
 		PERFORM "inv"."FnRegistrarOrdenMantenimiento"(JSONB_BUILD_OBJECT(
-			'NumeroOrden', 'TEST-0078-SINREP', 'TipoMantenimiento', 'correctivo',
+			'NumeroOrden', 'TEST-0081-SINREP', 'TipoMantenimiento', 'correctivo',
 			'FechaOrden', CURRENT_DATE, 'Turno', 'dia', 'IdVehiculo', "vIdVehiculo",
-			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0078')), 'IdsPersonal', "vPersonal"
+			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0081')), 'IdsPersonal', "vPersonal"
 		));
 	EXCEPTION WHEN OTHERS THEN
 		GET STACKED DIAGNOSTICS "vMensaje" = MESSAGE_TEXT;
@@ -126,9 +126,9 @@ BEGIN
 		json_build_object('sub', "vAdmin", 'role', 'authenticated')::text, true);
 	BEGIN
 		PERFORM "inv"."FnRegistrarOrdenMantenimiento"(JSONB_BUILD_OBJECT(
-			'NumeroOrden', 'TEST-0078-ADMIN', 'TipoMantenimiento', 'correctivo',
+			'NumeroOrden', 'TEST-0081-ADMIN', 'TipoMantenimiento', 'correctivo',
 			'FechaOrden', CURRENT_DATE, 'Turno', 'dia', 'IdVehiculo', "vIdVehiculo",
-			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0078')), 'IdsPersonal', "vPersonal",
+			'Trabajos', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('Secuencia', 1, 'Descripcion', 'prueba 0081')), 'IdsPersonal', "vPersonal",
 			'Consumo', JSONB_BUILD_OBJECT('IdUbicacionOrigen', "vOtro",
 				'Lineas', JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('IdProducto', "vIdProducto", 'Cantidad', 1, 'Modo', 'stock')))
 		));
@@ -148,8 +148,8 @@ BEGIN
 	END;
 
 	IF ARRAY_LENGTH("vFallas", 1) > 0 THEN
-		RAISE EXCEPTION E'FALLA 0078:\n  - %', ARRAY_TO_STRING("vFallas", E'\n  - ');
+		RAISE EXCEPTION E'FALLA 0081:\n  - %', ARRAY_TO_STRING("vFallas", E'\n  - ');
 	END IF;
 
-	RAISE EXCEPTION 'OK 0078: las 6 invariantes se cumplen (rollback de la prueba)';
+	RAISE EXCEPTION 'OK 0081: las 6 invariantes se cumplen (rollback de la prueba)';
 END $$;

@@ -4,7 +4,11 @@
 	        inv.FnGuardarRepuestosOrdenMantenimiento (REPLACE)
 	Tipo de Cambio: CREATE + REPLACE - almacen de consumo de OT restringido por rol
 	Autor: Equipo Desarrollo
-	Fecha: 2026-10-24
+	Fecha: 2026-10-24 (escrita) / 2026-10-28 (aplicada)
+	Numeracion: nacio como 0078 y se renumero a 0081. Nunca llego a aplicarse, asi
+	             que el 0078 quedo compartido con 0078_mensajes_correccion_sin_voseo
+	             y en el remoto esta entra DESPUES de 0079 y 0080. El numero dice
+	             cuando entra la migracion a la cadena, no cuando se escribio.
 	Descripcion: El rol almacenero solo puede descontar repuestos de una OT desde el
 	             almacen de Tambomayo. Hasta 0077 el editor de repuestos ofrecia todos
 	             los almacenes activos a cualquier rol.
@@ -24,8 +28,14 @@
 	                 impone la base: la API se puede llamar sin pasar por el front.
 
 	             El aprobador no pasa por aca (aprobar lee IdUbicacionConsumo ya
-	             guardado), asi que admin/gerencia/supervision no cambian. Al aplicar,
-	             las 60 OTs vivas ya usaban Tambomayo: ninguna queda fuera de regla.
+	             guardado), asi que admin/gerencia/supervision no cambian.
+
+	             Estado al aplicar (2026-10-28): 64 OTs vivas con almacen de consumo,
+	             63 de Tambomayo y 1 de Almacen Central - Arequipa
+	             (CORR-14092026-VCZ891-01, creada por el admin, cerrada y con stock ya
+	             descontado). El admin no tiene restriccion, asi que esa OT esta en
+	             regla; y al estar cerrada nadie la va a volver a guardar. La regla
+	             solo se evalua al GUARDAR el borrador: no toca lo ya registrado.
 */
 
 /* 1. Asignacion rol -> almacen de consumo ---------------------------------- */
@@ -50,14 +60,30 @@ GRANT SELECT ON "seg"."T_RolUbicacionConsumo" TO authenticated;
 
 ALTER TABLE "seg"."T_RolUbicacionConsumo" ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "LecturaAutenticado" ON "seg"."T_RolUbicacionConsumo";
-CREATE POLICY "LecturaAutenticado" ON "seg"."T_RolUbicacionConsumo"
-	FOR SELECT USING ("seg"."FnRolUsuario"() IS NOT NULL);
+/* Postgres no tiene CREATE OR REPLACE POLICY. Se crean solo si faltan, en vez de
+   borrarlas y recrearlas: asi la migracion se puede volver a correr sin dejar la
+   tabla un instante sin politica, que con RLS activa es un instante sin lectura. */
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1 FROM "pg_policies"
+		WHERE "schemaname" = 'seg' AND "tablename" = 'T_RolUbicacionConsumo'
+		  AND "policyname" = 'LecturaAutenticado'
+	) THEN
+		CREATE POLICY "LecturaAutenticado" ON "seg"."T_RolUbicacionConsumo"
+			FOR SELECT USING ("seg"."FnRolUsuario"() IS NOT NULL);
+	END IF;
 
-DROP POLICY IF EXISTS "RolUbicacionConsumoEscrituraAdmin" ON "seg"."T_RolUbicacionConsumo";
-CREATE POLICY "RolUbicacionConsumoEscrituraAdmin" ON "seg"."T_RolUbicacionConsumo"
-	FOR ALL USING ("seg"."FnRolUsuario"() = 'admin')
-	WITH CHECK ("seg"."FnRolUsuario"() = 'admin');
+	IF NOT EXISTS (
+		SELECT 1 FROM "pg_policies"
+		WHERE "schemaname" = 'seg' AND "tablename" = 'T_RolUbicacionConsumo'
+		  AND "policyname" = 'RolUbicacionConsumoEscrituraAdmin'
+	) THEN
+		CREATE POLICY "RolUbicacionConsumoEscrituraAdmin" ON "seg"."T_RolUbicacionConsumo"
+			FOR ALL USING ("seg"."FnRolUsuario"() = 'admin')
+			WITH CHECK ("seg"."FnRolUsuario"() = 'admin');
+	END IF;
+END $$;
 
 /* 2. Almacenes permitidos del usuario autenticado -------------------------- */
 CREATE OR REPLACE FUNCTION "seg"."FnUbicacionesConsumoUsuario"()
@@ -139,7 +165,7 @@ BEGIN
 		RAISE EXCEPTION 'El almacen de origen no existe o esta inactivo.';
 	END IF;
 
-	/* Almacen restringido por rol (0078). NULL = el rol no tiene restriccion. */
+	/* Almacen restringido por rol (0081). NULL = el rol no tiene restriccion. */
 	"vPermitidas" = "seg"."FnUbicacionesConsumoUsuario"();
 	IF "vPermitidas" IS NOT NULL AND NOT ("vUbic" = ANY ("vPermitidas")) THEN
 		SELECT STRING_AGG("Nombre", ', ' ORDER BY "Nombre") INTO "vNombres"
@@ -201,4 +227,4 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION "inv"."FnGuardarRepuestosOrdenMantenimiento"(UUID, JSONB, VARCHAR) IS 'Interna: reemplaza el borrador de repuestos de una OT (T_OrdenMantenimientoRepuesto + almacen/proveedor/comprobante de la cabecera) a partir de POrden.Consumo. Sin impacto en kardex. Rechaza (42501) un almacen fuera de seg.T_RolUbicacionConsumo del rol (0078). Devuelve la cantidad de lineas.';
+COMMENT ON FUNCTION "inv"."FnGuardarRepuestosOrdenMantenimiento"(UUID, JSONB, VARCHAR) IS 'Interna: reemplaza el borrador de repuestos de una OT (T_OrdenMantenimientoRepuesto + almacen/proveedor/comprobante de la cabecera) a partir de POrden.Consumo. Sin impacto en kardex. Rechaza (42501) un almacen fuera de seg.T_RolUbicacionConsumo del rol (0081). Devuelve la cantidad de lineas.';

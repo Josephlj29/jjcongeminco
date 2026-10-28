@@ -70,9 +70,22 @@ export async function obtenerUsuario() {
   // Módulos del rol: fuente de verdad en seg.T_RolModulo (RBAC configurable).
   const { data: modulosData } = await supabase.schema("seg").rpc("FnModulosUsuario");
   // Almacenes de consumo de OT del rol (seg.T_RolUbicacionConsumo). NULL = sin restricción.
-  const { data: ubicacionesConsumoData } = await supabase
+  const { data: ubicacionesConsumoData, error: ubicacionesConsumoError } = await supabase
     .schema("seg")
     .rpc("FnUbicacionesConsumoUsuario");
+  // Si la RPC falla, `data` llega null, y acá null significa "sin restricción":
+  // el filtro se abre solo, en silencio. Pasó de verdad — la 0081 estuvo cuatro
+  // días sin aplicar y el selector ofrecía todos los almacenes sin que nadie lo
+  // viera. No se lanza porque obtenerUsuario() se atrapa arriba y termina en 401
+  // "sesión expirada" o en redirect a /login: mentiría sobre la causa y echaría
+  // a todos. Quien autoriza de verdad es FnGuardarRepuestosOrdenMantenimiento
+  // (42501); esto solo decide qué almacenes ofrece el selector.
+  if (ubicacionesConsumoError) {
+    console.error(
+      "No se pudieron leer los almacenes de consumo del rol (¿falta aplicar la migración 0081?):",
+      ubicacionesConsumoError.message,
+    );
+  }
 
   return {
     id: authData.user.id,

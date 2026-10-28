@@ -188,20 +188,27 @@ del mismo día".
    fallaba era el camino, que es justo lo que se audita. Al aplicar 0076 había 33
    movimientos afectados sobre 29 productos.
 
-### 7. Almacén de consumo de OT restringido por rol (migración 0078)
+### 7. Almacén de consumo de OT restringido por rol (migración 0081)
 
-> ⚠️ **La migración 0078 NO está aplicada en el remoto** (verificado el
-> 2026-10-28: no existen `seg.T_RolUbicacionConsumo` ni
-> `seg.FnUbicacionesConsumoUsuario`, y no figura en `schema_migrations`).
-> `apps/web/lib/supabase/server.ts` llama a esa RPC y cae a `?? null`, o sea
-> "sin restricción": **hoy el almacenero puede elegir cualquier almacén**. Este
-> escenario no se puede correr hasta aplicarla.
+> Nació como `0078` y se renumeró a **0081**: nunca llegó a aplicarse, el número
+> 0078 quedó compartido con `0078_mensajes_correccion_sin_voseo` y en el remoto
+> esta entra después de 0079 y 0080. El número dice cuándo entra la migración a
+> la cadena, no cuándo se escribió.
 
-Verificado en el remoto el 2026-10-24 (rojo antes de aplicar; verde corriendo la
-migración y la prueba en una sola transacción, sin persistir):
+Aplicada al remoto el **2026-10-28** (`schema_migrations` → `20261028151152`).
+
+Mientras no estuvo aplicada, `apps/web/lib/supabase/server.ts` llamaba a una RPC
+inexistente, descartaba el error y caía a `?? null`, que ahí significa "sin
+restricción": **el almacenero descontaba de cualquier almacén**. Probado contra el
+remoto antes de aplicarla —el almacenero registró una OT descontando de "Almacén
+Central - Arequipa"— y revertido. La lección que deja: un control de permisos que
+cae a *permitido* cuando su fuente falla es peor que no tenerlo, porque aparenta
+estar. Hoy quien autoriza es la base (`42501`); el front solo filtra el selector.
+
+Rojo antes de aplicar, verde después; en una sola transacción, sin persistir:
 
 ```bash
-psql "$DATABASE_URL" -f packages/db/tests/0078_almacen_consumo_por_rol.sql
+psql "$DATABASE_URL" -f packages/db/tests/0081_almacen_consumo_por_rol.sql
 ```
 
 `seg.T_RolUbicacionConsumo` define de qué almacenes descuenta cada rol en una OT

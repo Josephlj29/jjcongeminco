@@ -3,7 +3,7 @@
  * repuestos de una OT.
  *
  * Qué almacenes puede usar cada rol vive en la base (seg.T_RolUbicacionConsumo,
- * migración 0078) y llega en /api/yo como `ubicacionesConsumo`: null si el rol no
+ * migración 0081) y llega en /api/yo como `ubicacionesConsumo`: null si el rol no
  * tiene restricción. La base rechaza igual un almacén no permitido; esto solo
  * evita ofrecer una opción que después falla al guardar.
  */
