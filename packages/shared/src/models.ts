@@ -323,6 +323,14 @@ export interface ProductoStockConsolidado {
   CodigoProductoProveedor: string | null;
   /** Última vez que el stock de este producto se movió. null = nunca tuvo saldo. */
   UltimoMovimiento: string | null; // TIMESTAMPTZ: instante; se muestra en hora Lima (fechaHora/fechaCorta)
+  /** Baja de un producto con historial (0086). En esta vista siempre es false:
+      los dados de baja solo salen en V_Producto_StockConsolidadoTodos (admin). */
+  DadoDeBaja: boolean;
+  FechaBaja: string | null;
+  UsuarioBaja: string | null;
+  MotivoBaja: string | null;
+  IdProductoUnificado: string | null;
+  SkuUnificado: string | null;
 }
 
 /* Respuesta de GET /api/saldos?pagina=N — página de saldos filtrada en el servidor. */

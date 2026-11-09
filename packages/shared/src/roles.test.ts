@@ -19,6 +19,14 @@ describe("puede", () => {
     expect(puede(ROLES.LOGISTICA, "documentoEscritura")).toBe(false);
   });
 
+  it("dar de baja un producto con historial es solo de admin", () => {
+    expect(puede(ROLES.ADMIN, "productoBaja")).toBe(true);
+    expect(puede(ROLES.ALMACENERO, "productoBaja")).toBe(false);
+    expect(puede(ROLES.SUPERVISION, "productoBaja")).toBe(false);
+    expect(puede(ROLES.GERENCIA, "productoBaja")).toBe(false);
+    expect(puede(ROLES.LOGISTICA, "productoBaja")).toBe(false);
+  });
+
   it("rol null/undefined nunca puede", () => {
     expect(puede(null, "productoEscritura")).toBe(false);
     expect(puede(undefined, "catalogoAdmin")).toBe(false);

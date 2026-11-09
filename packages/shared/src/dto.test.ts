@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  DarDeBajaProductoSchema,
   ActualizarLineaEquipoSchema,
   ActualizarOrdenMantenimientoSchema,
   ActualizarTipoEquipoSchema,
@@ -321,12 +322,12 @@ describe("CrearLineaEquipoSchema", () => {
 
   it("respeta los largos de la tabla: Codigo 20, Nombre 120, Descripcion 200", () => {
     const largo = (n: number) => "X".repeat(n);
-    expect(
-      CrearLineaEquipoSchema.safeParse({ Codigo: largo(21), Nombre: "X" }).success,
-    ).toBe(false);
-    expect(
-      CrearLineaEquipoSchema.safeParse({ Codigo: "X", Nombre: largo(121) }).success,
-    ).toBe(false);
+    expect(CrearLineaEquipoSchema.safeParse({ Codigo: largo(21), Nombre: "X" }).success).toBe(
+      false,
+    );
+    expect(CrearLineaEquipoSchema.safeParse({ Codigo: "X", Nombre: largo(121) }).success).toBe(
+      false,
+    );
     expect(
       CrearLineaEquipoSchema.safeParse({ Codigo: "X", Nombre: "X", Descripcion: largo(201) })
         .success,
@@ -373,5 +374,31 @@ describe("CrearTipoEquipoSchema con línea obligatoria", () => {
     expect(ActualizarTipoEquipoSchema.safeParse({ Nombre: "Otro" }).success).toBe(true);
     expect(ActualizarTipoEquipoSchema.safeParse({ IdLinea: UUID }).success).toBe(true);
     expect(ActualizarTipoEquipoSchema.safeParse({ IdLinea: "TRACKLESS" }).success).toBe(false);
+  });
+});
+
+describe("DarDeBajaProductoSchema", () => {
+  it("todo es opcional: se puede dar de baja sin decir en qué se unificó", () => {
+    expect(DarDeBajaProductoSchema.safeParse({}).success).toBe(true);
+  });
+
+  it("acepta el producto en el que se unificó y un motivo", () => {
+    const r = DarDeBajaProductoSchema.safeParse({ IdProductoUnificado: UUID, Motivo: "Duplicado" });
+    expect(r.success).toBe(true);
+  });
+
+  it("IdProductoUnificado null equivale a no indicarlo", () => {
+    expect(DarDeBajaProductoSchema.safeParse({ IdProductoUnificado: null }).success).toBe(true);
+  });
+
+  it("rechaza un IdProductoUnificado que no es UUID", () => {
+    expect(DarDeBajaProductoSchema.safeParse({ IdProductoUnificado: "REP-001" }).success).toBe(
+      false,
+    );
+  });
+
+  it("el motivo se recorta y no pasa de 300 caracteres", () => {
+    expect(DarDeBajaProductoSchema.parse({ Motivo: "  Duplicado  " }).Motivo).toBe("Duplicado");
+    expect(DarDeBajaProductoSchema.safeParse({ Motivo: "x".repeat(301) }).success).toBe(false);
   });
 });

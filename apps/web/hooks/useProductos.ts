@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CrearProducto, ActualizarProducto, ProductoConDetalle } from "@congeminco/shared";
+import type {
+  CrearProducto,
+  ActualizarProducto,
+  DarDeBajaProducto,
+  ProductoConDetalle,
+} from "@congeminco/shared";
+import type { ProductoSimilar } from "@/lib/productos-similares";
 
 /* Tipo para la vista consolidada de stock */
 export interface ProductoConsolidado {
@@ -17,17 +23,45 @@ export interface ProductoConsolidado {
      V_Producto_StockConsolidado); faltaba declararlos. Los usa la exportación. */
   CostoPromedio: number;
   CodigoProductoProveedor: string | null;
+  /* Baja de productos con historial (0086). Solo llegan en true cuando el
+     admin pide ?incluirBaja=true; para el resto la vista ya los excluye. */
+  DadoDeBaja?: boolean;
+  FechaBaja?: string | null;
+  UsuarioBaja?: string | null;
+  MotivoBaja?: string | null;
+  SkuUnificado?: string | null;
+}
+
+/* Parecidos al producto que se está por crear (control de duplicados, 0085).
+   Imperativo a propósito: se consulta UNA vez, al pulsar "Crear", no en cada tecla. */
+export async function buscarProductosSimilares(params: {
+  nombre: string;
+  codigo?: string | null;
+  excluir?: string | null;
+}): Promise<ProductoSimilar[]> {
+  const sp = new URLSearchParams({ nombre: params.nombre });
+  if (params.codigo) sp.set("codigo", params.codigo);
+  if (params.excluir) sp.set("excluir", params.excluir);
+  const res = await fetch(`/api/productos/similares?${sp.toString()}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `Error ${res.status}`);
+  }
+  return res.json() as Promise<ProductoSimilar[]>;
 }
 
 interface ProductosParams {
   q?: string;
   bajoMinimo?: boolean;
+  /* Solo admin (la API lo ignora para el resto). */
+  incluirBaja?: boolean;
 }
 
 async function fetchProductos(params: ProductosParams): Promise<ProductoConsolidado[]> {
   const sp = new URLSearchParams();
   if (params.q) sp.set("q", params.q);
   if (params.bajoMinimo) sp.set("bajoMinimo", "true");
+  if (params.incluirBaja) sp.set("incluirBaja", "true");
 
   const qs = sp.toString();
   const res = await fetch(`/api/productos${qs ? `?${qs}` : ""}`);
@@ -122,6 +156,39 @@ export function useActualizarProducto() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["productos"] });
     },
+  });
+}
+
+/* Dar de baja / reactivar un producto con historial (solo admin, 0086). */
+export function useDarDeBajaProducto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: DarDeBajaProducto }) => {
+      const res = await fetch(`/api/productos/${id}/baja`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `Error ${res.status}`);
+      }
+    },
+    onSuccess: () => invalidarProducto(qc),
+  });
+}
+
+export function useReactivarProducto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/productos/${id}/baja`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `Error ${res.status}`);
+      }
+    },
+    onSuccess: () => invalidarProducto(qc),
   });
 }
 

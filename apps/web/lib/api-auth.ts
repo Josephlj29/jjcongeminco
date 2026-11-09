@@ -50,6 +50,7 @@ const STEMS_NEGOCIO =
 
 /**
  * Mapea un error de Postgres/plpgsql a una respuesta HTTP por SQLSTATE:
+ *  - P0409 (codigo de proveedor duplicado, trigger de 0085) -> 409 con su mensaje
  *  - P0001 (RAISE EXCEPTION de plpgsql) y 23514 (CHECK, p. ej. guard de stock) -> 409 (regla de negocio)
  *  - 23505 (unique_violation) -> 409 (usa `mensajeDuplicado` si se pasa)
  *  - 42501 (insufficient_privilege / RLS) -> 403
@@ -61,6 +62,11 @@ export function mapearErrorNegocio(
   opciones?: { mensajeDuplicado?: string },
 ): NextResponse {
   const code = error.code;
+  // P0409: código de proveedor ya usado por otro producto (trigger de 0085).
+  // Su mensaje ya nombra el producto en conflicto: no se pisa con mensajeDuplicado.
+  if (code === "P0409") {
+    return NextResponse.json({ error: error.message }, { status: 409 });
+  }
   if (code === "23505") {
     return NextResponse.json(
       { error: opciones?.mensajeDuplicado ?? error.message },

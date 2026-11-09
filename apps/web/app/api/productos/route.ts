@@ -4,6 +4,7 @@
  * GET  /api/productos  — lista desde inv.V_Producto_StockConsolidado
  *                        ?q=<texto> búsqueda por SKU, nombre o código de proveedor
  *                        ?bajoMinimo=true filtra por BajoMinimo
+ *                        ?incluirBaja=true (solo admin) suma los dados de baja
  * POST /api/productos  — crea en inv.T_Producto (rol: admin, almacenero)
  *
  * GOTCHA: .schema("inv") OBLIGATORIO en todas las consultas.
@@ -11,20 +12,32 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { autenticarRequest, respuestaError, respuestaErrorBD } from "@/lib/api-auth";
+import {
+  autenticarRequest,
+  mapearErrorNegocio,
+  respuestaError,
+  respuestaErrorBD,
+} from "@/lib/api-auth";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { CrearProductoSchema, puede } from "@congeminco/shared";
 
 export async function GET(request: NextRequest) {
-  const { error } = await autenticarRequest();
+  const { usuario, error } = await autenticarRequest();
   if (error) return error;
 
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
   const bajoMinimo = searchParams.get("bajoMinimo");
+  // Los dados de baja (0086) solo los ve el admin, y solo si los pide: así sus
+  // demás pantallas (selectores, preview de SKU) se comportan igual que para el resto.
+  const incluirBaja =
+    searchParams.get("incluirBaja") === "true" && puede(usuario.rol, "productoBaja");
 
   const supabase = await crearClienteServidor();
-  let query = supabase.schema("inv").from("V_Producto_StockConsolidado").select("*");
+  let query = supabase
+    .schema("inv")
+    .from(incluirBaja ? "V_Producto_StockConsolidadoTodos" : "V_Producto_StockConsolidado")
+    .select("*");
 
   if (bajoMinimo === "true") {
     query = query.eq("BajoMinimo", true);
@@ -68,6 +81,7 @@ export async function POST(request: NextRequest) {
     .rpc("FnGuardarProducto", { PProducto: parsed.data });
 
   if (dbError) {
+    if (dbError.code === "P0409") return mapearErrorNegocio(dbError);
     if (dbError.code === "23505") {
       return respuestaErrorBD(dbError, "El SKU ya está en uso por un producto activo.");
     }

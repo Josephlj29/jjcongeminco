@@ -83,6 +83,14 @@ export const ActualizarProductoSchema = CrearProductoSchema.partial().extend({
 });
 export type ActualizarProducto = z.infer<typeof ActualizarProductoSchema>;
 
+/* Dar de baja un producto con historial (migración 0086). Opcional: el
+   producto en el que se unificó (trazabilidad) y el motivo. */
+export const DarDeBajaProductoSchema = z.object({
+  IdProductoUnificado: z.string().uuid().nullable().optional(),
+  Motivo: z.string().trim().max(300).optional(),
+});
+export type DarDeBajaProducto = z.infer<typeof DarDeBajaProductoSchema>;
+
 /* ─── Documento de inventario (cabecera + detalle) ─── */
 export const DetalleDocumentoSchema = z.object({
   IdProducto: z.string().uuid(),

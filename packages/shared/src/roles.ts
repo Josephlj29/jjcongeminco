@@ -30,6 +30,10 @@ export const PERMISOS = {
   // cierre por error. Una cerrada es terminal para el resto de los roles, y si
   // llegó a mover inventario ni el admin la reabre (se corrige por el ledger).
   ordenReabrirCerrada: [ROLES.ADMIN],
+  // Dar de baja (o reactivar) un producto con historial que ya no se usa, p. ej.
+  // un duplicado cuyo stock se pasó al producto bueno. Lo oculta a TODOS los
+  // demás roles, así que es solo admin (la BD lo revalida en FnDarDeBajaProducto).
+  productoBaja: [ROLES.ADMIN],
 } as const;
 
 export function puede(rol: RoleCode | null | undefined, permiso: keyof typeof PERMISOS): boolean {

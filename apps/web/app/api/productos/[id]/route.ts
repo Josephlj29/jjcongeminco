@@ -83,6 +83,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     .rpc("FnGuardarProducto", { PProducto: { ...parsed.data, Id: id } });
 
   if (dbError) {
+    if (dbError.code === "P0409") return mapearErrorNegocio(dbError);
     if (dbError.code === "23505") {
       return respuestaErrorBD(dbError, "El SKU ya está en uso por un producto activo.");
     }

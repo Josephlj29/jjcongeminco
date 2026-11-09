@@ -14,7 +14,7 @@
  * - Botón toolbar "Asociar por categoría": asociación masiva categoría→tipo (atajo)
  * - Acciones restringidas por rol (productoEscritura)
  */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Controller, useForm, type DefaultValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -28,6 +28,10 @@ import {
   Package,
   Camera,
   Eraser,
+  AlertTriangle,
+  Ban,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { DialogEliminar } from "@/components/DialogEliminar";
 import { InputCantidad } from "@/components/InputCantidad";
@@ -45,7 +49,13 @@ import {
   useEditarProducto,
   useProductoDetalle,
   useEliminarProducto,
+  buscarProductosSimilares,
+  useDarDeBajaProducto,
+  useReactivarProducto,
 } from "@/hooks/useProductos";
+import { evaluarSimilares, type EvaluacionSimilares } from "@/lib/productos-similares";
+import { accionesDeBaja } from "@/lib/baja-producto";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useImagenesProducto,
   useCrearImagenProducto,
@@ -122,6 +132,10 @@ interface ProductoConsolidado {
   BajoMinimo: boolean;
   IdCategoria: string;
   EsGeneral: boolean;
+  /* Baja de productos con historial (0086): solo llegan cuando el admin pide
+     ver los dados de baja. */
+  DadoDeBaja?: boolean;
+  SkuUnificado?: string | null;
 }
 
 /**
@@ -244,6 +258,22 @@ function DialogProducto({
   const idsTipo = watch("IdsTipoEquipo") ?? [];
   const idCategoria = watch("IdCategoria");
   const idUnidad = watch("IdUnidadMedida");
+  const nombreEscrito = watch("Nombre");
+  const codigoEscrito = watch("CodigoProductoProveedor");
+
+  /* Control de duplicados del ALTA: antes de crear se buscan productos
+     parecidos. Si los hay, se muestran y el usuario decide. La confirmación va
+     en un ref (no en state) porque el reenvío ocurre en el mismo tick y el
+     closure de onSubmit leería el valor viejo. */
+  const [revision, setRevision] = useState<EvaluacionSimilares | null>(null);
+  const [verificando, setVerificando] = useState(false);
+  const confirmadoNuevo = useRef(false);
+
+  // Si cambia lo que se compara, la revisión anterior ya no vale.
+  useEffect(() => {
+    setRevision(null);
+    confirmadoNuevo.current = false;
+  }, [open, nombreEscrito, codigoEscrito]);
 
   // Preview del SKU autogenerado (solo alta). Mismo queryKey que la lista de
   // la página, así que react-query no dispara un fetch extra.
@@ -314,6 +344,28 @@ function DialogProducto({
     if (!data.EsGeneral && (data.IdsTipoEquipo?.length ?? 0) === 0) {
       toast.error("Elige al menos un tipo de equipo o marca el producto como general.");
       return;
+    }
+    if (!esEdicion && !confirmadoNuevo.current) {
+      setVerificando(true);
+      let evaluacion: EvaluacionSimilares | null = null;
+      try {
+        evaluacion = evaluarSimilares(
+          await buscarProductosSimilares({
+            nombre: data.Nombre,
+            codigo: data.CodigoProductoProveedor,
+          }),
+        );
+      } catch {
+        // Si la consulta falla no se frena el alta: el código repetido igual lo
+        // bloquea la BD (trigger de 0085). Solo se pierde la sugerencia.
+        evaluacion = null;
+      } finally {
+        setVerificando(false);
+      }
+      if (evaluacion && evaluacion.accion !== "crear") {
+        setRevision(evaluacion);
+        return;
+      }
     }
     const payload: CrearProducto = {
       ...data,
@@ -395,7 +447,13 @@ function DialogProducto({
     }
   };
 
-  const guardando = creando || editandoProd || subiendoImagenes;
+  const crearIgual = () => {
+    confirmadoNuevo.current = true;
+    setRevision(null);
+    void handleSubmit(onSubmit)();
+  };
+
+  const guardando = creando || editandoProd || subiendoImagenes || verificando;
   // En edición, no renderizamos el form hasta tener el detalle: evita mostrar
   // (y peor, guardar) los datos del producto editado anteriormente.
   const cargandoEdicion = esEdicion && (cargandoDetalle || !detalle);
@@ -660,6 +718,13 @@ function DialogProducto({
                 </div>
               )}
             </DialogBody>
+            {revision && (
+              <PanelSimilares
+                revision={revision}
+                onCrearIgual={crearIgual}
+                onRevisar={() => setRevision(null)}
+              />
+            )}
             <DialogFooter>
               {!esEdicion && (
                 <Button
@@ -676,18 +741,187 @@ function DialogProducto({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={guardando}>
-                {subiendoImagenes
-                  ? "Subiendo imágenes..."
-                  : guardando
-                    ? "Guardando..."
-                    : esEdicion
-                      ? "Guardar cambios"
-                      : "Crear producto"}
+              <Button type="submit" disabled={guardando || !!revision}>
+                {verificando
+                  ? "Buscando parecidos..."
+                  : subiendoImagenes
+                    ? "Subiendo imágenes..."
+                    : guardando
+                      ? "Guardando..."
+                      : esEdicion
+                        ? "Guardar cambios"
+                        : "Crear producto"}
               </Button>
             </DialogFooter>
           </form>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Panel: "¿No es alguno de estos?" (control de duplicados del alta) ───
+   Bloqueo: otro producto ya tiene el mismo código de proveedor; no se ofrece
+   "crear igual". Confirmación: solo parecidos por nombre; el usuario decide. */
+function PanelSimilares({
+  revision,
+  onCrearIgual,
+  onRevisar,
+}: {
+  revision: EvaluacionSimilares;
+  onCrearIgual: () => void;
+  onRevisar: () => void;
+}) {
+  const bloquea = revision.accion === "bloquear";
+  return (
+    <div
+      role="alert"
+      className={`mx-4 mb-2 max-h-64 overflow-y-auto rounded-md border p-3 text-sm md:mx-6 ${
+        bloquea ? "border-destructive/50 bg-destructive/5" : "border-amber-500/50 bg-amber-500/5"
+      }`}
+    >
+      {revision.bloqueante && (
+        <div className="mb-2 flex gap-2">
+          <Ban className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <p>
+            El código de proveedor <strong>{revision.bloqueante.CodigoProductoProveedor}</strong> ya
+            está registrado en <strong>{revision.bloqueante.Sku}</strong> —{" "}
+            {revision.bloqueante.Nombre}. Si es el mismo repuesto, usa ese producto; si no, corrige
+            el código.
+          </p>
+        </div>
+      )}
+      {revision.parecidos.length > 0 && (
+        <>
+          <p className="mb-2 flex items-center gap-2 font-medium">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+            ¿No es alguno de estos?
+          </p>
+          <ul className="mb-3 space-y-1">
+            {revision.parecidos.map((p) => (
+              <li key={p.Id} className="flex items-baseline gap-2">
+                <Badge variant="outline" className="shrink-0 font-mono">
+                  {p.Sku}
+                </Badge>
+                <span className="min-w-0 break-words">{p.Nombre}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={onRevisar}>
+          {bloquea ? "Entendido" : "Revisar"}
+        </Button>
+        {!bloquea && (
+          <Button type="button" size="sm" onClick={onCrearIgual}>
+            Es un producto nuevo, crear igual
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Dialog: Dar de baja un producto con historial ───
+   Para duplicados ya unificados: el stock se pasó al producto bueno con un
+   documento y este quedó en 0. Se conserva por su kardex, pero desaparece del
+   catálogo y de los selectores de todos los roles menos admin. */
+function DialogBajaProducto({
+  producto,
+  candidatos,
+  onClose,
+}: {
+  producto: ProductoConsolidado | null;
+  candidatos: ProductoConsolidado[];
+  onClose: () => void;
+}) {
+  const [idUnificado, setIdUnificado] = useState<string | null>(null);
+  const [motivo, setMotivo] = useState("");
+  const { mutateAsync: darDeBaja, isPending } = useDarDeBajaProducto();
+
+  useEffect(() => {
+    setIdUnificado(null);
+    setMotivo("");
+  }, [producto]);
+
+  const opciones = useMemo(
+    () =>
+      candidatos
+        .filter((c) => c.IdProducto !== producto?.IdProducto && !c.DadoDeBaja)
+        .map((c) => ({ value: c.IdProducto, label: `${c.Sku} — ${c.NombreProducto}` })),
+    [candidatos, producto],
+  );
+
+  const confirmar = async () => {
+    if (!producto) return;
+    try {
+      await darDeBaja({
+        id: producto.IdProducto,
+        data: { IdProductoUnificado: idUnificado, Motivo: motivo.trim() || undefined },
+      });
+      toast.success(`${producto.Sku} dado de baja: ya no aparece para los demás roles`);
+      onClose();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  return (
+    <Dialog open={!!producto} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>Dar de baja producto</DialogTitle>
+        </DialogHeader>
+        <DialogBody className="space-y-4">
+          <p className="text-sm">
+            <strong>{producto?.Sku}</strong> — {producto?.NombreProducto}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Deja de aparecer en el catálogo, los saldos y los selectores de requerimientos,
+            movimientos y órdenes de mantenimiento para todos los roles. Su kardex y sus documentos
+            se conservan. Puedes reactivarlo desde &quot;Ver dados de baja&quot;.
+          </p>
+          <div className="space-y-1.5">
+            <Label>
+              Se unificó en <span className="font-normal text-muted-foreground">(opcional)</span>
+            </Label>
+            <Combobox
+              opciones={opciones}
+              value={idUnificado}
+              onChange={setIdUnificado}
+              placeholder="Producto que queda vigente"
+              buscarPlaceholder="Buscar por SKU o nombre..."
+              vacioTexto="No se encontraron productos."
+              permitirLimpiar
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="motivo-baja">
+              Motivo <span className="font-normal text-muted-foreground">(opcional)</span>
+            </Label>
+            <Textarea
+              id="motivo-baja"
+              value={motivo}
+              maxLength={300}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Ej.: duplicado, se registró con otro nombre"
+            />
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => void confirmar()}
+            disabled={isPending}
+          >
+            {isPending ? "Dando de baja..." : "Dar de baja"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -1028,10 +1262,32 @@ export default function ProductosPage() {
   const [productoKardex, setProductoKardex] = useState<ProductoConsolidado | null>(null);
   const [productoImagenes, setProductoImagenes] = useState<ProductoConsolidado | null>(null);
   const [productoEliminar, setProductoEliminar] = useState<ProductoConsolidado | null>(null);
+  const [productoBaja, setProductoBaja] = useState<ProductoConsolidado | null>(null);
+  // Solo admin: mostrar también los dados de baja (para revisarlos o reactivarlos).
+  const [verBajas, setVerBajas] = useState(false);
 
-  const { data: productos, isLoading: cargando, isError: error, refetch } = useProductos();
+  const { data: yo } = useYo();
+  const puedeBaja = usePermiso("productoBaja");
+  const {
+    data: productos,
+    isLoading: cargando,
+    isError: error,
+    refetch,
+  } = useProductos({
+    incluirBaja: puedeBaja && verBajas,
+  });
   const puedeEscribir = usePermiso("productoEscritura");
   const { mutateAsync: eliminarProducto } = useEliminarProducto();
+  const { mutateAsync: reactivarProducto } = useReactivarProducto();
+
+  const reactivar = async (p: ProductoConsolidado) => {
+    try {
+      await reactivarProducto(p.IdProducto);
+      toast.success(`${p.Sku} reactivado: vuelve a estar visible para todos`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   /* El catálogo con la jerarquía, para distinguir familia de categoría. Sin
      esto no hay forma de ver cuáles productos quedaron colgados del primer
@@ -1192,11 +1448,19 @@ export default function ProductosPage() {
       {
         id: "estado",
         titulo: "Estado",
-        celda: (p) => (
-          <Badge variant={p.BajoMinimo ? "warning" : "default"}>
-            {p.BajoMinimo ? "Bajo mínimo" : "OK"}
-          </Badge>
-        ),
+        celda: (p) =>
+          p.DadoDeBaja ? (
+            <div className="flex flex-col items-start gap-0.5">
+              <Badge variant="destructive">De baja</Badge>
+              {p.SkuUnificado && (
+                <span className="text-xs text-muted-foreground">→ {p.SkuUnificado}</span>
+              )}
+            </div>
+          ) : (
+            <Badge variant={p.BajoMinimo ? "warning" : "default"}>
+              {p.BajoMinimo ? "Bajo mínimo" : "OK"}
+            </Badge>
+          ),
       },
     ],
     [tiposPorProducto],
@@ -1208,24 +1472,39 @@ export default function ProductosPage() {
       {
         label: "Editar",
         icono: Pencil,
-        visible: () => puedeEscribir,
+        visible: (p) => puedeEscribir && !p.DadoDeBaja,
         onClick: (p) => setEditando(p),
       },
       {
         label: "Imágenes",
         icono: ImageIcon,
-        visible: () => puedeEscribir,
+        visible: (p) => puedeEscribir && !p.DadoDeBaja,
         onClick: (p) => setProductoImagenes(p),
+      },
+      {
+        // Solo admin y solo con saldo 0: primero se pasa el stock al producto bueno.
+        label: "Dar de baja",
+        icono: Archive,
+        variante: "destructiva",
+        visible: (p) => accionesDeBaja(p, yo?.rol).darDeBaja,
+        onClick: (p) => setProductoBaja(p),
+      },
+      {
+        label: "Reactivar",
+        icono: ArchiveRestore,
+        visible: (p) => accionesDeBaja(p, yo?.rol).reactivar,
+        onClick: (p) => void reactivar(p),
       },
       {
         label: "Eliminar",
         icono: Trash2,
         variante: "destructiva",
-        visible: () => puedeEscribir,
+        visible: (p) => puedeEscribir && !p.DadoDeBaja,
         onClick: (p) => setProductoEliminar(p),
       },
     ],
-    [puedeEscribir],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reactivar solo usa setters y la mutación estable
+    [puedeEscribir, yo?.rol],
   );
 
   return (
@@ -1296,6 +1575,17 @@ export default function ProductosPage() {
             Asociar por categoría
           </Button>
         )}
+
+        {puedeBaja && (
+          <Button
+            variant={verBajas ? "secondary" : "outline"}
+            onClick={() => setVerBajas((v) => !v)}
+            aria-pressed={verBajas}
+          >
+            <Archive className="mr-2 h-4 w-4" />
+            {verBajas ? "Ocultar dados de baja" : "Ver dados de baja"}
+          </Button>
+        )}
       </div>
 
       <DataTable
@@ -1342,6 +1632,12 @@ export default function ProductosPage() {
         open={mostrarAsociarCategoria}
         onClose={() => setMostrarAsociarCategoria(false)}
         productos={productosFiltradosConId}
+      />
+
+      <DialogBajaProducto
+        producto={productoBaja}
+        candidatos={(productos ?? []) as ProductoConsolidado[]}
+        onClose={() => setProductoBaja(null)}
       />
 
       <DialogEliminar

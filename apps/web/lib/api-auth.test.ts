@@ -14,6 +14,17 @@ describe("mapearErrorNegocio (mapeo por SQLSTATE)", () => {
     expect(mapearErrorNegocio({ code: "42501", message: "No tienes permiso" }).status).toBe(403);
   });
 
+  it("P0409 (código de proveedor duplicado) → 409 con su propio mensaje, no el del SKU", async () => {
+    const res = mapearErrorNegocio(
+      { code: "P0409", message: "El código de proveedor 13284 ya está registrado en FILTRO-015." },
+      { mensajeDuplicado: "El SKU ya está en uso por un producto activo." },
+    );
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(
+      "El código de proveedor 13284 ya está registrado en FILTRO-015.",
+    );
+  });
+
   it("23505 (duplicado) → 409", () => {
     expect(mapearErrorNegocio({ code: "23505", message: "duplicate key" }).status).toBe(409);
   });
@@ -33,7 +44,7 @@ describe("mapearErrorNegocio (mapeo por SQLSTATE)", () => {
   it("usa mensajeDuplicado en 23505", async () => {
     const res = mapearErrorNegocio(
       { code: "23505", message: "duplicate key" },
-      { mensajeDuplicado: "El código ya está en uso." }
+      { mensajeDuplicado: "El código ya está en uso." },
     );
     const body = await res.json();
     expect(body.error).toBe("El código ya está en uso.");
