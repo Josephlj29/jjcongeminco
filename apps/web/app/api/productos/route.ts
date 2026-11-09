@@ -2,7 +2,7 @@
  * app/api/productos/route.ts
  *
  * GET  /api/productos  — lista desde inv.V_Producto_StockConsolidado
- *                        ?q=<texto> búsqueda por SKU, nombre o código de proveedor
+ *                        ?q=<texto> búsqueda por SKU (actual o anterior), nombre o código de proveedor
  *                        ?bajoMinimo=true filtra por BajoMinimo
  *                        ?incluirBaja=true (solo admin) suma los dados de baja
  * POST /api/productos  — crea en inv.T_Producto (rol: admin, almacenero)
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const termino = `%${q.trim()}%`;
     // Mismo criterio que el buscador de saldos y el de la pantalla de productos.
     query = query.or(
-      `Sku.ilike.${termino},NombreProducto.ilike.${termino},CodigoProductoProveedor.ilike.${termino}`,
+      `Sku.ilike.${termino},NombreProducto.ilike.${termino},CodigoProductoProveedor.ilike.${termino},SkuAnterior.ilike.${termino}`,
     );
   }
 

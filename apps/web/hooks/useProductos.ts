@@ -30,6 +30,8 @@ export interface ProductoConsolidado {
   UsuarioBaja?: string | null;
   MotivoBaja?: string | null;
   SkuUnificado?: string | null;
+  /* SKU previo a la normalización PREFIJO-NNNN (0087); null en productos nuevos. */
+  SkuAnterior?: string | null;
 }
 
 /* Parecidos al producto que se está por crear (control de duplicados, 0085).

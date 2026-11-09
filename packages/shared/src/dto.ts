@@ -50,7 +50,7 @@ const zCosto = () =>
 
 /* ─── Producto ─── */
 export const CrearProductoSchema = z.object({
-  // Opcional: si el alta no lo trae, la BD lo autogenera como PREFIJO-NNN
+  // Opcional: si el alta no lo trae, la BD lo autogenera como PREFIJO-NNNN
   // a partir del código de la categoría (FnGuardarProducto, migración 0059).
   Sku: z.string().max(50).optional(),
   Nombre: z.string().min(1).max(200),

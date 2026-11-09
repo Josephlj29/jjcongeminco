@@ -270,6 +270,8 @@ export interface Categoria extends CamposAuditoria {
   Codigo: string;
   Nombre: string;
   Descripcion: string | null;
+  /* 3 letras para el SKU autogenerado (0087). Null en categorías sin productos propios. */
+  PrefijoSku?: string | null;
 }
 
 export interface Ubicacion extends CamposAuditoria {
@@ -331,6 +333,8 @@ export interface ProductoStockConsolidado {
   MotivoBaja: string | null;
   IdProductoUnificado: string | null;
   SkuUnificado: string | null;
+  /* SKU previo a la normalización PREFIJO-NNNN (0087); null en productos nuevos. */
+  SkuAnterior: string | null;
 }
 
 /* Respuesta de GET /api/saldos?pagina=N — página de saldos filtrada en el servidor. */

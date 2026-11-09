@@ -30,7 +30,7 @@ export async function GET() {
   const { data, error: dbError } = await supabase
     .schema("inv")
     .from("T_Categoria")
-    .select("Id, IdCategoriaPadre, Codigo, Nombre, Descripcion")
+    .select("Id, IdCategoriaPadre, Codigo, Nombre, Descripcion, PrefijoSku")
     .eq("Estado", true)
     .order("Nombre");
 

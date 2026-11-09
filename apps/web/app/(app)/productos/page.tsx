@@ -119,6 +119,7 @@ import type { KardexFila } from "@congeminco/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { fechaCorta, hoyLima } from "@/lib/format";
 import { CeldaRegistroMovimiento } from "@/components/CeldaRegistroMovimiento";
+import { armarSku } from "@/lib/sku";
 
 /* ─── Tipo para producto de la vista consolidada ─── */
 interface ProductoConsolidado {
@@ -136,37 +137,7 @@ interface ProductoConsolidado {
      ver los dados de baja. */
   DadoDeBaja?: boolean;
   SkuUnificado?: string | null;
-}
-
-/**
- * Arma el SKU autogenerado: PREFIJO-NNN.
- * Espeja la lógica del servidor (inv.FnGuardarProducto, migración 0059):
- * prefijo = código de la categoría sin CAT-/FAM-, saneado y en mayúsculas;
- * NNN = primer correlativo libre entre los SKUs ya cargados. El servidor
- * sigue siendo la fuente de verdad y reconfirma el número al guardar (además
- * considera productos dados de baja, que esta lista no incluye); esto es solo
- * la previsualización del SKU que se va a asignar.
- */
-function armarSku(codigoCategoria: string | undefined, skusExistentes: string[]): string | null {
-  if (!codigoCategoria) return null;
-  const prefijo = codigoCategoria
-    .replace(/^(CAT|FAM)-/i, "")
-    .replace(/[^A-Za-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toUpperCase();
-  if (!prefijo) return null;
-
-  const ocupados = new Set<number>();
-  for (const sku of skusExistentes) {
-    const s = sku.toUpperCase();
-    if (!s.startsWith(`${prefijo}-`)) continue;
-    const sufijo = Number(s.slice(prefijo.length + 1));
-    if (Number.isInteger(sufijo) && sufijo > 0) ocupados.add(sufijo);
-  }
-  let correlativo = 1;
-  while (ocupados.has(correlativo)) correlativo += 1;
-
-  return `${prefijo}-${String(correlativo).padStart(3, "0")}`;
+  SkuAnterior?: string | null;
 }
 
 /* ─── Dialog: Alta / edición de producto ───
@@ -279,7 +250,7 @@ function DialogProducto({
   // la página, así que react-query no dispara un fetch extra.
   const { data: productosExistentes } = useProductos();
   const skuArmado = armarSku(
-    categorias?.find((c) => c.Id === idCategoria)?.Codigo,
+    categorias?.find((c) => c.Id === idCategoria),
     (productosExistentes ?? []).map((p) => p.Sku),
   );
 
@@ -1337,7 +1308,10 @@ export default function ProductosPage() {
             : p.NombreCategoria === categoriaFiltro;
       return (
         coincideCategoria &&
-        coincideBusqueda([p.NombreProducto, p.Sku, p.CodigoProductoProveedor], busqueda)
+        coincideBusqueda(
+          [p.NombreProducto, p.Sku, p.SkuAnterior, p.CodigoProductoProveedor],
+          busqueda,
+        )
       );
     });
   }, [productos, busqueda, categoriaFiltro, familias]);
@@ -1362,6 +1336,7 @@ export default function ProductosPage() {
       nombreHoja: "Catálogo",
       columnas: [
         { key: "Sku", label: "SKU" },
+        { key: "SkuAnterior", label: "SKU anterior" },
         { key: "Nombre", label: "Nombre" },
         { key: "Categoria", label: "Categoría" },
         { key: "TiposEquipo", label: "Tipos de equipo" },
@@ -1374,6 +1349,7 @@ export default function ProductosPage() {
       ],
       filas: productosFiltrados.map((p) => ({
         Sku: p.Sku,
+        SkuAnterior: p.SkuAnterior ?? "",
         Nombre: p.NombreProducto,
         Categoria: p.NombreCategoria,
         // Mismo criterio que la grilla: un producto general aplica a todo equipo.
@@ -1392,7 +1368,22 @@ export default function ProductosPage() {
 
   const columnas = useMemo<ColumnaDataTable<ProductoConsolidado>[]>(
     () => [
-      { id: "sku", titulo: "SKU", celda: (p) => p.Sku, className: "font-mono text-xs" },
+      {
+        id: "sku",
+        titulo: "SKU",
+        className: "font-mono text-xs",
+        // El SKU viejo se muestra debajo mientras se reetiqueta el almacén (0087).
+        celda: (p) => (
+          <div>
+            {p.Sku}
+            {p.SkuAnterior && (
+              <div className="text-[10px] text-muted-foreground" title="SKU anterior">
+                antes {p.SkuAnterior}
+              </div>
+            )}
+          </div>
+        ),
+      },
       { id: "nombre", titulo: "Nombre", celda: (p) => p.NombreProducto, className: "font-medium" },
       {
         id: "categoria",

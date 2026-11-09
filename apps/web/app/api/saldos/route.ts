@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
 
     if (q) {
       query = query.or(
-        `Sku.ilike.%${q}%,NombreProducto.ilike.%${q}%,CodigoProductoProveedor.ilike.%${q}%`,
+        `Sku.ilike.%${q}%,NombreProducto.ilike.%${q}%,CodigoProductoProveedor.ilike.%${q}%,SkuAnterior.ilike.%${q}%`,
       );
     }
     if (idCategoria) {
